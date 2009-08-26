@@ -1,0 +1,15 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006-2008 OpenWrt.org
+
+START=90
+
+PIDFILE="/var/run/umurmurd.pid"
+
+start() {
+        stop
+        /usr/bin/umurmurd -p $PIDFILE
+}
+
+stop() {
+        [ -f "$PIDFILE" ] && kill $(cat "$PIDFILE") 2>/dev/null >/dev/null
+}
