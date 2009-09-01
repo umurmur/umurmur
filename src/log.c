@@ -84,7 +84,7 @@ void Log_warn(const char *logstring, ...)
 	if (termprint)
 		fprintf(stderr, "%s", buf); /* XXX - other targets for logging */
 	else
-		syslog(LOG_ALERT, buf);
+		syslog(LOG_WARNING, buf);
 }
 
 void Log_info(const char *logstring, ...)
@@ -101,7 +101,7 @@ void Log_info(const char *logstring, ...)
 	if (termprint)
 		fprintf(stderr, "%s", buf); /* XXX - other targets for logging */
 	else
-		syslog(LOG_ALERT, buf);
+		syslog(LOG_INFO, buf);
 }
 
 #ifdef DEBUG
@@ -119,7 +119,7 @@ void Log_debug(const char *logstring, ...)
 	if (termprint)
 		fprintf(stderr, "%s", buf); /* XXX - other targets for logging */
 	else
-		syslog(LOG_INFO, buf);
+		syslog(LOG_DEBUG, buf);
 }
 #endif
 
@@ -136,6 +136,6 @@ void Log_fatal(const char *logstring, ...)
 	if (termprint)
 		fprintf(stderr, "%s", buf); /* XXX - other targets for logging */
 	else
-		syslog(LOG_INFO, buf);
+		syslog(LOG_CRIT, buf);
 	exit(1);
 }
