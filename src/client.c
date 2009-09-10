@@ -94,8 +94,11 @@ void Client_janitor()
 		if (c->availableBandwidth > bwTop)
 			c->availableBandwidth = bwTop;
 		
-		if (Timer_isElapsed(&c->lastActivity, 1000000LL * INACTICITY_TIMEOUT))
-			Client_close(c);
+		if (Timer_isElapsed(&c->lastActivity, 1000000LL * INACTICITY_TIMEOUT)) {
+			/* No activity from client - assume it is lost and close. */
+			Log_info("Session ID %d timeout - closing", c->sessionId);
+			Client_free(c);
+		}
 	}
 }
 
