@@ -36,7 +36,7 @@
 #include "list.h"
 #include "types.h"
 
-#define MAX_TEXT 64
+#define MAX_TEXT 256
 #define SPEEX_DATA_SIZE 1024
 #define MESSAGE_STREAM_VERSION 4
 
