@@ -2,8 +2,8 @@ include $(TOPDIR)/rules.mk
 
 # Name and release number of this package
 PKG_NAME:=umurmur
-PKG_VERSION:=0.1.1
-PKG_RELEASE:=4
+PKG_VERSION:=0.1.2
+PKG_RELEASE:=1
 
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
