@@ -1,10 +1,8 @@
 include $(TOPDIR)/rules.mk
 
-# Name and release number of this package
 PKG_NAME:=umurmur
-PKG_VERSION:=0.1.2
+PKG_VERSION:=0.1.3
 PKG_RELEASE:=1
-
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
 
@@ -16,10 +14,10 @@ define Package/umurmur
 	CATEGORY:=Network
 	TITLE:=uMurmur
 	DEPENDS:=+libopenssl +libconfig
+	URL:=http://code.google.com/p/umurmur
+	MAINTAINER:=Martin Johansson <martin@fatbob.nu>
 endef
 
-
-# Uncomment portion below for Kamikaze and delete DESCRIPTION variable above
 define Package/umurmur/description
 	Minimalistic Mumble server daemon.
 endef
@@ -43,7 +41,7 @@ define Package/umurmur/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/umurmurd $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/etc
-	$(INSTALL_BIN) ./files/umurmur.conf $(1)/etc/umurmur.conf
+	$(INSTALL_CONF) ./files/umurmur.conf $(1)/etc/umurmur.conf
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/umurmur.init $(1)/etc/init.d/umurmur
 	$(INSTALL_DIR) $(1)/etc/umurmur
