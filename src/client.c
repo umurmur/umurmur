@@ -527,10 +527,14 @@ static void Client_voiceMsg_tunnel(client_t *client, message_t *msg)
 	Pds_add_numval(pds, msg->sessionId);
 	Pds_add_numval(pds, msg->payload.speex.seq);
 	Pds_append_data_nosize(pds, msg->payload.speex.data, msg->payload.speex.size);
+	
+	Msg_free(msg);
+	
 	if (!pds->bOk)
 		Log_warn("Large Speex message from TCP"); /* XXX - pds resize? */
 	pds->maxsize = pds->offset;
 	Client_voiceMsg(client, pds);
+	
 	Pds_free(pds);
 }
 
