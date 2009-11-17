@@ -46,7 +46,7 @@
 #include "client.h"
 #include "conf.h"
 
-#define UMURMUR_VERSION "0.1.0"
+#define UMURMUR_VERSION "0.1.3"
 
 void lockfile(const char *pidfile)
 {
@@ -124,6 +124,7 @@ void printhelp()
 	printf("       -d             - Do not deamonize\n");
 	printf("       -p <pidfile>   - Write PID to this file\n");
 	printf("       -c <conf file> - Specify configuration file\n");
+	printf("       -r             - Run with realtime priority\n");
 	printf("       -h             - Print this help\n");
 	exit(0);
 }
@@ -131,11 +132,12 @@ void printhelp()
 int main(int argc, char **argv)
 {
 	bool_t nodaemon = false;
+	bool_t realtime = false;
 	char *conffile = NULL, *pidfile = NULL;
 	int c;
 	
 	/* Arguments */
-	while ((c = getopt(argc, argv, "dp:c:h")) != EOF) {
+	while ((c = getopt(argc, argv, "drp:c:h")) != EOF) {
 		switch(c) {
 		case 'c':
 			conffile = optarg;
@@ -148,6 +150,9 @@ int main(int argc, char **argv)
 			break;
 		case 'h':
 			printhelp();
+			break;
+		case 'r':
+			realtime = true;
 			break;
 		default:
 			fprintf(stderr, "Unrecognized option\n");
@@ -182,7 +187,9 @@ int main(int argc, char **argv)
 	Chan_init();
 	Client_init();
 
-	setscheduler();
+	if (realtime)
+		setscheduler();
+	
 	Server_run();
 	
 	SSL_deinit();
