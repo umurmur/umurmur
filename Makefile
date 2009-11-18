@@ -41,7 +41,7 @@ define Package/umurmur/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/umurmurd $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/etc
-	$(INSTALL_CONF) ./files/umurmur.conf $(1)/etc/umurmur.conf
+	$(INSTALL_CONF) ./files/umurmur.conf $(1)/etc/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/umurmur.init $(1)/etc/init.d/umurmur
 	$(INSTALL_DIR) $(1)/etc/umurmur
