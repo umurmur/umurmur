@@ -377,8 +377,11 @@ int Client_send_message(client_t *client, message_t *msg)
 client_t *Client_iterate(client_t **client_itr)
 {
 	client_t *c = *client_itr;
+
+	if (list_empty(&clients))
+		return NULL;
 	
-	if (c == NULL && !list_empty(&clients)) {
+	if (c == NULL) {
 		c = list_get_entry(list_get_first(&clients), client_t, node);
 	} else {
 		if (list_get_next(&c->node) == &clients)
