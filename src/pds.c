@@ -83,6 +83,28 @@ void Pds_append_data_nosize(pds_t *pds, const uint8_t *data, uint32_t len)
 	}
 }
 
+uint8_t Pds_next8(pds_t *pds)
+{
+	if (pds->offset < pds->maxsize)
+		return pds->data[pds->offset++];
+	else {
+		pds->bOk = false;
+		return 0;
+	}
+}
+
+int Pds_skip(pds_t *pds, int offset)
+{
+	if (pds->offset + offset < pds->maxsize) {
+		pds->offset += offset;
+		return offset;
+	} else {
+		pds->bOk = false;
+		return 0;
+	}
+	
+}
+
 static inline uint64_t next(pds_t *pds)
 {
 	if (pds->offset < pds->maxsize)

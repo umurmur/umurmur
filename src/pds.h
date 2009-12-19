@@ -53,6 +53,8 @@ void Pds_get_string(pds_t *pds, char *str, int maxlen);
 void Pds_add_double(pds_t *pds, double value);
 double Pds_get_double(pds_t *pds);
 int Pds_get_data(pds_t *pds, uint8_t *data, int maxlen);
+uint8_t Pds_next8(pds_t *pds);
+int Pds_skip(pds_t *pds, int offset);
 
 
 #endif

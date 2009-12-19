@@ -37,17 +37,16 @@
 #include "ssl.h"
 #include "messages.h"
 #include "messagehandler.h"
-#include "pds.h"
 #include "conf.h"
 #include "channel.h"
 
-
+/* Version 0.2.0 XXX fixme */
+const uint32_t versionBlob = 1<<16 | 2<<8 | 0;
 
 static int Client_read(client_t *client);
 static int Client_write(client_t *client);
-static int Client_voiceMsg(client_t *client, pds_t *pds);
 static int Client_send_udp(client_t *client, uint8_t *data, int len);
-static void Client_voiceMsg_tunnel(client_t *client, message_t *msg);
+void Client_free(client_t *client);
 
 declare_list(clients);
 static int clientcount; /* = 0 */
@@ -142,8 +141,8 @@ void Client_free(client_t *client)
 			 ntohs(client->remote_tcp.sin_port));
 
 	if (client->authenticated) {
-		sendmsg = Msg_create(ServerLeave);
-		sendmsg->sessionId = client->sessionId;
+		sendmsg = Msg_create(UserRemove);
+		sendmsg->payload.userRemove->session = client->sessionId;
 		Client_send_message_except(client, sendmsg);
 	}
 	list_iterate_safe(itr, save, &client->txMsgQueue) {
@@ -220,7 +219,7 @@ int Client_read(client_t *client)
 	do {
 		errno = 0;
 		if (!client->msgsize) 
-			rc = SSL_read(client->ssl, client->rxbuf, 3 - client->rxcount);
+			rc = SSL_read(client->ssl, client->rxbuf, 6 - client->rxcount);
 		else if (client->drainleft > 0)
 			rc = SSL_read(client->ssl, client->rxbuf, client->drainleft > BUFSIZE ? BUFSIZE : client->drainleft);
 		else
@@ -231,24 +230,20 @@ int Client_read(client_t *client)
 				client->drainleft -= rc;
 			else {
 				client->rxcount += rc;
-				if (!client->msgsize && rc >= 3)
-					client->msgsize = ((client->rxbuf[0] & 0xff) << 16) |
-						((client->rxbuf[1] & 0xff) << 8) |
-						(client->rxbuf[2] & 0xff);
-				if (client->msgsize > BUFSIZE - 3 && client->drainleft == 0) {
+				if (!client->msgsize && client->rxcount >= 6) {
+					uint32_t *msgLen = (uint32_t *) &client->rxbuf[2];
+					client->msgsize = ntohl(*msgLen);
+				}
+				if (client->msgsize > BUFSIZE - 6 && client->drainleft == 0) {
 					Log_warn("Too big message received (%d). Discarding.", client->msgsize);
 					client->rxcount = client->msgsize = 0;
 					client->drainleft = client->msgsize;
 				}
-				else if (client->rxcount == client->msgsize + 3) { /* Got all of the message */
-					msg = Msg_networkToMessage(&client->rxbuf[3], client->msgsize);
+				else if (client->rxcount == client->msgsize + 6) { /* Got all of the message */
+					msg = Msg_networkToMessage(client->rxbuf, client->msgsize + 6);
 					/* pass messsage to handler */
-					if (msg) {
-						if (msg->messageType == Speex) /* Tunneled voice message */
-							Client_voiceMsg_tunnel(client, msg);
-						else 
+					if (msg)
 							Mh_handle_message(client, msg);
-					}
 					client->rxcount = client->msgsize = 0;
 				}
 			}
@@ -350,23 +345,21 @@ int Client_send_message(client_t *client, message_t *msg)
 	}
 	if (client->txsize != 0) {
 		/* Queue message */
-		if ((client->txQueueCount > 5 &&  msg->messageType == Speex) ||
+		if ((client->txQueueCount > 5 &&  msg->messageType == UDPTunnel) ||
 			client->txQueueCount > 30) {
 			Msg_free(msg);
 			return -1;
 		}
 		client->txQueueCount++;
 		list_add_tail(&msg->node, &client->txMsgQueue);
+		Log_debug("Queueing message");
 	} else {
 		int len;
 		memset(client->txbuf, 0, BUFSIZE);
-		len = Msg_messageToNetwork(msg, &client->txbuf[3], BUFSIZE - 3);
-		doAssert(len < BUFSIZE - 3);
+		len = Msg_messageToNetwork(msg, client->txbuf);
+		doAssert(len < BUFSIZE);
 
-		client->txbuf[0] =  (len >> 16) & 0xff;
-		client->txbuf[1] =  (len >> 8) & 0xff;
-		client->txbuf[2] =  len & 0xff;
-		client->txsize = len + 3;
+		client->txsize = len;
 		client->txcount = 0;
 		Client_write(client);
 		Msg_free(msg);
@@ -428,9 +421,7 @@ static bool_t checkDecrypt(client_t *client, const uint8_t *encrypted, uint8_t *
 			message_t *sendmsg;
 			Timer_restart(&client->cryptState.tLastRequest);
 			
-			sendmsg = Msg_create(CryptSync);
-			sendmsg->sessionId = client->sessionId;
-			sendmsg->payload.cryptSync.empty = true;
+			sendmsg = Msg_create(CryptSetup);
 			Log_info("Requesting voice channel crypt resync");
 			Client_send_message(client, sendmsg);
 		}
@@ -438,6 +429,7 @@ static bool_t checkDecrypt(client_t *client, const uint8_t *encrypted, uint8_t *
 	return false;
 }
 
+#define UDP_PACKET_SIZE 1024
 int Client_read_udp()
 {
 	int len;
@@ -445,58 +437,59 @@ int Client_read_udp()
 	socklen_t fromlen = sizeof(struct sockaddr_in);
 	uint64_t key;
 	client_t *itr;
-	int msgType = 0;
-	uint32_t sessionId = 0;
-	pds_t *pds;
+	UDPMessageType_t msgType;
 	
 #if defined(__LP64__)
-	uint8_t encbuff[512 + 8];
+	uint8_t encbuff[UDP_PACKET_SIZE + 8];
 	uint8_t *encrypted = encbuff + 4;
 #else
-	uint8_t encrypted[512];
+	uint8_t encrypted[UDP_PACKET_SIZE];
 #endif
-	uint8_t buffer[512];
+	uint8_t buffer[UDP_PACKET_SIZE];
 	
-	len = recvfrom(udpsock, encrypted, 512, MSG_TRUNC, (struct sockaddr *)&from, &fromlen);
+	len = recvfrom(udpsock, encrypted, UDP_PACKET_SIZE, MSG_TRUNC, (struct sockaddr *)&from, &fromlen);
 	if (len == 0) {
 		return -1;
 	} else if (len < 0) {
 		return -1;
-	} else if (len < 6) {
+	} else if (len < 5) {
 		// 4 bytes crypt header + type + session
 		return 0;
-	} else if (len > 512) {
+	} else if (len > UDP_PACKET_SIZE) {
+		return 0;
+	}
+
+	/* Ping packet */
+	if (len == 12 && *encrypted == 0) {
+		uint32_t *ping = (uint32_t *)encrypted;
+		ping[0] = htons(versionBlob);
+		// 1 and 2 will be the timestamp, which we return unmodified.
+		ping[3] = htons((uint32_t)clientcount);
+		ping[4] = htons((uint32_t)getIntConf(MAX_CLIENTS));
+		ping[5] = htons((uint32_t)getIntConf(MAX_BANDWIDTH));
+		
+		sendto(udpsock, encrypted, 6 * sizeof(uint32_t), 0, (struct sockaddr *)&from, fromlen);
 		return 0;
 	}
 	
 	key = (((uint64_t)from.sin_addr.s_addr) << 16) ^ from.sin_port;
-	pds = Pds_create(buffer, len - 4);
 	itr = NULL;
 	
 	while (Client_iterate(&itr) != NULL) {
 		if (itr->key == key) {
 			if (!checkDecrypt(itr, encrypted, buffer, len))
 				goto out;
-			msgType = Pds_get_numval(pds);
-			sessionId = Pds_get_numval(pds);
-			if (itr->sessionId != sessionId)
-				goto out;
 			break;
 		}
 	}	
 	if (itr == NULL) { /* Unknown peer */
 		while (Client_iterate(&itr) != NULL) {
-			pds->offset = 0;
 			if (itr->remote_tcp.sin_addr.s_addr == from.sin_addr.s_addr) {
 				if (checkDecrypt(itr, encrypted, buffer, len)) {
-					msgType = Pds_get_numval(pds);
-					sessionId = Pds_get_numval(pds);
-					if (itr->sessionId == sessionId) { /* Found matching client */
-						itr->key = key;
-						Log_info("New UDP connection from %s port %d sessionId %d", inet_ntoa(from.sin_addr), ntohs(from.sin_port), sessionId);
-						memcpy(&itr->remote_udp, &from, sizeof(struct sockaddr_in));
-						break;
-					}
+					itr->key = key;
+					Log_info("New UDP connection from %s port %d sessionId %d", inet_ntoa(from.sin_addr), ntohs(from.sin_port), itr->sessionId);
+					memcpy(&itr->remote_udp, &from, sizeof(struct sockaddr_in));
+					break;
 				}
 				else Log_warn("Bad cryptstate from peer");
 			}
@@ -505,80 +498,81 @@ int Client_read_udp()
 	if (itr == NULL) {
 		goto out;
 	}
-	len -= 4;
-	if (msgType != Speex && msgType != Ping)
-		goto out;
 	
-	if (msgType == Ping) {
+	msgType = (UDPMessageType_t)((buffer[0] >> 5) & 0x7);
+	switch (msgType) {
+	case UDPVoiceSpeex:
+	case UDPVoiceCELTAlpha:
+	case UDPVoiceCELTBeta:
+		// u->bUdp = true;
+		Client_voiceMsg(itr, buffer, len);
+		break;
+	case UDPPing:
 		Client_send_udp(itr, buffer, len);
+		break;
+	default:
+		Log_debug("Unknown UDP message type from %s port %d", inet_ntoa(from.sin_addr), ntohs(from.sin_port));
+		break;
 	}
-	else {
-		Client_voiceMsg(itr, pds);
-	}
-	
 out:
-	Pds_free(pds);
 	return 0;
 }
 
-static void Client_voiceMsg_tunnel(client_t *client, message_t *msg)
+/* Handle decrypted voice message */
+int Client_voiceMsg(client_t *client, uint8_t *data, int len)
 {
-	uint8_t buf[512];
-	pds_t *pds = Pds_create(buf, 512);
+	uint8_t buffer[UDP_PACKET_SIZE];
+	pds_t *pdi = Pds_create(data + 1, len - 1);
+	pds_t *pds = Pds_create(buffer + 1, UDP_PACKET_SIZE - 1);
+	unsigned int type = data[0] & 0xe0;
+	unsigned int target = data[0] & 0x1f;
+	unsigned int poslen, counter;
+	int offset, packetsize;
 
-	Pds_add_numval(pds, msg->messageType);
-	Pds_add_numval(pds, msg->sessionId);
-	Pds_add_numval(pds, msg->payload.speex.seq);
-	Pds_append_data_nosize(pds, msg->payload.speex.data, msg->payload.speex.size);
-	
-	Msg_free(msg);
-	
-	if (!pds->bOk)
-		Log_warn("Large Speex message from TCP"); /* XXX - pds resize? */
-	pds->maxsize = pds->offset;
-	Client_voiceMsg(client, pds);
-	
-	Pds_free(pds);
-}
-
-static int Client_voiceMsg(client_t *client, pds_t *pds)
-{
-	int seq, flags, msgType, sessionId, packetsize;
 	channel_t *ch = (channel_t *)client->channel;
 	struct dlist *itr;
 	
 	if (!client->authenticated || client->mute)
 		return 0;
-
 	
-	pds->offset = 0;
-	msgType = Pds_get_numval(pds);
-	sessionId = Pds_get_numval(pds);
-	seq = Pds_get_numval(pds);
-	flags = Pds_get_numval(pds);
-
-	packetsize = 20 + 8 + 4 + pds->maxsize - pds->offset;
+	packetsize = 20 + 8 + 4 + len;
 	if (client->availableBandwidth - packetsize < 0)
 		return 0; /* Discard */
-	
 	client->availableBandwidth -= packetsize;
 	
-	pds->offset = 0;
+	counter = Pds_get_numval(pdi); /* Seems like this... */
+	do {
+		counter = Pds_next8(pdi);
+		offset = Pds_skip(pdi, counter & 0x7f);
+	} while ((counter & 0x80) && offset > 0);
+
+	poslen = pdi->maxsize - pdi->offset; /* XXX - Add stripping of positional audio */
 	
-	if (flags & LoopBack) {
-		Client_send_udp(client, pds->data, pds->maxsize);
-		return 0;
+	Pds_add_numval(pds, client->sessionId);
+	Pds_append_data_nosize(pds, data + 1, len - 1);
+	
+	if (target & 0x1f) { /* Loopback */
+		buffer[0] = (uint8_t) type;
+		Client_send_udp(client, buffer, pds->offset + 1);
 	}
-	if (ch == NULL)
-		return 0;
-	
-	list_iterate(itr, &ch->clients) {
-		client_t *c;
-		c = list_get_entry(itr, client_t, chan_node);
-		if (c != client && !c->deaf) {
-			Client_send_udp(c, pds->data, pds->maxsize);
+	else if (target == 0) { /* regular channel speech */
+		buffer[0] = (uint8_t) type;
+		
+		if (ch == NULL)
+			return 0;
+		
+		list_iterate(itr, &ch->clients) {
+			client_t *c;
+			c = list_get_entry(itr, client_t, chan_node);
+			if (c != client && !c->deaf) {
+				Client_send_udp(c, buffer, pds->offset + 1);
+			}
 		}
 	}
+	/* XXX - Add targeted whisper here */
+	Pds_free(pds);
+	Pds_free(pdi);
+	
 	return 0;
 }
 
@@ -586,7 +580,6 @@ static int Client_voiceMsg(client_t *client, pds_t *pds)
 static int Client_send_udp(client_t *client, uint8_t *data, int len)
 {
 	uint8_t *buf, *mbuf;
-	message_t *sendmsg;
 
 	if (client->remote_udp.sin_port != 0 && CryptState_isValid(&client->cryptState)) {
 #if defined(__LP64__)
@@ -604,26 +597,14 @@ static int Client_send_udp(client_t *client, uint8_t *data, int len)
 		
 		free(mbuf);
 	} else {
-		pds_t *pds = Pds_create(data, len);
+		message_t *msg;
+		buf = malloc(len);
+		memcpy(buf, data, len);
+		msg = Msg_create(UDPTunnel);
 		
-		sendmsg = Msg_create(Pds_get_numval(pds));
-		sendmsg->sessionId = Pds_get_numval(pds);
-		
-		if (sendmsg->messageType == Speex || sendmsg->messageType == Ping) {
-			if (sendmsg->messageType == Speex) {
-				sendmsg->payload.speex.seq = Pds_get_numval(pds);
-				sendmsg->payload.speex.size = pds->maxsize - pds->offset;
-				doAssert(pds->maxsize - pds->offset <= SPEEX_DATA_SIZE);
-				memcpy(sendmsg->payload.speex.data, data + pds->offset, pds->maxsize - pds->offset);
-			} else { /* Ping */
-				sendmsg->payload.ping.timestamp = Pds_get_numval(pds);
-			}
-			Client_send_message(client, sendmsg);
-		} else {
-			Log_warn("TCP fallback: Unsupported message type %d", sendmsg->messageType);
-			Msg_free(sendmsg);
-		}
-		Pds_free(pds);
+		msg->payload.UDPTunnel->packet.data = buf;
+		msg->payload.UDPTunnel->packet.len = len;
+		Client_send_message(client, msg);
 	}
 	return 0;
 }

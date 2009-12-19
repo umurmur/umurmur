@@ -32,203 +32,86 @@
 #define MESSAGES_H_89768
 
 #include <stdint.h>
-#include <openssl/aes.h>
+#include "Mumble.pb-c.h"
 #include "list.h"
 #include "types.h"
 
 #define MAX_TEXT 256
-#define SPEEX_DATA_SIZE 1024
 #define MESSAGE_STREAM_VERSION 4
 
 typedef enum {
-	ServerReject,
-	ServerAuthenticate,
-	Speex,
-	ServerSync,
-	ServerJoin,
-	ServerLeave,
-	ServerBanList,
-	PlayerMute,
-	PlayerDeaf,
-	PlayerKick,
-	PlayerRename, /*10 */
-	PlayerBan,
-	PlayerMove,
-	PlayerSelfMuteDeaf,
-	ChannelAdd,
-	ChannelRemove,
-	ChannelMove,
-	ChannelLink,
-	ChannelRename,
-	PermissionDenied,
-	EditACL, /* 20 */
-	QueryUsers,
+	Version,
+	UDPTunnel,
+	Authenticate,
 	Ping,
+	Reject,
+	ServerSync,
+	ChannelRemove,
+	ChannelState,
+	UserRemove,
+	UserState,
+	BanList,
 	TextMessage,
-	PlayerTexture,
+	PermissionDenied,
+	ACL,
+	QueryUsers,
 	CryptSetup,
-	CryptSync,
-	PingStats,
+	ContextActionAdd,
 	ContextAction,
-	ContextAddAction,
-	ChannelDescUpdate,
+	UserList,
+	VoiceTarget,
+	PermissionQuery,
+	CodecVersion,
 } messageType_t;
 
-
 typedef enum {
-	AltSpeak = 0x01,
-	LoopBack = 0x02,
-	EndSpeech = 0x04,
-	FrameCountMask = 0x30
-} speexflag_t;
+	UDPVoiceCELTAlpha,
+	UDPPing,
+	UDPVoiceSpeex,
+	UDPVoiceCELTBeta,
+} UDPMessageType_t;
 
-typedef struct {
-	int speexflag;
-	int seq;
-	uint8_t *data;
-	int size;
-} speex_t;
-
-typedef struct {
-	int maxBandwidth;
-	char welcomeText[MAX_TEXT];
-} serverSync_t;
-
-typedef struct {
-	char playerName[MAX_TEXT];
-	int id;
-} serverLeave_t;
-
-typedef enum {
-	None,
-	WrongVersion,
-	InvalidUsername,
-	WrongUserPW,
-	WrongServerPW,
-	UsernameInUse,
-	ServerFull
-} rejectType_t;
-
-typedef struct {
-	char reason[MAX_TEXT];
-	rejectType_t type;
-} serverReject_t;
-
-typedef struct {
-	int version;
-	char userName[MAX_TEXT];
-	char password[MAX_TEXT];
-} serverAuthenticate_t;
-
-typedef struct {
-	int id;
-	int parentId;
-	char name[MAX_TEXT];
-} channelAdd_t;
-
-typedef struct {
-	int id;
-	char desc[MAX_TEXT];
-} channelDescUpdate_t;
-
-typedef struct {
-	char playerName[MAX_TEXT];
-	int id;
-} serverJoin_t;
-
-typedef struct {
-	int victim;
-	int channel;
-} playerMove_t;
-
-typedef struct {
-	uint8_t key[AES_BLOCK_SIZE];
-	uint8_t clientNonce[AES_BLOCK_SIZE];
-	uint8_t serverNonce[AES_BLOCK_SIZE];
-} cryptSetup_t;
-
-typedef struct {
-	bool_t empty;
-	uint8_t nonce[AES_BLOCK_SIZE];
-} cryptSync_t;
-
-typedef struct {
-	uint64_t timestamp;
-} ping_t;
-
-typedef struct {
-	uint64_t timestamp;
-	uint32_t good;
-	uint32_t late;
-	uint32_t lost;
-	uint32_t resync;
-	double dUDPPingAvg;
-	double dUDPPingVar;
-	uint32_t UDPPackets;
-	double dTCPPingAvg;
-	double dTCPPingVar;
-	uint32_t TCPPackets;
-} pingStats_t;
-
-typedef struct {
-	char reason[MAX_TEXT];
-} permissionDenied_t;
-
-typedef struct {
-	uint32_t victim;
-	bool_t bMute;
-} playerMute_t;
-
-typedef struct {
-	uint32_t victim;
-	bool_t bDeaf;
-} playerDeaf_t;
-
-typedef struct {
-	bool_t bMute;
-	bool_t bDeaf;
-} playerSelfMuteDeaf_t;
-
-typedef struct {
-	int32_t victim;
-	int32_t channel;
-	bool_t bTree;
-	char message[MAX_TEXT];
-} textMessage_t;
 
 typedef union payload {
-	speex_t speex;
-	serverSync_t serverSync;
-	serverJoin_t serverJoin;
-	serverLeave_t serverLeave;
-	serverReject_t serverReject;
-	serverAuthenticate_t serverAuthenticate;
-	cryptSetup_t cryptSetup;
-	cryptSync_t cryptSync;
-	pingStats_t pingStats;
-	ping_t ping;
-	channelAdd_t channelAdd;
-	channelDescUpdate_t channelDescUpdate;
-	playerMove_t playerMove;
-	permissionDenied_t permissinDenied;
-	playerMute_t playerMute;
-	playerDeaf_t playerDeaf;
-	playerSelfMuteDeaf_t playerSelfMuteDeaf;
-	permissionDenied_t permissionDenied;
-	textMessage_t textMessage;
+	struct  _MumbleProto__Version *version;
+	struct  _MumbleProto__UDPTunnel *UDPTunnel;
+	struct  _MumbleProto__Authenticate *authenticate;
+	struct  _MumbleProto__Ping *ping;
+	struct  _MumbleProto__Reject *reject;
+	struct  _MumbleProto__ServerSync *serverSync;
+	struct  _MumbleProto__ChannelRemove *channelRemove;
+	struct  _MumbleProto__ChannelState *channelState;
+	struct  _MumbleProto__UserRemove *userRemove;
+	struct  _MumbleProto__UserState *userState;
+	/* BanEntry not supported */
+	/* BanList not supported */
+	struct  _MumbleProto__TextMessage *textMessage;
+	struct  _MumbleProto__PermissionDenied *permissionDenied;
+	/* ChanACL not supported */
+	/* ACL not supported */
+	struct  _MumbleProto__QueryUsers *queryUsers;
+	struct  _MumbleProto__CryptSetup *cryptSetup;
+	/* ContextActionAdd not supported */
+	/* ContextAction not supported */
+	struct  _MumbleProto__UserList__User *userList_user;
+	struct  _MumbleProto__UserList *userList;
+	struct  _MumbleProto__VoiceTarget__Target *voiceTarget_target;
+	struct  _MumbleProto__VoiceTarget *voiceTarget;
+	/* PermissionQuery not supported */
+	struct  _MumbleProto__CodecVersion *codecVersion;
 } payload_t;
 
 typedef struct message {
 	messageType_t messageType;
-	uint32_t sessionId;
 	int refcount;
 	struct dlist node;
+	bool_t unpacked;
 	payload_t payload;
 } message_t;
 
 
 
-int Msg_messageToNetwork(message_t *msg, uint8_t *buffer, int bufsize);
+int Msg_messageToNetwork(message_t *msg, uint8_t *buffer);
 message_t *Msg_networkToMessage(uint8_t *data, int size);
 void Msg_free(message_t *msg);
 void Msg_inc_ref(message_t *msg);

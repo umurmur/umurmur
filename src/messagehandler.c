@@ -41,20 +41,21 @@
 
 extern channel_t *defaultChan;
 
-static void sendServerReject(client_t *client, const char *reason, rejectType_t type)
+static void sendServerReject(client_t *client, const char *reason, MumbleProto__Reject__RejectType type)
 {
-	message_t *msg = Msg_create(ServerReject);
-	msg->sessionId = client->sessionId;
-	strcpy(msg->payload.serverReject.reason, reason);
-	msg->payload.serverReject.type = type;
+	message_t *msg = Msg_create(Reject);
+	msg->payload.reject->reason = strdup(reason);
+	msg->payload.reject->type = type;
+	msg->payload.reject->has_type = true;
 	Client_send_message(client, msg);
 }
 
 static void sendPermissionDenied(client_t *client, const char *reason)
 {
 	message_t *msg = Msg_create(PermissionDenied);
-	msg->sessionId = client->sessionId;
-	strncpy(msg->payload.permissionDenied.reason, reason, MAX_TEXT);
+	msg->payload.permissionDenied->has_type = true;
+	msg->payload.permissionDenied->type = MUMBLE_PROTO__PERMISSION_DENIED__DENY_TYPE__Text;
+	msg->payload.permissionDenied->reason = strdup(reason);
 	Client_send_message(client, msg);
 }
 
@@ -65,7 +66,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 	client_t *client_itr;
 	
 	switch (msg->messageType) {
-	case ServerAuthenticate:
+	case Authenticate:
 		/*
 		 * 1. Check stuff, Serverreject if not ok
 		 * 2. Setup UDP encryption -> MessageCryptSetup
@@ -78,63 +79,67 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		 * 9. PlayerDeaf/PlayerMute/PlayerSelfMuteDeaf for all users it applies to
 		 * 10. MessageServerSync
 		 */
-		if (msg->payload.serverAuthenticate.version != MESSAGE_STREAM_VERSION) {
-			char buf[64];
-			sprintf(buf, "Wrong version of mumble protocol (client: %d, server: %d)",
-					msg->payload.serverAuthenticate.version, MESSAGE_STREAM_VERSION);
-			sendServerReject(client, buf, WrongVersion);
-			goto disconnect;
-		}
 				
+		Log_debug("Authenticate message received");
+		Log_debug("Username: %s", msg->payload.authenticate->username);
+		
+		client->authenticated = true;
+		
 		client_itr = NULL;
 		while (Client_iterate(&client_itr) != NULL) {
 			if (!IS_AUTH(client_itr))
 				continue;
-			if (strncmp(client_itr->playerName, msg->payload.serverAuthenticate.userName, MAX_TEXT) == 0) {
+			if (strncmp(client_itr->playerName, msg->payload.authenticate->username, MAX_TEXT) == 0) {
 				char buf[64];
 				sprintf(buf, "Username already in use");
-				sendServerReject(client, buf, UsernameInUse);
+				Log_debug("Username already in use");
+				sendServerReject(client, buf, MUMBLE_PROTO__REJECT__REJECT_TYPE__UsernameInUse);
 				goto disconnect;
 			}				
 		}
-		
-		if (strncmp(getStrConf(PASSPHRASE), msg->payload.serverAuthenticate.password, MAX_TEXT) != 0) {
+		if (msg->payload.authenticate->password && strncmp(getStrConf(PASSPHRASE), msg->payload.authenticate->password, MAX_TEXT) != 0) {
 			char buf[64];
 			sprintf(buf, "Wrong server password");
-			sendServerReject(client, buf, WrongServerPW);
+			Log_debug("Wrong server password: %s", msg->payload.authenticate->password);
+			sendServerReject(client, buf, MUMBLE_PROTO__REJECT__REJECT_TYPE__WrongServerPW);
 			goto disconnect;
 		}				
-
-		if (strlen(msg->payload.serverAuthenticate.userName) == 0) { /* XXX - other invalid names? */
+		if (strlen(msg->payload.authenticate->username) == 0 ||
+			strlen(msg->payload.authenticate->username) >= MAX_TEXT) { /* XXX - other invalid names? */
 			char buf[64];
 			sprintf(buf, "Invalid username");
-			sendServerReject(client, buf, InvalidUsername);
+			Log_debug("Invalid username");
+			sendServerReject(client, buf, MUMBLE_PROTO__REJECT__REJECT_TYPE__InvalidUsername);
 			goto disconnect;
 		}				
 
 		if (Client_count() >= getIntConf(MAX_CLIENTS)) {
 			char buf[64];
 			sprintf(buf, "Server is full (max %d users)", getIntConf(MAX_CLIENTS));
-			sendServerReject(client, buf, ServerFull);
+			sendServerReject(client, buf, MUMBLE_PROTO__REJECT__REJECT_TYPE__ServerFull);
 			goto disconnect;
 		}
 		
 		/* Name & password */
-		strncpy(client->playerName, msg->payload.serverAuthenticate.userName, MAX_TEXT);
+		strncpy(client->playerName, msg->payload.authenticate->username, MAX_TEXT);
 		client->playerId = client->sessionId;
-
-		client->authenticated = true;
 		
-		/* XXX - Kick ghost */
+		
+		/* XXX - Kick ghost? */
 		
 		/* Setup UDP encryption */
 		CryptState_init(&client->cryptState);
 		CryptState_genKey(&client->cryptState);
 		sendmsg = Msg_create(CryptSetup);
-		sendmsg->sessionId = client->sessionId;
-		memcpy(sendmsg->payload.cryptSetup.key, client->cryptState.raw_key, AES_BLOCK_SIZE);
-		memcpy(sendmsg->payload.cryptSetup.serverNonce, client->cryptState.encrypt_iv, AES_BLOCK_SIZE);
-		memcpy(sendmsg->payload.cryptSetup.clientNonce, client->cryptState.decrypt_iv, AES_BLOCK_SIZE);
+		sendmsg->payload.cryptSetup->has_key = true;
+		sendmsg->payload.cryptSetup->key.data = client->cryptState.raw_key;
+		sendmsg->payload.cryptSetup->key.len = AES_BLOCK_SIZE;
+		sendmsg->payload.cryptSetup->has_server_nonce = true;
+		sendmsg->payload.cryptSetup->server_nonce.data = client->cryptState.encrypt_iv;
+		sendmsg->payload.cryptSetup->server_nonce.len = AES_BLOCK_SIZE;
+		sendmsg->payload.cryptSetup->has_client_nonce = true;
+		sendmsg->payload.cryptSetup->client_nonce.data = client->cryptState.decrypt_iv;
+		sendmsg->payload.cryptSetup->client_nonce.len = AES_BLOCK_SIZE;
 		Client_send_message(client, sendmsg);
 
 		/* Channel stuff */
@@ -144,131 +149,159 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		ch_itr = NULL;
 		Chan_iterate(&ch_itr);
 		do {
-			sendmsg = Msg_create(ChannelAdd);
-			sendmsg->sessionId = 0;
-			sendmsg->payload.channelAdd.id = ch_itr->id;
-			if (ch_itr->id == 0)
-				sendmsg->payload.channelAdd.parentId = -1;
-			else
-				sendmsg->payload.channelAdd.parentId = ch_itr->parent->id;
-			strcpy(sendmsg->payload.channelAdd.name, ch_itr->name);
-			Client_send_message(client, sendmsg);
-			
-			sendmsg = Msg_create(ChannelDescUpdate);
-			sendmsg->sessionId = 0;
-			sendmsg->payload.channelDescUpdate.id = ch_itr->id;
-			strcpy(sendmsg->payload.channelDescUpdate.desc, ch_itr->desc);
+			sendmsg = Msg_create(ChannelState);
+			sendmsg->payload.channelState->has_channel_id = true;
+			sendmsg->payload.channelState->channel_id = ch_itr->id;
+			if (ch_itr->id != 0) {
+				sendmsg->payload.channelState->has_parent = true;
+				sendmsg->payload.channelState->parent = ch_itr->parent->id;
+			}
+			sendmsg->payload.channelState->name = strdup(ch_itr->name);
+			if (strlen(ch_itr->desc) > 0) {
+				sendmsg->payload.channelState->description = strdup(ch_itr->desc);
+			}
+			Log_debug("Send channel info: %s", sendmsg->payload.channelState->name);
 			Client_send_message(client, sendmsg);
 			
 			Chan_iterate(&ch_itr);
 		} while (ch_itr != NULL);
 
-		/* Not supporting channel link for now */
-
-		/* Server join for connecting user */
-		sendmsg = Msg_create(ServerJoin);
-		sendmsg->sessionId = client->sessionId;
-		sendmsg->payload.serverJoin.id = client->playerId;
-		strcpy(sendmsg->payload.serverJoin.playerName, client->playerName);
+		/* Not supporting channel links yet */
+		
+		/* Send user state for connecting user to other users */
+		sendmsg = Msg_create(UserState);
+		sendmsg->payload.userState->has_session = true;
+		sendmsg->payload.userState->session = client->sessionId;
+		sendmsg->payload.userState->has_user_id = true;
+		sendmsg->payload.userState->user_id = client->playerId;
+		sendmsg->payload.userState->name = strdup(client->playerName);
+		sendmsg->payload.userState->has_channel_id = true;
+		sendmsg->payload.userState->channel_id = ((channel_t *)client->channel)->id;
+		
 		Client_send_message_except(client, sendmsg);
 
-		/* Player move for connecting user */
-		if (((channel_t *)client->channel)->id != 0) {
-			sendmsg = Msg_create(PlayerMove);
-			sendmsg->sessionId = client->sessionId;
-			sendmsg->payload.playerMove.victim = client->playerId;
-			sendmsg->payload.playerMove.channel = ((channel_t *)client->channel)->id;
-			Client_send_message_except(client, sendmsg);
-		}
 		client_itr = NULL;
 		while (Client_iterate(&client_itr) != NULL) {
 			if (!IS_AUTH(client_itr))
 				continue;
-			sendmsg = Msg_create(ServerJoin);
-			sendmsg->sessionId = client_itr->sessionId;
-			sendmsg->payload.serverJoin.id = client_itr->playerId;
-			strncpy(sendmsg->payload.serverJoin.playerName, client_itr->playerName, MAX_TEXT);
-			Client_send_message(client, sendmsg);
-			
-			sendmsg = Msg_create(PlayerMove);
-			sendmsg->sessionId = client_itr->sessionId;
-			sendmsg->payload.playerMove.victim = client_itr->playerId;
-			sendmsg->payload.playerMove.channel = ((channel_t *)client_itr->channel)->id;
+			sendmsg = Msg_create(UserState);
+			sendmsg->payload.userState->has_session = true;
+			sendmsg->payload.userState->session = client->sessionId;
+			sendmsg->payload.userState->name = strdup(client->playerName);
+			sendmsg->payload.userState->has_channel_id = true;
+			sendmsg->payload.userState->channel_id = ((channel_t *)client->channel)->id;
+
+			/* XXX - check if self_* is correct */
+			if (client->deaf) {
+				sendmsg->payload.userState->has_self_deaf = true;
+				sendmsg->payload.userState->self_deaf = true;
+			}
+			if (client->mute) {
+				sendmsg->payload.userState->has_self_mute = true;
+				sendmsg->payload.userState->self_mute = true;
+			}
 			Client_send_message(client, sendmsg);
 		}
-		
+
+		/* Sync message */
 		sendmsg = Msg_create(ServerSync);
-		sendmsg->sessionId = client->sessionId;
-		strcpy(sendmsg->payload.serverSync.welcomeText, getStrConf(WELCOMETEXT));
-		sendmsg->payload.serverSync.maxBandwidth = getIntConf(MAX_BANDWIDTH);
+		sendmsg->payload.serverSync->has_session = true;
+		sendmsg->payload.serverSync->session = client->sessionId;
+		sendmsg->payload.serverSync->welcome_text = strdup(getStrConf(WELCOMETEXT));
+		sendmsg->payload.serverSync->has_max_bandwidth = true;
+		sendmsg->payload.serverSync->max_bandwidth = getIntConf(MAX_BANDWIDTH);
+		sendmsg->payload.serverSync->has_allow_html = true;
+		sendmsg->payload.serverSync->allow_html = false; /* Support this? */
 		Client_send_message(client, sendmsg);
 		
-		Log_info("Player %s authenticated", client->playerName);
-		
+		Log_info("User %s authenticated", client->playerName);
 		break;
 		
-	case PingStats:
-		client->cryptState.uiRemoteGood = msg->payload.pingStats.good;
-		client->cryptState.uiRemoteLate = msg->payload.pingStats.late;
-		client->cryptState.uiRemoteLost = msg->payload.pingStats.lost;
-		client->cryptState.uiRemoteResync = msg->payload.pingStats.resync;
+	case Ping:
+	{
+		uint64_t timestamp;
+		if (msg->payload.ping->has_good)
+			client->cryptState.uiRemoteGood = msg->payload.ping->good;
+		if (msg->payload.ping->has_late)
+			client->cryptState.uiRemoteLate = msg->payload.ping->late;
+		if (msg->payload.ping->has_lost)
+			client->cryptState.uiRemoteLost = msg->payload.ping->lost;
+		if (msg->payload.ping->has_resync)
+			client->cryptState.uiRemoteResync = msg->payload.ping->resync;
 
-		Log_debug("Pingstats <-: %d %d %d %d",
+		Log_debug("Ping <-: %d %d %d %d",
 				  client->cryptState.uiRemoteGood, client->cryptState.uiRemoteLate,
-				  client->cryptState.uiRemoteLost, client->cryptState.uiRemoteResync);
+				  client->cryptState.uiRemoteLost, client->cryptState.uiRemoteResync
+			);
 		
 		/* Ignoring the double values since they don't seem to be used */
-		sendmsg = Msg_create(PingStats);
-		sendmsg->sessionId = client->sessionId;
-		sendmsg->payload.pingStats.timestamp = msg->payload.pingStats.timestamp;
 		
-		sendmsg->payload.pingStats.good = client->cryptState.uiGood;
-		sendmsg->payload.pingStats.late = client->cryptState.uiLate;
-		sendmsg->payload.pingStats.lost = client->cryptState.uiLost;
-		sendmsg->payload.pingStats.resync = client->cryptState.uiResync;
+		sendmsg = Msg_create(Ping);
+		timestamp = msg->payload.ping->timestamp;
+
+		sendmsg->payload.ping->timestamp = timestamp;
 		
+		sendmsg->payload.ping->good = client->cryptState.uiGood;
+		sendmsg->payload.ping->has_good = true;
+		sendmsg->payload.ping->late = client->cryptState.uiLate;
+		sendmsg->payload.ping->has_late = true;
+		sendmsg->payload.ping->lost = client->cryptState.uiLost;
+		sendmsg->payload.ping->has_lost = true;
+		sendmsg->payload.ping->resync = client->cryptState.uiResync;
+		sendmsg->payload.ping->has_resync = true;
+
 		Client_send_message(client, sendmsg);
-		Log_debug("Pingstats ->: %d %d %d %d",
+		Log_debug("Ping ->: %d %d %d %d",
 				  client->cryptState.uiGood, client->cryptState.uiLate,
 				  client->cryptState.uiLost, client->cryptState.uiResync);
 
 		break;
-	case Ping:
-		sendmsg = Msg_create(Ping);
-		sendmsg->sessionId = client->sessionId;
-		sendmsg->payload.ping.timestamp = msg->payload.ping.timestamp;
-		Client_send_message(client, sendmsg);
-		break;
-	case CryptSync:
+	}
+	case CryptSetup:
 		Log_debug("Voice channel crypt resync requested");
-		if (msg->payload.cryptSync.empty) {
-			sendmsg = Msg_create(CryptSync);
-			sendmsg->sessionId = msg->sessionId;
-			sendmsg->payload.cryptSync.empty = false;
-			memcpy(sendmsg->payload.cryptSync.nonce, client->cryptState.decrypt_iv, AES_BLOCK_SIZE);
+		if (!msg->payload.cryptSetup->has_client_nonce) {
+			sendmsg = Msg_create(CryptSetup);
+			sendmsg->payload.cryptSetup->has_server_nonce = true;
+			memcpy(sendmsg->payload.cryptSetup->server_nonce.data, client->cryptState.decrypt_iv, AES_BLOCK_SIZE);
+			sendmsg->payload.cryptSetup->server_nonce.len = AES_BLOCK_SIZE;
 			Client_send_message(client, sendmsg);
 		} else {
-			memcpy(client->cryptState.decrypt_iv, msg->payload.cryptSync.nonce, AES_BLOCK_SIZE);
+			memcpy(client->cryptState.decrypt_iv, msg->payload.cryptSetup->client_nonce.data, AES_BLOCK_SIZE);
 			client->cryptState.uiResync++;
 		}
 		break;
-	case PlayerMute:
-		if (msg->payload.playerMute.victim != client->playerId) {
+	case UserState:
+		/* Only allow state changes for for the self user */
+		if (msg->payload.userState->has_session &&
+			msg->payload.userState->session != client->sessionId) {
 			sendPermissionDenied(client, "Permission denied");
-		} else {
-			Log_debug("Player ID %d muted", msg->payload.playerMute.victim);
-			client->mute = msg->payload.playerMute.bMute;			
+			break;
 		}
-		break;
-	case PlayerDeaf:
-		if (msg->payload.playerDeaf.victim != client->playerId) {
-			sendPermissionDenied(client, "Permission denied");
-		} else {
-			Log_debug("Player ID %d deaf", msg->payload.playerDeaf.victim);
-			client->deaf = msg->payload.playerDeaf.bDeaf;
+		if (msg->payload.userState->has_user_id || msg->payload.userState->has_mute ||
+			msg->payload.userState->has_deaf || msg->payload.userState->has_suppress ||
+			msg->payload.userState->has_texture) {
+			
+			sendPermissionDenied(client, "Not supported by uMurmur");
+			break;
 		}
+		if (msg->payload.userState->has_self_deaf) {
+			client->deaf = msg->payload.userState->self_deaf;
+		}
+		if (msg->payload.userState->has_self_mute) {
+			client->mute = msg->payload.userState->self_mute;			
+		}
+		if (msg->payload.userState->has_channel_id) {
+			Chan_playerJoin_id(msg->payload.userState->channel_id, client);
+		}
+		/* Re-use message */
+		Msg_inc_ref(msg);
+		msg->payload.userState->has_actor = true;
+		msg->payload.userState->actor = client->sessionId;
+		Client_send_message_except(NULL, msg);
 		break;
+		
 	case TextMessage:
+#if 0
 		if (msg->payload.textMessage.bTree)
 			sendPermissionDenied(client, "Tree message not supported");
 		else if (msg->payload.textMessage.channel != -1) { /* To channel */
@@ -307,38 +340,42 @@ void Mh_handle_message(client_t *client, message_t *msg)
 				Log_warn("TextMessage: Player ID %d not found", msg->payload.textMessage.victim);
 		}
 		break;
-	case PlayerSelfMuteDeaf:
-		client->deaf = msg->payload.playerSelfMuteDeaf.bDeaf;
-		client->mute = msg->payload.playerSelfMuteDeaf.bMute;
-		Log_debug("Player ID %d %s and %s", client->playerId, client->deaf ? "deaf": "not deaf",
-				  client->mute ? "mute" : "not mute");
-		break;
-	case PlayerMove:
-		Msg_inc_ref(msg); /* Re-use message */
-		Client_send_message_except(NULL, msg);
-		Chan_playerJoin_id(msg->payload.playerMove.channel, client);		
+#endif
+
+	case VoiceTarget:
+		/* XXX -TODO */
 		break;
 
+	case Version:
+		sendmsg = Msg_create(Version); /* Re-use message */
+		Log_debug("Version message received");
+		sendmsg->payload.version->has_version = true;
+		sendmsg->payload.version->version = (1 << 16) | (2 << 8) | 0; /* XXX fix */
+		sendmsg->payload.version->release = "Phony donkey";
+		sendmsg->payload.version->os = "OpenWRT";
+		
+		Client_send_message(client, sendmsg);
+		break;
+	case CodecVersion:
+		Msg_inc_ref(msg); /* Re-use message */
+
+		/* XXX - fill in version */
+		
+		Client_send_message(client, msg);
+		break;
+	case UDPTunnel:
+		Client_voiceMsg(client, msg->payload.UDPTunnel->packet.data, msg->payload.UDPTunnel->packet.len);
+	    break;
 		/* Permission denied for all these messages. Not implemented. */
-	case PlayerRename:
-	case ChannelAdd:
-	case ChannelDescUpdate:
-	case ContextAction:
-	case ContextAddAction:
-	case ServerBanList:
-	case PlayerKick:
-	case PlayerBan:
 	case ChannelRemove:
-	case ChannelMove:
-	case ChannelLink:
-	case ChannelRename:
-	case EditACL:
+	case ChannelState:
+	case ContextAction:
+	case ContextActionAdd:
+	case ACL:
+	case BanList:
 		sendPermissionDenied(client, "Not supported by uMurmur");
 		break;
-		
-	case PlayerTexture: /* Ignore */
-		break;
-		
+				
 	default:
 		Log_warn("Message %d not handled", msg->messageType);
 		break;

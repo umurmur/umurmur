@@ -32,105 +32,174 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <arpa/inet.h>
 
 #include "messages.h"
+#include "client.h"
 #include "pds.h"
 #include "log.h"
 
 
 void dumpmsg(uint8_t *data, int size);
 
-int Msg_messageToNetwork(message_t *msg, uint8_t *buffer, int bufsize)
+void Msg_addPreamble(uint8_t *buffer, uint16_t type, uint32_t len)
 {
-	pds_t *pds = Pds_create(buffer, bufsize);
+	uint16_t *msgType = (uint16_t *) &buffer[0];
+	uint32_t *msgLen = (uint32_t *) &buffer[2];
+	
+	*msgType = htons(type);
+	*msgLen = htonl(len);
+}
+
+static void Msg_getPreamble(uint8_t *buffer, int *type, int *len)
+{
+	uint16_t *msgType = (uint16_t *) &buffer[0];
+	uint32_t *msgLen = (uint32_t *) &buffer[2];
+	
+	*type = (int)ntohs(*msgType);
+	*len = (int)ntohl(*msgLen);
+}
+
+#define MAX_MSGSIZE (BUFSIZE - 6)
+int Msg_messageToNetwork(message_t *msg, uint8_t *buffer)
+{
 	int len;
-	
-	Pds_add_numval(pds, msg->messageType);
-	Pds_add_numval(pds, msg->sessionId);
-	
+	uint8_t *bufptr = buffer + 6;
+		
+	Log_debug("To net: msg type %d", msg->messageType);
 	switch (msg->messageType) {
-		case Speex:
-			Pds_add_numval(pds, msg->payload.speex.seq);
-			Pds_append_data_nosize(pds, msg->payload.speex.data, msg->payload.speex.size);
+	case Version:
+		len = mumble_proto__version__get_packed_size(msg->payload.version);
+		if (len > MAX_MSGSIZE) {
+			Log_warn("Too big tx message. Discarding");
 			break;
-		case ServerReject:
-			Pds_add_string(pds, msg->payload.serverReject.reason);
-			Pds_add_numval(pds, msg->payload.serverReject.type);
+		}
+		Msg_addPreamble(buffer, msg->messageType, len);
+		mumble_proto__version__pack(msg->payload.version, bufptr);
+		break;
+	case UDPTunnel:
+		len = mumble_proto__udptunnel__get_packed_size(msg->payload.UDPTunnel);
+		if (len > MAX_MSGSIZE) {
+			Log_warn("Too big tx message. Discarding");
 			break;
-		case ServerSync:
-			Pds_add_numval(pds, msg->payload.serverSync.maxBandwidth);
-			Pds_add_string(pds, msg->payload.serverSync.welcomeText);
+		}
+		Msg_addPreamble(buffer, msg->messageType, len);
+		mumble_proto__udptunnel__pack(msg->payload.UDPTunnel, bufptr);		
+		break;
+	case Authenticate:
+		len = mumble_proto__authenticate__get_packed_size(msg->payload.authenticate);
+		if (len > MAX_MSGSIZE) {
+			Log_warn("Too big tx message. Discarding");
 			break;
-		case ServerJoin:
-			Pds_add_string(pds, msg->payload.serverJoin.playerName);			
-			Pds_add_numval(pds, msg->payload.serverJoin.id);
+			}
+		Msg_addPreamble(buffer, msg->messageType, len);
+		mumble_proto__authenticate__pack(msg->payload.authenticate, bufptr);
+		break;
+	case Ping:
+		len = mumble_proto__ping__get_packed_size(msg->payload.ping);
+		if (len > MAX_MSGSIZE) {
+			Log_warn("Too big tx message. Discarding");
 			break;
-		case ChannelDescUpdate:
-			Pds_add_numval(pds, msg->payload.channelDescUpdate.id);
-			Pds_add_string(pds, msg->payload.channelDescUpdate.desc);			
+			}
+		Msg_addPreamble(buffer, msg->messageType, len);
+		mumble_proto__ping__pack(msg->payload.ping, bufptr);
+		break;
+	case Reject:
+		len = mumble_proto__reject__get_packed_size(msg->payload.reject);
+		if (len > MAX_MSGSIZE) {
+			Log_warn("Too big tx message. Discarding");
 			break;
-		case ChannelAdd:
-			Pds_add_numval(pds, msg->payload.channelAdd.id);
-			Pds_add_numval(pds, msg->payload.channelAdd.parentId);
-			Pds_add_string(pds, msg->payload.channelAdd.name);
+			}
+		Msg_addPreamble(buffer, msg->messageType, len);
+		mumble_proto__reject__pack(msg->payload.reject, bufptr);
+		break;
+	case ServerSync:
+		len = mumble_proto__server_sync__get_packed_size(msg->payload.serverSync);
+		if (len > MAX_MSGSIZE) {
+			Log_warn("Too big tx message. Discarding");
 			break;
-		case PlayerMove:
-			Pds_add_numval(pds, msg->payload.playerMove.victim);
-			Pds_add_numval(pds, msg->payload.playerMove.channel);
+			}
+		Msg_addPreamble(buffer, msg->messageType, len);
+		mumble_proto__server_sync__pack(msg->payload.serverSync, bufptr);
+		break;
+	case TextMessage:
+		len = mumble_proto__text_message__get_packed_size(msg->payload.textMessage);
+		if (len > MAX_MSGSIZE) {
+			Log_warn("Too big tx message. Discarding");
 			break;
-		case QueryUsers:
+			}
+		Msg_addPreamble(buffer, msg->messageType, len);
+		mumble_proto__text_message__pack(msg->payload.textMessage, bufptr);
+		break;
+	case PermissionDenied:
+		len = mumble_proto__permission_denied__get_packed_size(msg->payload.permissionDenied);
+		if (len > MAX_MSGSIZE) {
+			Log_warn("Too big tx message. Discarding");
 			break;
-		case Ping:
-			Pds_add_numval(pds, msg->payload.ping.timestamp);
+			}
+		Msg_addPreamble(buffer, msg->messageType, len);
+		mumble_proto__permission_denied__pack(msg->payload.permissionDenied, bufptr);
+		break;
+	case CryptSetup:
+		len = mumble_proto__crypt_setup__get_packed_size(msg->payload.cryptSetup);
+		if (len > MAX_MSGSIZE) {
+			Log_warn("Too big tx message. Discarding");
 			break;
-		case PingStats:
-			Pds_add_numval(pds, msg->payload.pingStats.timestamp);
-			Pds_add_numval(pds, msg->payload.pingStats.good);
-			Pds_add_numval(pds, msg->payload.pingStats.late);
-			Pds_add_numval(pds, msg->payload.pingStats.lost);
-			Pds_add_numval(pds, msg->payload.pingStats.resync);
-			Pds_add_double(pds, msg->payload.pingStats.dUDPPingAvg);
-			Pds_add_double(pds, msg->payload.pingStats.dUDPPingVar);
-			Pds_add_numval(pds, msg->payload.pingStats.UDPPackets);
-			Pds_add_double(pds, msg->payload.pingStats.dTCPPingAvg);
-			Pds_add_double(pds, msg->payload.pingStats.dTCPPingVar);
-			Pds_add_numval(pds, msg->payload.pingStats.TCPPackets);			
+			}
+		Msg_addPreamble(buffer, msg->messageType, len);
+		mumble_proto__crypt_setup__pack(msg->payload.cryptSetup, bufptr);
+		break;
+	case UserList:
+		len = mumble_proto__user_list__get_packed_size(msg->payload.userList);
+		if (len > MAX_MSGSIZE) {
+			Log_warn("Too big tx message. Discarding");
 			break;
-		case PlayerMute:
+			}
+		Msg_addPreamble(buffer, msg->messageType, len);
+		mumble_proto__user_list__pack(msg->payload.userList, bufptr);
+		break;
+	case UserState:
+		len = mumble_proto__user_state__get_packed_size(msg->payload.userState);
+		if (len > MAX_MSGSIZE) {
+			Log_warn("Too big tx message. Discarding");
 			break;
-		case PlayerDeaf:
+			}
+		Msg_addPreamble(buffer, msg->messageType, len);
+		mumble_proto__user_state__pack(msg->payload.userState, bufptr);
+		break;
+	case ChannelState:
+		len = mumble_proto__channel_state__get_packed_size(msg->payload.channelState);
+		if (len > MAX_MSGSIZE) {
+			Log_warn("Too big tx message. Discarding");
 			break;
-		case PlayerSelfMuteDeaf:
+			}
+		Msg_addPreamble(buffer, msg->messageType, len);
+		mumble_proto__channel_state__pack(msg->payload.channelState, bufptr);
+		break;
+	case VoiceTarget:
+		len = mumble_proto__voice_target__get_packed_size(msg->payload.voiceTarget);
+		if (len > MAX_MSGSIZE) {
+			Log_warn("Too big tx message. Discarding");
 			break;
-		case TextMessage:
-			Pds_add_numval(pds, msg->payload.textMessage.victim);			
-			Pds_add_numval(pds, msg->payload.textMessage.channel);			
-			Pds_add_numval(pds, msg->payload.textMessage.bTree);			
-			Pds_add_string(pds, msg->payload.textMessage.message);
+			}
+		Msg_addPreamble(buffer, msg->messageType, len);
+		mumble_proto__voice_target__pack(msg->payload.voiceTarget, bufptr);
+		break;
+	case CodecVersion:
+		len = mumble_proto__codec_version__get_packed_size(msg->payload.codecVersion);
+		if (len > MAX_MSGSIZE) {
+			Log_warn("Too big tx message. Discarding");
 			break;
-		case PermissionDenied:
-			Pds_add_string(pds, msg->payload.permissionDenied.reason);
-			break;
-		case CryptSetup:
-			Pds_append_data(pds, msg->payload.cryptSetup.key, AES_BLOCK_SIZE);
-			Pds_append_data(pds, msg->payload.cryptSetup.serverNonce, AES_BLOCK_SIZE);
-			Pds_append_data(pds, msg->payload.cryptSetup.clientNonce, AES_BLOCK_SIZE);
-			break;
-		case CryptSync:
-			if (!msg->payload.cryptSync.empty)
-				Pds_append_data(pds, msg->payload.cryptSync.nonce, AES_BLOCK_SIZE);			
-			break;
-		case ServerLeave:
-			/* No info to add */
-			break;
+			}
+		Msg_addPreamble(buffer, msg->messageType, len);
+		mumble_proto__codec_version__pack(msg->payload.codecVersion, bufptr);
+		break;
 
 	default:
 		Log_warn("Unsupported message %d", msg->messageType);
-		break;
+		return 0;
 	}
-	len = pds->offset;
-	Pds_free(pds);
-	return len;
+	return len + 6;
 }
 
 message_t *Msg_create(messageType_t messageType)
@@ -144,11 +213,73 @@ message_t *Msg_create(messageType_t messageType)
 	msg->messageType = messageType;
 	init_list_entry(&msg->node);
 	
-	if (msg->messageType == Speex) {
-		msg->payload.speex.data = malloc(SPEEX_DATA_SIZE);
-		if (msg->payload.speex.data == NULL)
-			Log_fatal("Out of memory");
+	switch (messageType) {
+	case Version:
+		msg->payload.version = malloc(sizeof(MumbleProto__Version));
+		mumble_proto__version__init(msg->payload.version);
+		break;
+	case UDPTunnel:
+		msg->payload.UDPTunnel = malloc(sizeof(MumbleProto__UDPTunnel));
+		mumble_proto__udptunnel__init(msg->payload.UDPTunnel);
+		break;
+	case Authenticate:
+		msg->payload.authenticate = malloc(sizeof(MumbleProto__Authenticate));
+		mumble_proto__authenticate__init(msg->payload.authenticate);
+		break;
+	case Ping:
+		msg->payload.ping = malloc(sizeof(MumbleProto__Ping));
+		mumble_proto__ping__init(msg->payload.ping);
+		break;
+	case Reject:
+		msg->payload.reject = malloc(sizeof(MumbleProto__Reject));
+		mumble_proto__reject__init(msg->payload.reject);
+		break;
+	case ServerSync:
+		msg->payload.serverSync = malloc(sizeof(MumbleProto__ServerSync));
+		mumble_proto__server_sync__init(msg->payload.serverSync);
+		break;
+	case TextMessage:
+		msg->payload.textMessage = malloc(sizeof(MumbleProto__TextMessage));
+		mumble_proto__text_message__init(msg->payload.textMessage);
+		break;
+	case PermissionDenied:
+		msg->payload.permissionDenied = malloc(sizeof(MumbleProto__PermissionDenied));
+		mumble_proto__permission_denied__init(msg->payload.permissionDenied);
+		break;
+	case CryptSetup:
+		msg->payload.cryptSetup = malloc(sizeof(MumbleProto__CryptSetup));
+		mumble_proto__crypt_setup__init(msg->payload.cryptSetup);
+		break;
+	case UserList:
+		msg->payload.userList = malloc(sizeof(MumbleProto__UserList));
+		mumble_proto__user_list__init(msg->payload.userList);
+		break;
+	case UserState:
+		msg->payload.userState = malloc(sizeof(MumbleProto__UserState));
+		mumble_proto__user_state__init(msg->payload.userState);
+		break;
+	case UserRemove:
+		msg->payload.userRemove = malloc(sizeof(MumbleProto__UserRemove));
+		mumble_proto__user_remove__init(msg->payload.userRemove);
+		break;
+	case VoiceTarget:
+		msg->payload.voiceTarget = malloc(sizeof(MumbleProto__VoiceTarget));
+		mumble_proto__voice_target__init(msg->payload.voiceTarget);
+		break;
+	case CodecVersion:
+		msg->payload.codecVersion = malloc(sizeof(MumbleProto__CodecVersion));
+		mumble_proto__codec_version__init(msg->payload.codecVersion);
+		break;
+	case ChannelState:
+		msg->payload.channelState = malloc(sizeof(MumbleProto__ChannelState));
+		mumble_proto__channel_state__init(msg->payload.channelState);
+		break;
+
+	default:
+		Log_warn("Msg_create: Unsupported message %d", msg->messageType);
+		break;
 	}
+
 	return msg;
 }
 
@@ -162,8 +293,124 @@ void Msg_free(message_t *msg)
 	if (msg->refcount) msg->refcount--;
 	if (msg->refcount > 0)
 		return;
-	if (msg->messageType == Speex)
-		free(msg->payload.speex.data);
+
+	/* XXX - add free for locally generated messages too */
+	switch (msg->messageType) {
+	case Version:
+		if (msg->unpacked)
+			mumble_proto__version__free_unpacked(msg->payload.version, NULL);
+		else {
+			free(msg->payload.version);
+		}
+		break;
+	case UDPTunnel:
+		if (msg->unpacked)
+			mumble_proto__udptunnel__free_unpacked(msg->payload.UDPTunnel, NULL);
+		else {
+			free(msg->payload.UDPTunnel->packet.data);
+			free(msg->payload.UDPTunnel);
+		}
+		break;
+	case Authenticate:
+		if (msg->unpacked)
+			mumble_proto__authenticate__free_unpacked(msg->payload.authenticate, NULL);
+		break;
+	case Ping:
+		if (msg->unpacked)
+			mumble_proto__ping__free_unpacked(msg->payload.ping, NULL);
+		else {
+			free(msg->payload.ping);
+		}
+		break;
+	case Reject:
+		if (msg->unpacked)
+			mumble_proto__reject__free_unpacked(msg->payload.reject, NULL);
+		else {
+			free(msg->payload.reject->reason);
+			free(msg->payload.reject);
+		}
+		break;
+	case ServerSync:
+		if (msg->unpacked)
+			mumble_proto__server_sync__free_unpacked(msg->payload.serverSync, NULL);
+		else {
+			free(msg->payload.serverSync->welcome_text);
+			free(msg->payload.serverSync);
+		}
+		break;
+	case TextMessage:
+		if (msg->unpacked)
+			mumble_proto__text_message__free_unpacked(msg->payload.textMessage, NULL);
+		else {
+			free(msg->payload.textMessage);
+		}
+		break;
+	case PermissionDenied:
+		if (msg->unpacked)
+			mumble_proto__permission_denied__free_unpacked(msg->payload.permissionDenied, NULL);
+		else {
+			free(msg->payload.permissionDenied->reason);
+			free(msg->payload.permissionDenied);
+		}
+		break;
+	case CryptSetup:
+		if (msg->unpacked)
+			mumble_proto__crypt_setup__free_unpacked(msg->payload.cryptSetup, NULL);
+		else {
+			free(msg->payload.cryptSetup);
+		}
+		break;
+	case UserList:
+		if (msg->unpacked)
+			mumble_proto__user_list__free_unpacked(msg->payload.userList, NULL);
+		else {
+			free(msg->payload.userList);
+		}
+		break;
+	case UserState:
+		if (msg->unpacked)
+			mumble_proto__user_state__free_unpacked(msg->payload.userState, NULL);
+		else {
+			free(msg->payload.userState->name);
+			free(msg->payload.userState);
+		}
+		break;
+	case UserRemove:
+		if (msg->unpacked)
+			mumble_proto__user_remove__free_unpacked(msg->payload.userRemove, NULL);
+		else {
+			free(msg->payload.userRemove);
+		}
+		break;
+	case VoiceTarget:
+		if (msg->unpacked)
+			mumble_proto__voice_target__free_unpacked(msg->payload.voiceTarget, NULL);
+		else {
+			free(msg->payload.voiceTarget);
+		}
+		break;
+	case CodecVersion:
+		if (msg->unpacked)
+			mumble_proto__codec_version__free_unpacked(msg->payload.codecVersion, NULL);
+		else {
+			free(msg->payload.codecVersion);
+		}
+		break;
+	case ChannelState:
+		if (msg->unpacked)
+			mumble_proto__channel_state__free_unpacked(msg->payload.channelState, NULL);
+		else {
+			if (msg->payload.channelState->description)
+				free(msg->payload.channelState->description);
+			free(msg->payload.channelState->name);
+			free(msg->payload.channelState);
+		}
+		break;
+
+	default:
+		Log_warn("Msg_free: Unsupported message %d", msg->messageType);
+		break;
+	}
 	free(msg);
 }
 
@@ -187,167 +434,110 @@ void dumpmsg(uint8_t *data, int size)
 message_t *Msg_networkToMessage(uint8_t *data, int size)
 {
 	message_t *msg = NULL;
-	int messageType;
-	int sessionId;
-	pds_t *pds;
+	uint8_t *msgData = &data[6];
+	int messageType, msgLen;
 
-	pds = Pds_create(data, size);
-	messageType = Pds_get_numval(pds);
-	sessionId = Pds_get_numval(pds);
+	Msg_getPreamble(data, &messageType, &msgLen);
+
+	Log_debug("Message type %d size %d", messageType, msgLen);
+	dumpmsg(data, size);
 	
 	switch (messageType) {
-		case Speex:
-			msg = Msg_create(Speex);
-			msg->payload.speex.seq = Pds_get_numval(pds);
-			msg->payload.speex.size = pds->maxsize - pds->offset;
-			memcpy(msg->payload.speex.data, &pds->data[pds->offset], pds->maxsize - pds->offset);
-			break;
-		case ServerAuthenticate:
-			msg = Msg_create(ServerAuthenticate);
-			msg->payload.serverAuthenticate.version = Pds_get_numval(pds);
-			Pds_get_string(pds, msg->payload.serverAuthenticate.userName, MAX_TEXT);
-			Pds_get_string(pds, msg->payload.serverAuthenticate.password, MAX_TEXT);
-			break;
-		case ServerReject:
-			msg = Msg_create(ServerReject);
-			break;
-		case ServerSync:
-			msg = Msg_create(ServerSync);
-			break;
-		case ServerJoin:
-			msg = Msg_create(ServerJoin);
-			break;
-		case ServerLeave:
-			msg = Msg_create(ServerLeave);
-			break;
-		case QueryUsers:
-			msg = Msg_create(QueryUsers);
-			break;
-		case Ping:
-			msg = Msg_create(Ping);
-			msg->payload.ping.timestamp = Pds_get_numval(pds);
-			break;
-		case PingStats:
-			msg = Msg_create(PingStats);
-			msg->payload.pingStats.timestamp = Pds_get_numval(pds);
-			msg->payload.pingStats.good = Pds_get_numval(pds);
-			msg->payload.pingStats.late = Pds_get_numval(pds);
-			msg->payload.pingStats.lost = Pds_get_numval(pds);
-			msg->payload.pingStats.resync = Pds_get_numval(pds);
-			msg->payload.pingStats.dUDPPingAvg = Pds_get_double(pds);
-			msg->payload.pingStats.dUDPPingVar = Pds_get_double(pds);
-			msg->payload.pingStats.UDPPackets = Pds_get_numval(pds);
-			msg->payload.pingStats.dTCPPingAvg = Pds_get_double(pds);
-			msg->payload.pingStats.dTCPPingVar = Pds_get_double(pds);
-			msg->payload.pingStats.TCPPackets = Pds_get_numval(pds);
-			break;
-		case PlayerMute:
-			msg = Msg_create(PlayerMute);
-			msg->payload.playerMute.victim = Pds_get_numval(pds);
-			msg->payload.playerMute.bMute = Pds_get_numval(pds);
-			break;
-		case PlayerDeaf:
-			msg = Msg_create(PlayerDeaf);
-			msg->payload.playerDeaf.victim = Pds_get_numval(pds);
-			msg->payload.playerDeaf.bDeaf = Pds_get_numval(pds);
-			break;
-		case PlayerSelfMuteDeaf:
-			msg = Msg_create(PlayerSelfMuteDeaf);
-			msg->payload.playerSelfMuteDeaf.bMute = Pds_get_numval(pds);
-			msg->payload.playerSelfMuteDeaf.bDeaf = Pds_get_numval(pds);
-			break;
-		case TextMessage:
-			msg = Msg_create(TextMessage);
-			msg->payload.textMessage.victim = Pds_get_numval(pds);
-			msg->payload.textMessage.channel = Pds_get_numval(pds);
-			msg->payload.textMessage.bTree = Pds_get_numval(pds);
-			Pds_get_string(pds, msg->payload.textMessage.message, MAX_TEXT);
-			break;
-		case PermissionDenied:
-			Log_warn("Ignoring message PermissionDenied - not supported");
-			break;
-		case CryptSetup:
-			Log_warn("Ignoring message CryptSetup - not supported");
-			break;
-		case CryptSync:
-			msg = Msg_create(CryptSync);
-			if (Pds_get_data(pds, msg->payload.cryptSync.nonce, AES_BLOCK_SIZE) == 0)
-				msg->payload.cryptSync.empty = true;
-			else
-				msg->payload.cryptSync.empty = false;				
-			break;
-		case PlayerMove:
-			msg = Msg_create(PlayerMove);
-			msg->payload.playerMove.victim = Pds_get_numval(pds);
-			msg->payload.playerMove.channel = Pds_get_numval(pds);
-			break;
-			
-			/* The commands below are not supported -> no need to read the parameters */
-		case PlayerRename:
-			msg = Msg_create(PlayerRename);
-			break;			
-		case ChannelAdd:
-			msg = Msg_create(ChannelAdd);
-			break;
-		case ChannelDescUpdate:
-			msg = Msg_create(ChannelDescUpdate);
-			break;
-		case ContextAction:
-			msg = Msg_create(ContextAction);
-			break;
-		case ContextAddAction:
-			msg = Msg_create(ContextAddAction);
-			break;
-		case ServerBanList:
-			msg = Msg_create(ServerBanList);
-			break;
-		case PlayerKick:
-			msg = Msg_create(PlayerKick);
-			break;
-		case PlayerBan:
-			msg = Msg_create(PlayerBan);
-			break;
-		case ChannelRemove:
-			msg = Msg_create(ChannelRemove);
-			break;
-		case ChannelMove:
-			msg = Msg_create(ChannelMove);
-			break;
-		case ChannelLink:
-			msg = Msg_create(ChannelLink);
-			break;
-		case ChannelRename:
-			msg = Msg_create(ChannelRename);
-			break;
-		case EditACL:
-			msg = Msg_create(EditACL);
-			break;
-		case PlayerTexture:
-			msg = Msg_create(PlayerTexture);
-			break;
-		default:
-			Log_warn("Message: Type %d (session %d) is unknown type", messageType, sessionId);
+	case Version:
+	{
+		msg = Msg_create(Version);
+		msg->unpacked = true;
+		msg->payload.version = mumble_proto__version__unpack(NULL, msgLen, msgData);
+		break;
 	}
-	if (msg) {
-		msg->sessionId = sessionId;
-#if 0
-		if (!pds->bOk) {
-			Msg_free(msg);
-			msg = NULL;
-			Log_warn("Message: Type %d (session %d, size %d) corrupt or short packet",
-					 messageType, sessionId, pds->offset);
-		} else if (pds->maxsize - pds->offset != 0) {
-			Msg_free(msg);
-			msg = NULL;
-			Log_warn("Message: Type %d (session %d) Long packet: %d/%d leftover bytes",
-					 messageType, sessionId, pds->overshoot, pds->offset);
-		} else if (!pds->bOk) {
-			Msg_free(msg);
-			msg = NULL;
-			Log_warn("Message: Type %d (session %d, size %d) failed to validate", messageType, sessionId, pds->maxsize);
-		}
-#endif
+	case UDPTunnel:
+	{
+		msg = Msg_create(UDPTunnel);
+		msg->unpacked = true;
+		msg->payload.UDPTunnel = mumble_proto__udptunnel__unpack(NULL, msgLen, msgData);
+		break;
 	}
-	Pds_free(pds);
+	case Authenticate:
+	{
+		msg = Msg_create(Authenticate);
+		msg->unpacked = true;
+		msg->payload.authenticate = mumble_proto__authenticate__unpack(NULL, msgLen, msgData);
+		break;
+	}
+	case Ping:
+	{
+		msg = Msg_create(Ping);
+		msg->unpacked = true;
+		msg->payload.ping = mumble_proto__ping__unpack(NULL, msgLen, msgData);
+		break;
+	}
+	case Reject:
+	{
+		msg = Msg_create(Reject);
+		msg->unpacked = true;
+		msg->payload.reject = mumble_proto__reject__unpack(NULL, msgLen, msgData);
+		break;
+	}
+	case ServerSync:
+	{
+		msg = Msg_create(ServerSync);
+		msg->unpacked = true;
+		msg->payload.serverSync = mumble_proto__server_sync__unpack(NULL, msgLen, msgData);
+		break;
+	}
+	case TextMessage:
+	{
+		msg = Msg_create(TextMessage);
+		msg->unpacked = true;
+		msg->payload.textMessage = mumble_proto__text_message__unpack(NULL, msgLen, msgData);
+		break;
+	}
+	case PermissionDenied:
+	{
+		msg = Msg_create(PermissionDenied);
+		msg->unpacked = true;
+		msg->payload.permissionDenied = mumble_proto__permission_denied__unpack(NULL, msgLen, msgData);
+		break;
+	}
+	case CryptSetup:
+	{
+		msg = Msg_create(CryptSetup);
+		msg->unpacked = true;
+		msg->payload.cryptSetup = mumble_proto__crypt_setup__unpack(NULL, msgLen, msgData);
+		break;
+	}
+	case UserList:
+	{
+		msg = Msg_create(UserList);
+		msg->unpacked = true;
+		msg->payload.userList = mumble_proto__user_list__unpack(NULL, msgLen, msgData);
+		break;
+	}
+	case UserState:
+	{
+		msg = Msg_create(UserState);
+		msg->unpacked = true;
+		msg->payload.userState = mumble_proto__user_state__unpack(NULL, msgLen, msgData);
+		break;
+	}
+	case VoiceTarget:
+	{
+		msg = Msg_create(VoiceTarget);
+		msg->unpacked = true;
+		msg->payload.voiceTarget = mumble_proto__voice_target__unpack(NULL, msgLen, msgData);
+		break;
+	}
+	case CodecVersion:
+	{
+		msg = Msg_create(CodecVersion);
+		msg->unpacked = true;
+		msg->payload.codecVersion = mumble_proto__codec_version__unpack(NULL, msgLen, msgData);
+		break;
+	}
+
+	default:
+		Log_warn("Unsupported message %d", messageType);
+		break;
+	}
 	return msg;
 }

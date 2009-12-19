@@ -46,6 +46,7 @@
 #include "messages.h"
 #include "crypt.h"
 #include "timer.h"
+#include "pds.h"
 
 #define BUFSIZE 2048
 #define UDP_BUFSIZE 512
@@ -94,5 +95,6 @@ client_t *Client_iterate(client_t **client);
 int Client_send_message_except(client_t *client, message_t *msg);
 int Client_read_udp(void);
 void Client_disconnect_all();
+int Client_voiceMsg(client_t *client, uint8_t *data, int len);
 
 #endif
