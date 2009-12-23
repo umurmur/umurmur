@@ -75,6 +75,8 @@ int Msg_messageToNetwork(message_t *msg, uint8_t *buffer)
 			break;
 		}
 		Msg_addPreamble(buffer, msg->messageType, len);
+		Log_debug("To net: Version->release: %s Version->os: %s",
+				  msg->payload.version->release, msg->payload.version->os);
 		mumble_proto__version__pack(msg->payload.version, bufptr);
 		break;
 	case UDPTunnel:
@@ -294,12 +296,17 @@ void Msg_free(message_t *msg)
 	if (msg->refcount > 0)
 		return;
 
-	/* XXX - add free for locally generated messages too */
 	switch (msg->messageType) {
 	case Version:
 		if (msg->unpacked)
 			mumble_proto__version__free_unpacked(msg->payload.version, NULL);
 		else {
+			if (msg->payload.version->release)
+				free(msg->payload.version->release);
+			if (msg->payload.version->os)
+				free(msg->payload.version->os);
+			if (msg->payload.version->os_version)
+				free(msg->payload.version->os_version);
 			free(msg->payload.version);
 		}
 		break;

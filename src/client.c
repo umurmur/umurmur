@@ -53,6 +53,9 @@ static int clientcount; /* = 0 */
 static int session = 1;
 static int maxBandwidth;
 
+static int iCodecAlpha, iCodecBeta;
+static bool_t bPreferAlpha;
+
 extern int udpsock;
 
 void Client_init()
@@ -101,10 +104,64 @@ void Client_janitor()
 	}
 }
 
+void recheckCodecVersions()
+{
+	int codec_map[MAX_CODECS][2];
+	client_t *itr;
+	int i, codecindex, max = 0, version, current_version;
+	message_t *sendmsg;
+	
+	memset(codec_map, 0, MAX_CODECS * 2 * sizeof(int));
+	while (Client_iterate(&itr) != NULL) {
+		for (i = 0; i < itr->codec_count; i++) {
+			for (codecindex = 0; codecindex < MAX_CODECS; codecindex++) {
+				if (codec_map[codecindex][0] == 0)
+					codec_map[codecindex][0] = itr->codecs[i];
+				if (itr->codecs[i] == codec_map[codecindex][0])
+					codec_map[codecindex][1]++;
+			}
+		}
+	}
+	if (codec_map[codecindex][0] == 0)
+		return;
+	for (codecindex = 0; codecindex < MAX_CODECS; codecindex++) {
+		if (codec_map[codecindex][0] == 0)
+			break;
+		if (codec_map[codecindex][1] > max) {
+			max = codec_map[codecindex][1];
+			version = codec_map[codecindex][0];
+		}
+	}
+	current_version = bPreferAlpha ? iCodecAlpha : iCodecBeta;
+	if (current_version == version)
+		return;
+	// If we don't already use the compat bitstream version set
+	// it as alpha and announce it. If another codec now got the
+	// majority set it as the opposite of the currently valid bPreferAlpha
+	// and announce it.
+	if (version == (uint32_t)0x8000000a)
+		bPreferAlpha = true;
+	else
+		bPreferAlpha = ! bPreferAlpha;
+
+	if (bPreferAlpha)
+		iCodecAlpha = version;
+	else
+		iCodecBeta = version;
+	
+	sendmsg = Msg_create(CodecVersion);
+	sendmsg->payload.codecVersion->alpha = version;
+	sendmsg->payload.codecVersion->beta = version;
+	sendmsg->payload.codecVersion->beta = bPreferAlpha;
+	Client_send_message_except(NULL, sendmsg);
+
+}
+
 int Client_add(int fd, struct sockaddr_in *remote)
 {
 	client_t *newclient;
-
+	message_t *sendmsg;
+	
 	newclient = malloc(sizeof(client_t));
 	if (newclient == NULL)
 		Log_fatal("Out of memory");
@@ -128,6 +185,16 @@ int Client_add(int fd, struct sockaddr_in *remote)
 	
 	list_add_tail(&newclient->node, &clients);
 	clientcount++;
+	
+	/* Send version message to client */
+	sendmsg = Msg_create(Version);
+	sendmsg->payload.version->has_version = true;
+	sendmsg->payload.version->version = (1 << 16) | (2 << 8) | 0; /* XXX fix */
+	sendmsg->payload.version->release = strdup("1.2.0");
+	sendmsg->payload.version->os = strdup("Linux/OpenWRT");
+		
+	Client_send_message(newclient, sendmsg);
+
 	return 0;
 }
 
@@ -339,11 +406,11 @@ int Client_write(client_t *client)
 
 int Client_send_message(client_t *client, message_t *msg)
 {
-	if (!client->authenticated || !client->SSLready) {
+	if (!client->authenticated && msg->messageType != Version) {
 		Msg_free(msg);
 		return 0;
 	}
-	if (client->txsize != 0) {
+	if (client->txsize != 0 || !client->SSLready) {
 		/* Queue message */
 		if ((client->txQueueCount > 5 &&  msg->messageType == UDPTunnel) ||
 			client->txQueueCount > 30) {
@@ -533,14 +600,14 @@ int Client_voiceMsg(client_t *client, uint8_t *data, int len)
 	struct dlist *itr;
 	
 	if (!client->authenticated || client->mute)
-		return 0;
+		goto out;
 	
 	packetsize = 20 + 8 + 4 + len;
 	if (client->availableBandwidth - packetsize < 0)
-		return 0; /* Discard */
+		goto out; /* Discard */
 	client->availableBandwidth -= packetsize;
 	
-	counter = Pds_get_numval(pdi); /* Seems like this... */
+	counter = Pds_get_numval(pdi); /* step past session id */
 	do {
 		counter = Pds_next8(pdi);
 		offset = Pds_skip(pdi, counter & 0x7f);
@@ -559,7 +626,7 @@ int Client_voiceMsg(client_t *client, uint8_t *data, int len)
 		buffer[0] = (uint8_t) type;
 		
 		if (ch == NULL)
-			return 0;
+			goto out;
 		
 		list_iterate(itr, &ch->clients) {
 			client_t *c;
@@ -570,6 +637,7 @@ int Client_voiceMsg(client_t *client, uint8_t *data, int len)
 		}
 	}
 	/* XXX - Add targeted whisper here */
+out:
 	Pds_free(pds);
 	Pds_free(pdi);
 	

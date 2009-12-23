@@ -51,6 +51,7 @@
 #define BUFSIZE 2048
 #define UDP_BUFSIZE 512
 #define INACTICITY_TIMEOUT 15 /* Seconds */
+#define MAX_CODECS 10
 
 #define IS_AUTH(_a_) ((_a_)->authenticated)
 
@@ -71,6 +72,10 @@ typedef struct {
 	char playerName[MAX_TEXT];
 	int playerId;
 	bool_t authenticated, deaf, mute;
+	char *os, *release;
+	uint32_t version;
+	int codec_count;
+	int32_t codecs[MAX_CODECS];
 	int availableBandwidth;
 	etimer_t lastActivity;
 	struct dlist node;
@@ -96,5 +101,6 @@ int Client_send_message_except(client_t *client, message_t *msg);
 int Client_read_udp(void);
 void Client_disconnect_all();
 int Client_voiceMsg(client_t *client, uint8_t *data, int len);
+void recheckCodecVersions();
 
 #endif

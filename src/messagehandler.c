@@ -145,6 +145,22 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		/* Channel stuff */
 		Chan_playerJoin(defaultChan, client); /* Join default channel */
 
+		/* Codec version */
+		if (msg->payload.authenticate->n_celt_versions > MAX_CODECS)
+			Log_warn("Client has more than %d CELT codecs. Ignoring %d codecs",
+					 MAX_CODECS, msg->payload.authenticate->n_celt_versions - MAX_CODECS);
+		if (msg->payload.authenticate->n_celt_versions > 0) {
+			int i;
+			client->codec_count = msg->payload.authenticate->n_celt_versions > MAX_CODECS ?
+				MAX_CODECS : msg->payload.authenticate->n_celt_versions;
+			for (i = 0; i < client->codec_count; i++)
+				client->codecs[i] = msg->payload.authenticate->celt_versions[i];
+		} else {
+			client->codecs[0] = (int32_t)0x8000000a;
+			client->codec_count = 1;
+		}
+		recheckCodecVersions();
+			
 		/* Iterate channels and send channel info */
 		ch_itr = NULL;
 		Chan_iterate(&ch_itr);
@@ -186,17 +202,17 @@ void Mh_handle_message(client_t *client, message_t *msg)
 				continue;
 			sendmsg = Msg_create(UserState);
 			sendmsg->payload.userState->has_session = true;
-			sendmsg->payload.userState->session = client->sessionId;
-			sendmsg->payload.userState->name = strdup(client->playerName);
+			sendmsg->payload.userState->session = client_itr->sessionId;
+			sendmsg->payload.userState->name = strdup(client_itr->playerName);
 			sendmsg->payload.userState->has_channel_id = true;
-			sendmsg->payload.userState->channel_id = ((channel_t *)client->channel)->id;
+			sendmsg->payload.userState->channel_id = ((channel_t *)client_itr->channel)->id;
 
 			/* XXX - check if self_* is correct */
-			if (client->deaf) {
+			if (client_itr->deaf) {
 				sendmsg->payload.userState->has_self_deaf = true;
 				sendmsg->payload.userState->self_deaf = true;
 			}
-			if (client->mute) {
+			if (client_itr->mute) {
 				sendmsg->payload.userState->has_self_mute = true;
 				sendmsg->payload.userState->self_mute = true;
 			}
@@ -262,7 +278,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		if (!msg->payload.cryptSetup->has_client_nonce) {
 			sendmsg = Msg_create(CryptSetup);
 			sendmsg->payload.cryptSetup->has_server_nonce = true;
-			memcpy(sendmsg->payload.cryptSetup->server_nonce.data, client->cryptState.decrypt_iv, AES_BLOCK_SIZE);
+			sendmsg->payload.cryptSetup->server_nonce.data = client->cryptState.decrypt_iv;
 			sendmsg->payload.cryptSetup->server_nonce.len = AES_BLOCK_SIZE;
 			Client_send_message(client, sendmsg);
 		} else {
@@ -347,14 +363,21 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		break;
 
 	case Version:
-		sendmsg = Msg_create(Version); /* Re-use message */
 		Log_debug("Version message received");
-		sendmsg->payload.version->has_version = true;
-		sendmsg->payload.version->version = (1 << 16) | (2 << 8) | 0; /* XXX fix */
-		sendmsg->payload.version->release = "Phony donkey";
-		sendmsg->payload.version->os = "OpenWRT";
-		
-		Client_send_message(client, sendmsg);
+		if (msg->payload.version->has_version) {
+			client->version = msg->payload.version->version;
+			Log_debug("Client version 0x%x", client->version);
+		}
+		if (msg->payload.version->release) {
+			if (client->release) free(client->release);
+			client->release = strdup(msg->payload.version->release);
+			Log_debug("Client release %s", client->release);
+		}
+		if (msg->payload.version->os) {
+			if (client->os) free(client->os);			
+			client->os = strdup(msg->payload.version->os);
+			Log_debug("Client OS %s", client->os);
+		}
 		break;
 	case CodecVersion:
 		Msg_inc_ref(msg); /* Re-use message */
@@ -386,3 +409,4 @@ disconnect:
 	Msg_free(msg);
 	Client_close(client);
 }
+
