@@ -541,6 +541,13 @@ message_t *Msg_networkToMessage(uint8_t *data, int size)
 		msg->payload.codecVersion = mumble_proto__codec_version__unpack(NULL, msgLen, msgData);
 		break;
 	}
+	case PermissionQuery:
+	{
+		msg = Msg_create(PermissionQuery);
+		msg->unpacked = true;
+		msg->payload.permissionQuery = mumble_proto__permission_query__unpack(NULL, msgLen, msgData);
+		break;
+	}
 
 	default:
 		Log_warn("Unsupported message %d", messageType);

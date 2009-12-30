@@ -60,7 +60,7 @@ extern int udpsock;
 
 void Client_init()
 {
-	maxBandwidth = getIntConf(MAX_BANDWIDTH);
+	maxBandwidth = getIntConf(MAX_BANDWIDTH) / 8; /* From bits/s -> bytes/s */
 }
 
 int Client_count()
@@ -223,6 +223,10 @@ void Client_free(client_t *client)
 		SSL_free(client->ssl);
 	close(client->tcpfd);
 	clientcount--;
+	if (client->release)
+		free(client->release);
+	if (client->os)
+		free(client->os);			
 	free(client);
 }
 

@@ -123,9 +123,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		/* Name & password */
 		strncpy(client->playerName, msg->payload.authenticate->username, MAX_TEXT);
 		client->playerId = client->sessionId;
-		
-		
-		/* XXX - Kick ghost? */
+				
 		
 		/* Setup UDP encryption */
 		CryptState_init(&client->cryptState);
@@ -317,46 +315,61 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		break;
 		
 	case TextMessage:
-#if 0
-		if (msg->payload.textMessage.bTree)
+		msg->payload.textMessage->has_actor = true;
+		msg->payload.textMessage->actor = client->sessionId;
+
+		/* XXX - Allow HTML stuff? */
+		
+		if (msg->payload.textMessage->n_tree_id > 0) {
 			sendPermissionDenied(client, "Tree message not supported");
-		else if (msg->payload.textMessage.channel != -1) { /* To channel */
-			channel_t *ch_itr = NULL;
-			do {
-				Chan_iterate(&ch_itr);
-			} while (ch_itr != NULL && ch_itr->id != msg->payload.textMessage.channel);
-			if (ch_itr == NULL)
-				Log_warn("Channel id %d not found - ignoring.", msg->payload.textMessage.channel);
-			else {
-				struct dlist *itr;
-				list_iterate(itr, &ch_itr->clients) {
-					client_t *c;
-					c = list_get_entry(itr, client_t, chan_node);
-					if (c != client && !c->deaf) {
-						Msg_inc_ref(msg);
-						Client_send_message(c, msg);
-						Log_debug("Text message to player ID %d", c->playerId);
+			break;
+		}
+			
+		if (msg->payload.textMessage->n_channel_id > 0) { /* To channel */
+			int i;
+			channel_t *ch_itr;
+			for (i = 0; i < msg->payload.textMessage->n_channel_id; i++) {
+				ch_itr = NULL;
+				do {
+					Chan_iterate(&ch_itr);
+				} while (ch_itr != NULL && ch_itr->id != msg->payload.textMessage->channel_id[i]);
+				if (ch_itr == NULL)
+					Log_warn("Channel id %d not found - ignoring.", msg->payload.textMessage->channel_id[i]);
+				else {
+					struct dlist *itr;
+					list_iterate(itr, &ch_itr->clients) {
+						client_t *c;
+						c = list_get_entry(itr, client_t, chan_node);
+						if (c != client && !c->deaf) {
+							Msg_inc_ref(msg);
+							Client_send_message(c, msg);
+							Log_debug("Text message to session ID %d", c->sessionId);
+						}
 					}
 				}
-			}
-		} else { /* To player */
-			client_t *itr = NULL;
-			while (Client_iterate(&itr) != NULL) {
-				if (!IS_AUTH(itr))
-					continue;
-				if (itr->playerId == msg->payload.textMessage.victim) {
-					if (!itr->deaf) {
-						Msg_inc_ref(msg);
-						Client_send_message(itr, msg);
+			} /* for */
+		}
+		if (msg->payload.textMessage->n_session > 0) { /* To user */
+			int i;
+			client_t *itr;
+			for (i = 0; i < msg->payload.textMessage->n_session; i++) {
+				itr = NULL;
+				while (Client_iterate(&itr) != NULL) {
+					if (!IS_AUTH(itr))
+						continue;
+					if (itr->playerId == msg->payload.textMessage->session[i]) {
+						if (!itr->deaf) {
+							Msg_inc_ref(msg);
+							Client_send_message(itr, msg);
+						}
+						break;
 					}
-					break;
 				}
-			}
-			if (itr == NULL)
-				Log_warn("TextMessage: Player ID %d not found", msg->payload.textMessage.victim);
+				if (itr == NULL)
+					Log_warn("TextMessage: Session ID %d not found", msg->payload.textMessage->session[i]);
+			} /* for */
 		}
 		break;
-#endif
 
 	case VoiceTarget:
 		/* XXX -TODO */

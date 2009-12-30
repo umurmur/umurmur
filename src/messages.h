@@ -97,7 +97,7 @@ typedef union payload {
 	struct  _MumbleProto__UserList *userList;
 	struct  _MumbleProto__VoiceTarget__Target *voiceTarget_target;
 	struct  _MumbleProto__VoiceTarget *voiceTarget;
-	/* PermissionQuery not supported */
+	struct  _MumbleProto__PermissionQuery *permissionQuery;
 	struct  _MumbleProto__CodecVersion *codecVersion;
 } payload_t;
 
