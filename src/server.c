@@ -109,6 +109,8 @@ void Server_run()
 	
 	Timer_init(&janitorTimer);
 	
+	Log_info("uMurmur voicechat server started -- http://code.google.com/p/umurmur/");
+
 	/* Main server loop */
 	while (!shutdown_server) {
 		struct sockaddr_in remote;

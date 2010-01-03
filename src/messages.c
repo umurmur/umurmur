@@ -196,6 +196,15 @@ int Msg_messageToNetwork(message_t *msg, uint8_t *buffer)
 		Msg_addPreamble(buffer, msg->messageType, len);
 		mumble_proto__codec_version__pack(msg->payload.codecVersion, bufptr);
 		break;
+	case PermissionQuery:
+		len = mumble_proto__permission_query__get_packed_size(msg->payload.permissionQuery);
+		if (len > MAX_MSGSIZE) {
+			Log_warn("Too big tx message. Discarding");
+			break;
+			}
+		Msg_addPreamble(buffer, msg->messageType, len);
+		mumble_proto__permission_query__pack(msg->payload.permissionQuery, bufptr);
+		break;
 
 	default:
 		Log_warn("Unsupported message %d", msg->messageType);
@@ -275,6 +284,10 @@ message_t *Msg_create(messageType_t messageType)
 	case ChannelState:
 		msg->payload.channelState = malloc(sizeof(MumbleProto__ChannelState));
 		mumble_proto__channel_state__init(msg->payload.channelState);
+		break;
+	case PermissionQuery:
+		msg->payload.permissionQuery = malloc(sizeof(MumbleProto__PermissionQuery));
+		mumble_proto__permission_query__init(msg->payload.permissionQuery);
 		break;
 
 	default:
@@ -411,6 +424,13 @@ void Msg_free(message_t *msg)
 				free(msg->payload.channelState->description);
 			free(msg->payload.channelState->name);
 			free(msg->payload.channelState);
+		}
+		break;
+	case PermissionQuery:
+		if (msg->unpacked)
+			mumble_proto__permission_query__free_unpacked(msg->payload.permissionQuery, NULL);
+		else {
+			free(msg->payload.permissionQuery);
 		}
 		break;
 

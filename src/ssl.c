@@ -300,10 +300,10 @@ void SSL_init(void)
 			sk_SSL_CIPHER_push(cipherlist_new, cipher);
 		}
 	}
-	Log_info("List of ciphers:");
+	Log_debug("List of ciphers:");
 	if (cipherlist_new) {
 		for ( i = 0; (cipher = sk_SSL_CIPHER_value(cipherlist_new, i)) != NULL; i++) {
-			Log_info("%s", SSL_CIPHER_get_name(cipher));
+			Log_debug("%s", SSL_CIPHER_get_name(cipher));
 			offset += snprintf(cipherstring + offset, 1024 - offset, "%s:", SSL_CIPHER_get_name(cipher));
 		}
 		cipherstring[offset - 1] = '\0';

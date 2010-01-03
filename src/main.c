@@ -45,8 +45,7 @@
 #include "log.h"
 #include "client.h"
 #include "conf.h"
-
-#define UMURMUR_VERSION "0.1.3"
+#include "version.h"
 
 void lockfile(const char *pidfile)
 {
@@ -57,7 +56,7 @@ void lockfile(const char *pidfile)
 	
 	if (lfp < 0)
 		Log_fatal("Cannot open PID-file %s for writing", pidfile);
-	sprintf(str,"%d\n",getpid());
+	sprintf(str,"%d\n", getpid());
 	write(lfp, str, strlen(str)); /* record pid to lockfile */
 	Log_info("PID-file: %s", pidfile);
 }
@@ -119,7 +118,7 @@ void setscheduler()
 
 void printhelp()
 {
-	printf("uMurmur version %s. Mumble protocol %d\n", UMURMUR_VERSION, MESSAGE_STREAM_VERSION);
+	printf("uMurmur version %s. Mumble protocol %d.%d.%d\n", UMURMUR_VERSION, PROTVER_MAJOR, PROTVER_MINOR, PROTVER_PATCH);
 	printf("Usage: umurmurd [-d] [-p <pidfile>] [-c <conf file>] [-h]\n");
 	printf("       -d             - Do not deamonize\n");
 	printf("       -p <pidfile>   - Write PID to this file\n");

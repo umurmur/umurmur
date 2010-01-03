@@ -53,8 +53,8 @@ static int clientcount; /* = 0 */
 static int session = 1;
 static int maxBandwidth;
 
-static int iCodecAlpha, iCodecBeta;
-static bool_t bPreferAlpha;
+int iCodecAlpha, iCodecBeta;
+bool_t bPreferAlpha;
 
 extern int udpsock;
 
@@ -152,9 +152,12 @@ void recheckCodecVersions()
 	sendmsg = Msg_create(CodecVersion);
 	sendmsg->payload.codecVersion->alpha = version;
 	sendmsg->payload.codecVersion->beta = version;
-	sendmsg->payload.codecVersion->beta = bPreferAlpha;
+	sendmsg->payload.codecVersion->prefer_alpha = bPreferAlpha;
 	Client_send_message_except(NULL, sendmsg);
-
+	
+	Log_info("CELT codec switch 0x%x 0x%x (prefer 0x%x)", iCodecAlpha, iCodecBeta,
+			 bPreferAlpha ? iCodecAlpha : iCodecBeta);
+	
 }
 
 int Client_add(int fd, struct sockaddr_in *remote)
@@ -227,6 +230,8 @@ void Client_free(client_t *client)
 		free(client->release);
 	if (client->os)
 		free(client->os);			
+	if (client->playerName)
+		free(client->playerName);			
 	free(client);
 }
 

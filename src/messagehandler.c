@@ -40,6 +40,8 @@
 #include "conf.h"
 
 extern channel_t *defaultChan;
+extern int iCodecAlpha, iCodecBeta;
+extern bool_t bPreferAlpha;
 
 static void sendServerReject(client_t *client, const char *reason, MumbleProto__Reject__RejectType type)
 {
@@ -89,7 +91,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		while (Client_iterate(&client_itr) != NULL) {
 			if (!IS_AUTH(client_itr))
 				continue;
-			if (strncmp(client_itr->playerName, msg->payload.authenticate->username, MAX_TEXT) == 0) {
+			if (client_itr->playerName && strncmp(client_itr->playerName, msg->payload.authenticate->username, MAX_TEXT) == 0) {
 				char buf[64];
 				sprintf(buf, "Username already in use");
 				Log_debug("Username already in use");
@@ -121,9 +123,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		}
 		
 		/* Name & password */
-		strncpy(client->playerName, msg->payload.authenticate->username, MAX_TEXT);
-		client->playerId = client->sessionId;
-				
+		client->playerName = strdup(msg->payload.authenticate->username);				
 		
 		/* Setup UDP encryption */
 		CryptState_init(&client->cryptState);
@@ -147,18 +147,29 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		if (msg->payload.authenticate->n_celt_versions > MAX_CODECS)
 			Log_warn("Client has more than %d CELT codecs. Ignoring %d codecs",
 					 MAX_CODECS, msg->payload.authenticate->n_celt_versions - MAX_CODECS);
+		
+		Log_debug("Client %d has %d CELT codecs", client->sessionId, msg->payload.authenticate->n_celt_versions);
 		if (msg->payload.authenticate->n_celt_versions > 0) {
 			int i;
 			client->codec_count = msg->payload.authenticate->n_celt_versions > MAX_CODECS ?
 				MAX_CODECS : msg->payload.authenticate->n_celt_versions;
-			for (i = 0; i < client->codec_count; i++)
+			for (i = 0; i < client->codec_count; i++) {
 				client->codecs[i] = msg->payload.authenticate->celt_versions[i];
+				Log_debug("Client %d CELT codec ver 0x%x", client->sessionId, client->codecs[i]);
+			}
 		} else {
 			client->codecs[0] = (int32_t)0x8000000a;
 			client->codec_count = 1;
 		}
+		
 		recheckCodecVersions();
-			
+		
+		sendmsg = Msg_create(CodecVersion);
+		sendmsg->payload.codecVersion->alpha = iCodecAlpha;
+		sendmsg->payload.codecVersion->beta = iCodecBeta;
+		sendmsg->payload.codecVersion->prefer_alpha = bPreferAlpha;
+		Client_send_message(client, sendmsg);
+		
 		/* Iterate channels and send channel info */
 		ch_itr = NULL;
 		Chan_iterate(&ch_itr);
@@ -187,7 +198,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		sendmsg->payload.userState->has_session = true;
 		sendmsg->payload.userState->session = client->sessionId;
 		sendmsg->payload.userState->has_user_id = true;
-		sendmsg->payload.userState->user_id = client->playerId;
+		sendmsg->payload.userState->user_id = client->sessionId;
 		sendmsg->payload.userState->name = strdup(client->playerName);
 		sendmsg->payload.userState->has_channel_id = true;
 		sendmsg->payload.userState->channel_id = ((channel_t *)client->channel)->id;
@@ -225,15 +236,13 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		sendmsg->payload.serverSync->has_max_bandwidth = true;
 		sendmsg->payload.serverSync->max_bandwidth = getIntConf(MAX_BANDWIDTH);
 		sendmsg->payload.serverSync->has_allow_html = true;
-		sendmsg->payload.serverSync->allow_html = false; /* Support this? */
+		sendmsg->payload.serverSync->allow_html = true; /* Support this? */
 		Client_send_message(client, sendmsg);
 		
 		Log_info("User %s authenticated", client->playerName);
 		break;
 		
 	case Ping:
-	{
-		uint64_t timestamp;
 		if (msg->payload.ping->has_good)
 			client->cryptState.uiRemoteGood = msg->payload.ping->good;
 		if (msg->payload.ping->has_late)
@@ -251,10 +260,9 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		/* Ignoring the double values since they don't seem to be used */
 		
 		sendmsg = Msg_create(Ping);
-		timestamp = msg->payload.ping->timestamp;
 
-		sendmsg->payload.ping->timestamp = timestamp;
-		
+		sendmsg->payload.ping->timestamp = msg->payload.ping->timestamp;
+		sendmsg->payload.ping->has_timestamp = true;
 		sendmsg->payload.ping->good = client->cryptState.uiGood;
 		sendmsg->payload.ping->has_good = true;
 		sendmsg->payload.ping->late = client->cryptState.uiLate;
@@ -270,7 +278,6 @@ void Mh_handle_message(client_t *client, message_t *msg)
 				  client->cryptState.uiLost, client->cryptState.uiResync);
 
 		break;
-	}
 	case CryptSetup:
 		Log_debug("Voice channel crypt resync requested");
 		if (!msg->payload.cryptSetup->has_client_nonce) {
@@ -357,10 +364,11 @@ void Mh_handle_message(client_t *client, message_t *msg)
 				while (Client_iterate(&itr) != NULL) {
 					if (!IS_AUTH(itr))
 						continue;
-					if (itr->playerId == msg->payload.textMessage->session[i]) {
+					if (itr->sessionId == msg->payload.textMessage->session[i]) {
 						if (!itr->deaf) {
 							Msg_inc_ref(msg);
 							Client_send_message(itr, msg);
+							Log_debug("Text message to session ID %d", itr->sessionId);
 						}
 						break;
 					}
@@ -392,10 +400,10 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			Log_debug("Client OS %s", client->os);
 		}
 		break;
-	case CodecVersion:
+	case PermissionQuery:
 		Msg_inc_ref(msg); /* Re-use message */
-
-		/* XXX - fill in version */
+		msg->payload.permissionQuery->has_permissions = true;
+		msg->payload.permissionQuery->permissions = PERM_DEFAULT;
 		
 		Client_send_message(client, msg);
 		break;

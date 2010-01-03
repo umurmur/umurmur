@@ -36,8 +36,35 @@
 #include "list.h"
 #include "types.h"
 
-#define MAX_TEXT 256
-#define MESSAGE_STREAM_VERSION 4
+#define PROTVER_MAJOR 1
+#define PROTVER_MINOR 2
+#define PROTVER_PATCH 0
+#define PROTOCOL_VERSION (((PROTVER_MAJOR << 16) | (PROTVER_MINOR << 8) | PROTVER_PATCH))
+
+#define MAX_TEXT 512
+
+
+#define PERM_NONE 0x0
+#define PERM_WRITE 0x1
+#define PERM_TRAVERSE 0x2
+#define PERM_ENTER 0x4
+#define PERM_SPEAK 0x8
+#define PERM_MUTEDEAFEN 0x10
+#define PERM_MOVE 0x20
+#define PERM_MAKECHANNEL 0x40
+#define PERM_LINKCHANNEL 0x80
+#define PERM_WHISPER 0x100
+#define PERM_TEXTMESSAGE 0x200
+#define PERM_MAKETEMPCHANNEL 0x400
+// Root channel only
+#define PERM_KICK 0x10000
+#define PERM_BAN 0x20000
+#define PERM_REGISTER 0x40000
+#define PERM_SELFREGISTER 0x80000	
+#define PERM_CACHED 0x8000000
+#define PERM_ALL 0xf07ff
+
+#define PERM_DEFAULT (PERM_TRAVERSE | PERM_ENTER | PERM_SPEAK | PERM_WHISPER | PERM_TEXTMESSAGE)
 
 typedef enum {
 	Version,
@@ -50,7 +77,7 @@ typedef enum {
 	ChannelState,
 	UserRemove,
 	UserState,
-	BanList,
+	BanList, /* 10 */
 	TextMessage,
 	PermissionDenied,
 	ACL,
@@ -60,7 +87,7 @@ typedef enum {
 	ContextAction,
 	UserList,
 	VoiceTarget,
-	PermissionQuery,
+	PermissionQuery, /* 20 */
 	CodecVersion,
 } messageType_t;
 
@@ -108,7 +135,6 @@ typedef struct message {
 	bool_t unpacked;
 	payload_t payload;
 } message_t;
-
 
 
 int Msg_messageToNetwork(message_t *msg, uint8_t *buffer);

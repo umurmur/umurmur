@@ -69,8 +69,7 @@ typedef struct {
 	uint32_t rxcount, msgsize, drainleft, txcount, txsize;
 	int sessionId;
 	uint64_t key;
-	char playerName[MAX_TEXT];
-	int playerId;
+	char *playerName;
 	bool_t authenticated, deaf, mute;
 	char *os, *release;
 	uint32_t version;
