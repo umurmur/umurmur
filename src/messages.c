@@ -79,14 +79,13 @@ int Msg_messageToNetwork(message_t *msg, uint8_t *buffer)
 				  msg->payload.version->release, msg->payload.version->os);
 		mumble_proto__version__pack(msg->payload.version, bufptr);
 		break;
-	case UDPTunnel:
-		len = mumble_proto__udptunnel__get_packed_size(msg->payload.UDPTunnel);
-		if (len > MAX_MSGSIZE) {
+	case UDPTunnel: /* Non-standard handling of tunneled voice traffic. */
+		if (msg->payload.UDPTunnel->packet.len > MAX_MSGSIZE) {
 			Log_warn("Too big tx message. Discarding");
 			break;
 		}
-		Msg_addPreamble(buffer, msg->messageType, len);
-		mumble_proto__udptunnel__pack(msg->payload.UDPTunnel, bufptr);		
+		Msg_addPreamble(buffer, msg->messageType, msg->payload.UDPTunnel->packet.len);
+		memcpy(bufptr, msg->payload.UDPTunnel->packet.data, msg->payload.UDPTunnel->packet.len);
 		break;
 	case Authenticate:
 		len = mumble_proto__authenticate__get_packed_size(msg->payload.authenticate);
@@ -477,11 +476,18 @@ message_t *Msg_networkToMessage(uint8_t *data, int size)
 		msg->payload.version = mumble_proto__version__unpack(NULL, msgLen, msgData);
 		break;
 	}
-	case UDPTunnel:
+	case UDPTunnel: /* Non-standard handling of tunneled voice data */
 	{
 		msg = Msg_create(UDPTunnel);
-		msg->unpacked = true;
-		msg->payload.UDPTunnel = mumble_proto__udptunnel__unpack(NULL, msgLen, msgData);
+		msg->unpacked = false;
+		msg->payload.UDPTunnel = malloc(sizeof(struct _MumbleProto__UDPTunnel));
+		if (msg->payload.UDPTunnel == NULL)
+			Log_fatal("Out of memory");
+		msg->payload.UDPTunnel->packet.data = malloc(msgLen);
+		if (msg->payload.UDPTunnel->packet.data == NULL)
+			Log_fatal("Out of memory");
+		memcpy(msg->payload.UDPTunnel->packet.data, msgData, msgLen);
+		msg->payload.UDPTunnel->packet.len = msgLen;
 		break;
 	}
 	case Authenticate:
