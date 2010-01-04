@@ -39,9 +39,7 @@
 #include "messagehandler.h"
 #include "conf.h"
 #include "channel.h"
-
-/* Version 0.2.0 XXX fixme */
-const uint32_t versionBlob = 1<<16 | 2<<8 | 0;
+#include "version.h"
 
 static int Client_read(client_t *client);
 static int Client_write(client_t *client);
@@ -192,9 +190,10 @@ int Client_add(int fd, struct sockaddr_in *remote)
 	/* Send version message to client */
 	sendmsg = Msg_create(Version);
 	sendmsg->payload.version->has_version = true;
-	sendmsg->payload.version->version = (1 << 16) | (2 << 8) | 0; /* XXX fix */
-	sendmsg->payload.version->release = strdup("1.2.0");
-	sendmsg->payload.version->os = strdup("Linux/OpenWRT");
+	sendmsg->payload.version->version = PROTOCOL_VERSION;
+	sendmsg->payload.version->release = strdup(UMURMUR_VERSION);
+	/* XXX - set OS to something relevant? */
+	/* sendmsg->payload.version->os = strdup("Linux/OpenWRT"); */
 		
 	Client_send_message(newclient, sendmsg);
 
@@ -538,11 +537,11 @@ int Client_read_udp()
 	/* Ping packet */
 	if (len == 12 && *encrypted == 0) {
 		uint32_t *ping = (uint32_t *)encrypted;
-		ping[0] = htons(versionBlob);
+		ping[0] = htonl((uint32_t)PROTOCOL_VERSION);
 		// 1 and 2 will be the timestamp, which we return unmodified.
-		ping[3] = htons((uint32_t)clientcount);
-		ping[4] = htons((uint32_t)getIntConf(MAX_CLIENTS));
-		ping[5] = htons((uint32_t)getIntConf(MAX_BANDWIDTH));
+		ping[3] = htonl((uint32_t)clientcount);
+		ping[4] = htonl((uint32_t)getIntConf(MAX_CLIENTS));
+		ping[5] = htonl((uint32_t)getIntConf(MAX_BANDWIDTH));
 		
 		sendto(udpsock, encrypted, 6 * sizeof(uint32_t), 0, (struct sockaddr *)&from, fromlen);
 		return 0;
