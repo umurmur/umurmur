@@ -41,6 +41,7 @@
 
 
 void dumpmsg(uint8_t *data, int size);
+static message_t *Msg_create_nopayload(messageType_t messageType);
 
 void Msg_addPreamble(uint8_t *buffer, uint16_t type, uint32_t len)
 {
@@ -212,7 +213,7 @@ int Msg_messageToNetwork(message_t *msg, uint8_t *buffer)
 	return len + 6;
 }
 
-message_t *Msg_create(messageType_t messageType)
+message_t *Msg_create_nopayload(messageType_t messageType)
 {
 	message_t *msg = malloc(sizeof(message_t));
 
@@ -222,6 +223,12 @@ message_t *Msg_create(messageType_t messageType)
 	msg->refcount = 1;
 	msg->messageType = messageType;
 	init_list_entry(&msg->node);
+	return msg;
+}
+
+message_t *Msg_create(messageType_t messageType)
+{
+	message_t *msg = Msg_create_nopayload(messageType);
 	
 	switch (messageType) {
 	case Version:
@@ -333,6 +340,8 @@ void Msg_free(message_t *msg)
 	case Authenticate:
 		if (msg->unpacked)
 			mumble_proto__authenticate__free_unpacked(msg->payload.authenticate, NULL);
+		else
+			free(msg->payload.authenticate);
 		break;
 	case Ping:
 		if (msg->unpacked)
@@ -466,19 +475,19 @@ message_t *Msg_networkToMessage(uint8_t *data, int size)
 	Msg_getPreamble(data, &messageType, &msgLen);
 
 	Log_debug("Message type %d size %d", messageType, msgLen);
-	dumpmsg(data, size);
+	//dumpmsg(data, size);
 	
 	switch (messageType) {
 	case Version:
 	{
-		msg = Msg_create(Version);
+		msg = Msg_create_nopayload(Version);
 		msg->unpacked = true;
 		msg->payload.version = mumble_proto__version__unpack(NULL, msgLen, msgData);
 		break;
 	}
 	case UDPTunnel: /* Non-standard handling of tunneled voice data */
 	{
-		msg = Msg_create(UDPTunnel);
+		msg = Msg_create_nopayload(UDPTunnel);
 		msg->unpacked = false;
 		msg->payload.UDPTunnel = malloc(sizeof(struct _MumbleProto__UDPTunnel));
 		if (msg->payload.UDPTunnel == NULL)
@@ -492,84 +501,84 @@ message_t *Msg_networkToMessage(uint8_t *data, int size)
 	}
 	case Authenticate:
 	{
-		msg = Msg_create(Authenticate);
+		msg = Msg_create_nopayload(Authenticate);
 		msg->unpacked = true;
 		msg->payload.authenticate = mumble_proto__authenticate__unpack(NULL, msgLen, msgData);
 		break;
 	}
 	case Ping:
 	{
-		msg = Msg_create(Ping);
+		msg = Msg_create_nopayload(Ping);
 		msg->unpacked = true;
 		msg->payload.ping = mumble_proto__ping__unpack(NULL, msgLen, msgData);
 		break;
 	}
 	case Reject:
 	{
-		msg = Msg_create(Reject);
+		msg = Msg_create_nopayload(Reject);
 		msg->unpacked = true;
 		msg->payload.reject = mumble_proto__reject__unpack(NULL, msgLen, msgData);
 		break;
 	}
 	case ServerSync:
 	{
-		msg = Msg_create(ServerSync);
+		msg = Msg_create_nopayload(ServerSync);
 		msg->unpacked = true;
 		msg->payload.serverSync = mumble_proto__server_sync__unpack(NULL, msgLen, msgData);
 		break;
 	}
 	case TextMessage:
 	{
-		msg = Msg_create(TextMessage);
+		msg = Msg_create_nopayload(TextMessage);
 		msg->unpacked = true;
 		msg->payload.textMessage = mumble_proto__text_message__unpack(NULL, msgLen, msgData);
 		break;
 	}
 	case PermissionDenied:
 	{
-		msg = Msg_create(PermissionDenied);
+		msg = Msg_create_nopayload(PermissionDenied);
 		msg->unpacked = true;
 		msg->payload.permissionDenied = mumble_proto__permission_denied__unpack(NULL, msgLen, msgData);
 		break;
 	}
 	case CryptSetup:
 	{
-		msg = Msg_create(CryptSetup);
+		msg = Msg_create_nopayload(CryptSetup);
 		msg->unpacked = true;
 		msg->payload.cryptSetup = mumble_proto__crypt_setup__unpack(NULL, msgLen, msgData);
 		break;
 	}
 	case UserList:
 	{
-		msg = Msg_create(UserList);
+		msg = Msg_create_nopayload(UserList);
 		msg->unpacked = true;
 		msg->payload.userList = mumble_proto__user_list__unpack(NULL, msgLen, msgData);
 		break;
 	}
 	case UserState:
 	{
-		msg = Msg_create(UserState);
+		msg = Msg_create_nopayload(UserState);
 		msg->unpacked = true;
 		msg->payload.userState = mumble_proto__user_state__unpack(NULL, msgLen, msgData);
 		break;
 	}
 	case VoiceTarget:
 	{
-		msg = Msg_create(VoiceTarget);
+		msg = Msg_create_nopayload(VoiceTarget);
 		msg->unpacked = true;
 		msg->payload.voiceTarget = mumble_proto__voice_target__unpack(NULL, msgLen, msgData);
 		break;
 	}
 	case CodecVersion:
 	{
-		msg = Msg_create(CodecVersion);
+		msg = Msg_create_nopayload(CodecVersion);
 		msg->unpacked = true;
 		msg->payload.codecVersion = mumble_proto__codec_version__unpack(NULL, msgLen, msgData);
 		break;
 	}
 	case PermissionQuery:
 	{
-		msg = Msg_create(PermissionQuery);
+		msg = Msg_create_nopayload(PermissionQuery);
 		msg->unpacked = true;
 		msg->payload.permissionQuery = mumble_proto__permission_query__unpack(NULL, msgLen, msgData);
 		break;
