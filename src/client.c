@@ -649,6 +649,22 @@ int Client_voiceMsg(client_t *client, uint8_t *data, int len)
 				Client_send_udp(c, buffer, pds->offset + 1);
 			}
 		}
+		/* Channel links */
+		if (!list_empty(&ch->channel_links)) {
+			struct dlist *ch_itr;
+			list_iterate(ch_itr, &ch->channel_links) {
+				channel_t *ch_link;
+				ch_link = list_get_entry(ch_itr, channel_t, link_node);
+				list_iterate(itr, &ch_link->clients) {
+					client_t *c;
+					c = list_get_entry(itr, client_t, chan_node);
+					if (c != client && !c->deaf) {
+						Log_debug("Linked voice from %s -> %s", ch->name, ch_link->name);
+						Client_send_udp(c, buffer, pds->offset + 1);
+					}
+				}
+			}
+		}
 	} else if ((vt = Voicetarget_get_id(client, target)) != NULL) {	/* Targeted whisper */
 		int i;
 		channel_t *ch;

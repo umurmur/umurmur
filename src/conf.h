@@ -51,11 +51,17 @@ typedef struct {
 	char description[MAX_TEXT];
 } conf_channel_t;
 
+typedef struct {
+	char source[MAX_TEXT];
+	char destination[MAX_TEXT];
+} conf_channel_link_t;
+
 int Conf_init(const char *conffile);
 void Conf_deinit();
 
 const char *getStrConf(param_t param);
 int getIntConf(param_t param);
 int Conf_getNextChannel(conf_channel_t *chdesc, int index);
+int Conf_getNextChannelLink(conf_channel_link_t *chlink, int index);
 
 #endif

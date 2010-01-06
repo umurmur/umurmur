@@ -212,3 +212,23 @@ int Conf_getNextChannel(conf_channel_t *chdesc, int index)
 
 	return 0;
 }
+
+int Conf_getNextChannelLink(conf_channel_link_t *chlink, int index)
+{
+	config_setting_t *setting = NULL;
+	char configstr[64];
+	
+	sprintf(configstr, "channel_links.[%d].source", index);
+	setting = config_lookup(&configuration, configstr);
+	if (setting == NULL)
+		return -1;
+	strncpy(chlink->source, config_setting_get_string(setting), MAX_TEXT);
+
+	sprintf(configstr, "channel_links.[%d].destination", index);
+	setting = config_lookup(&configuration, configstr);
+	if (setting == NULL)
+		return -1;
+	strncpy(chlink->destination, config_setting_get_string(setting), MAX_TEXT);
+
+	return 0;
+}

@@ -44,6 +44,8 @@ typedef struct channel {
 	struct dlist subs;
 	struct dlist clients;
 	struct dlist flatlist_node;
+	struct dlist channel_links;
+	struct dlist link_node;
 } channel_t;
 
 void Chan_init();
@@ -56,6 +58,7 @@ void Chan_playerJoin(channel_t *ch, client_t *client);
 void Chan_playerJoin_id(int channelid, client_t *client);
 void Chan_iterate(channel_t **channelpptr);
 channel_t *Chan_createChannel(const char *name, const char *desc);
+channel_t *Chan_fromId(int channelid);
 void Chan_freeChannel(channel_t *ch);
 
 #endif

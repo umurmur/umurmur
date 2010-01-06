@@ -55,6 +55,7 @@ static channel_t *createChannel(int id, const char *name, const char *desc)
 	init_list_entry(&ch->node);
 	init_list_entry(&ch->clients);
 	init_list_entry(&ch->flatlist_node);
+	init_list_entry(&ch->channel_links);
 	return ch;
 }
 
@@ -90,8 +91,6 @@ void Chan_iterate(channel_t **channelpptr)
 			else
 				ch = list_get_entry(list_get_next(&ch->flatlist_node), channel_t, flatlist_node);
 		}
-		if (ch)
-			Log_debug("Channel %d", ch->id);
 	}
 
 	*channelpptr = ch;
@@ -101,6 +100,7 @@ void Chan_init()
 {
 	int i;
 	conf_channel_t chdesc;
+	conf_channel_link_t chlink;
 	const char *defaultChannelName;
 
 	defaultChannelName = getStrConf(DEAFULT_CHANNEL);
@@ -134,12 +134,42 @@ void Chan_init()
 				Log_fatal("Error in channel configuration: parent not found");
 			else {
 				Chan_addChannel(ch_itr, ch);
-				Log_info("Adding channel %s parent %s", ch->name, chdesc.parent);
+				Log_info("Adding channel '%s' parent '%s'", ch->name, chdesc.parent);
 			}
 		}
 	}
 	if (defaultChan == NULL)
 		defaultChan = rootChan;
+
+	/* Channel links */
+	for (i = 0; ; i++) {
+		channel_t *ch_src, *ch_dst, *ch_itr = NULL;
+		if (Conf_getNextChannelLink(&chlink, i) < 0) {
+			if (i == 0)
+				Log_info("No channel links found in configuration file.");
+			break;
+		}
+		ch_itr = NULL;
+		do {
+			Chan_iterate(&ch_itr);
+		} while (ch_itr != NULL && strcmp(ch_itr->name, chlink.source) != 0);
+		if (ch_itr == NULL)
+			Log_fatal("Error in channel link configuration: source channel '%s' not found.", chlink.source);
+		else
+			ch_src = ch_itr;
+		
+		ch_itr = NULL;		
+		do {
+			Chan_iterate(&ch_itr);
+		} while (ch_itr != NULL && strcmp(ch_itr->name, chlink.destination) != 0);
+		if (ch_itr == NULL)
+			Log_fatal("Error in channel link configuration: destination channel '%s' not found", chlink.destination);
+		else
+			ch_dst = ch_itr;
+		
+		list_add_tail(&ch_dst->link_node, &ch_src->channel_links);
+		Log_debug("Adding channel link %s -> %s", ch_src->name, ch_dst->name);
+	}
 }
 
 void Chan_free()
@@ -206,9 +236,20 @@ void Chan_addChannel_id(int parentId, channel_t *ch)
 		Chan_iterate(&ch_itr);
 	} while (ch_itr != NULL && ch_itr->id != parentId);
 	if (ch_itr == NULL)
-		Log_warn("Channel id %d not found - ignoring.", parentId);
+		Log_warn("Chan_addChannel_id: Channel id %d not found - ignoring.", parentId);
 	else
 		list_add_tail(&ch->node, &ch_itr->subs);
+}
+
+channel_t *Chan_fromId(int channelid)
+{
+	channel_t *ch_itr = NULL;
+	do {
+		Chan_iterate(&ch_itr);
+	} while (ch_itr != NULL && ch_itr->id != channelid);
+	if (ch_itr == NULL)
+		Log_warn("Chan_fromId: Channel id %d not found.", channelid);
+	return ch_itr;
 }
 
 void Chan_removeChannel(channel_t *ch)
