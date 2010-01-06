@@ -1,0 +1,40 @@
+README for uMurmur - minimalistic Mumble server
+===============================================
+http://code.google.com/p/umurmur/
+
+Contains protobuf-c library code which is Copyright 2008, Dave Benson.
+See http://code.google.com/p/protobuf-c/
+
+1. Requirements
+o OpenSSL library
+o libConfig
+
+2. Build
+cd to src directory
+make
+
+3. Install
+o Copy umurmurd from src directory to where you want it,
+  /usr/local/sbin/ for example.
+o Edit umurmur.conf.example to your liking and put it in a suitable place.
+  /etc/umurmur.conf is default.
+
+Some day I might put together an autoconf with the typical configure &&
+make && make install, but we'll see.
+
+4. Run
+As daemon:
+
+umurmurd -c <conf file> -p <PID file> -r
+
+For other switches and their meaning run:
+
+umurmurd -h
+
+A startup script can easily be created if you want to. Just copy an
+existing script and edit it to your liking.
+
+5. Support/Contact/Documentation
+See the project page, link above.
+
+Have fun!
