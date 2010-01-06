@@ -83,6 +83,7 @@ typedef struct {
 	/* Channel */
 	void *channel; /*Ugly... */
 	struct dlist chan_node;
+	struct dlist voicetargets;
 } client_t;
 
 

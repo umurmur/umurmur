@@ -40,6 +40,7 @@
 #include "conf.h"
 #include "channel.h"
 #include "version.h"
+#include "voicetarget.h"
 
 static int Client_read(client_t *client);
 static int Client_write(client_t *client);
@@ -105,7 +106,7 @@ void Client_janitor()
 void recheckCodecVersions()
 {
 	int codec_map[MAX_CODECS][2];
-	client_t *itr;
+	client_t *itr = NULL;
 	int i, codecindex, max = 0, version, current_version;
 	message_t *sendmsg;
 	
@@ -113,15 +114,16 @@ void recheckCodecVersions()
 	while (Client_iterate(&itr) != NULL) {
 		for (i = 0; i < itr->codec_count; i++) {
 			for (codecindex = 0; codecindex < MAX_CODECS; codecindex++) {
-				if (codec_map[codecindex][0] == 0)
+				if (codec_map[codecindex][0] == 0) {
 					codec_map[codecindex][0] = itr->codecs[i];
+					codec_map[codecindex][1] = 1;
+					break;
+				}
 				if (itr->codecs[i] == codec_map[codecindex][0])
 					codec_map[codecindex][1]++;
 			}
 		}
 	}
-	if (codec_map[codecindex][0] == 0)
-		return;
 	for (codecindex = 0; codecindex < MAX_CODECS; codecindex++) {
 		if (codec_map[codecindex][0] == 0)
 			break;
@@ -183,6 +185,7 @@ int Client_add(int fd, struct sockaddr_in *remote)
 	init_list_entry(&newclient->txMsgQueue);
 	init_list_entry(&newclient->chan_node);
 	init_list_entry(&newclient->node);
+	init_list_entry(&newclient->voicetargets);
 	
 	list_add_tail(&newclient->node, &clients);
 	clientcount++;
@@ -218,7 +221,8 @@ void Client_free(client_t *client)
 		list_del(&list_get_entry(itr, message_t, node)->node);
 		Msg_free(list_get_entry(itr, message_t, node));
 	}
-		
+	Voicetarget_free_all(client);
+	
 	list_del(&client->node);
 	list_del(&client->chan_node);
 	if (client->ssl)
@@ -255,7 +259,7 @@ int Client_read_fd(int fd)
 	client_t *client = NULL;
 	
 	list_iterate(itr, &clients) {
-		if(fd == list_get_entry(itr, client_t, node)->tcpfd) {
+		if (fd == list_get_entry(itr, client_t, node)->tcpfd) {
 			client = list_get_entry(itr, client_t, node);
 			break;
 		}
@@ -583,6 +587,7 @@ int Client_read_udp()
 		Client_voiceMsg(itr, buffer, len);
 		break;
 	case UDPPing:
+		Log_debug("UDP Ping reply len %d", len);
 		Client_send_udp(itr, buffer, len);
 		break;
 	default:
@@ -603,7 +608,8 @@ int Client_voiceMsg(client_t *client, uint8_t *data, int len)
 	unsigned int target = data[0] & 0x1f;
 	unsigned int poslen, counter;
 	int offset, packetsize;
-
+	voicetarget_t *vt;
+	
 	channel_t *ch = (channel_t *)client->channel;
 	struct dlist *itr;
 	
@@ -626,7 +632,7 @@ int Client_voiceMsg(client_t *client, uint8_t *data, int len)
 	Pds_add_numval(pds, client->sessionId);
 	Pds_append_data_nosize(pds, data + 1, len - 1);
 	
-	if (target & 0x1f) { /* Loopback */
+	if (target == 0x1f) { /* Loopback */
 		buffer[0] = (uint8_t) type;
 		Client_send_udp(client, buffer, pds->offset + 1);
 	}
@@ -643,8 +649,35 @@ int Client_voiceMsg(client_t *client, uint8_t *data, int len)
 				Client_send_udp(c, buffer, pds->offset + 1);
 			}
 		}
+	} else if ((vt = Voicetarget_get_id(client, target)) != NULL) {	/* Targeted whisper */
+		int i;
+		channel_t *ch;
+		/* Channels */
+		for (i = 0; i < TARGET_MAX_CHANNELS && vt->channels[i] != -1; i++) {
+			Log_debug("Whisper channel %d", vt->channels[i]);
+			ch = Chan_fromId(vt->channels[i]);
+			if (ch == NULL)
+				continue;
+			list_iterate(itr, &ch->clients) {
+				client_t *c;
+				c = list_get_entry(itr, client_t, chan_node);
+				if (c != client && !c->deaf && IS_AUTH(c)) {
+					Client_send_udp(c, buffer, pds->offset + 1);
+				}
+			}
+		}			
+		/* Sessions */
+		for (i = 0; i < TARGET_MAX_SESSIONS && vt->sessions[i] != -1; i++) {
+			client_t *c;
+			Log_debug("Whisper session %d", vt->sessions[i]);
+			while (Client_iterate(&c) != NULL) {
+				if (c->sessionId == vt->sessions[i] && c != client && !c->deaf && IS_AUTH(c)) {
+					Client_send_udp(c, buffer, pds->offset + 1);
+					break;
+				}
+			}
+		}
 	}
-	/* XXX - Add targeted whisper here */
 out:
 	Pds_free(pds);
 	Pds_free(pdi);

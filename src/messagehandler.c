@@ -38,6 +38,7 @@
 #include "crypt.h"
 #include "channel.h"
 #include "conf.h"
+#include "voicetarget.h"
 
 extern channel_t *defaultChan;
 extern int iCodecAlpha, iCodecBeta;
@@ -380,9 +381,28 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		break;
 
 	case VoiceTarget:
-		/* XXX -TODO */
-		break;
+	{
+		int i, j, count, targetId = msg->payload.voiceTarget->id;
+		struct _MumbleProto__VoiceTarget__Target *target;
 
+		if (!targetId || targetId >= 0x1f)
+			break;
+		Voicetarget_add_id(client, targetId);
+		count = msg->payload.voiceTarget->n_targets;
+		if (!count)
+			break;
+		for (i = 0; i < count; i++) {
+			target = msg->payload.voiceTarget->targets[i];
+			for (j = 0; j < target->n_session; j++)
+				Voicetarget_add_session(client, targetId, target->session[j]);
+			if (target->has_channel_id) {
+				if (target->has_links || target->has_children)
+					Log_warn("Whisper to children or linked channels not implemented. Ignoring.");
+				Voicetarget_add_channel(client, targetId, target->channel_id);
+			}
+		}
+		break;
+	}
 	case Version:
 		Log_debug("Version message received");
 		if (msg->payload.version->has_version) {
@@ -417,6 +437,8 @@ void Mh_handle_message(client_t *client, message_t *msg)
 	case ContextActionAdd:
 	case ACL:
 	case BanList:
+	case UserList:
+	case QueryUsers:
 		sendPermissionDenied(client, "Not supported by uMurmur");
 		break;
 				
