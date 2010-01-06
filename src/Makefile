@@ -22,6 +22,6 @@ all: umurmurd
 $(OBJS): Makefile
 
 depend.mak:
-	$(CC) -M $(SRCS) > depend.mak
+	$(CC) $(CFLAGS) -M $(SRCS) > depend.mak
 
 include depend.mak
