@@ -300,7 +300,7 @@ int Client_read(client_t *client)
 	do {
 		errno = 0;
 		if (!client->msgsize) 
-			rc = SSL_read(client->ssl, client->rxbuf, 6 - client->rxcount);
+			rc = SSL_read(client->ssl, &client->rxbuf[client->rxcount], 6 - client->rxcount);
 		else if (client->drainleft > 0)
 			rc = SSL_read(client->ssl, client->rxbuf, client->drainleft > BUFSIZE ? BUFSIZE : client->drainleft);
 		else
@@ -312,8 +312,9 @@ int Client_read(client_t *client)
 			else {
 				client->rxcount += rc;
 				if (!client->msgsize && client->rxcount >= 6) {
-					uint32_t *msgLen = (uint32_t *) &client->rxbuf[2];
-					client->msgsize = ntohl(*msgLen);
+					uint32_t msgLen;
+					memcpy(&msgLen, &client->rxbuf[2], sizeof(uint32_t));
+					client->msgsize = ntohl(msgLen);
 				}
 				if (client->msgsize > BUFSIZE - 6 && client->drainleft == 0) {
 					Log_warn("Too big message received (%d). Discarding.", client->msgsize);
