@@ -234,7 +234,9 @@ void Client_free(client_t *client)
 	if (client->os)
 		free(client->os);			
 	if (client->playerName)
-		free(client->playerName);			
+		free(client->playerName);
+	if (client->context)
+		free(client->context);
 	free(client);
 }
 
@@ -598,6 +600,16 @@ out:
 	return 0;
 }
 
+static inline void Client_send_voice(client_t *src, client_t *dst, uint8_t *data, int len, int poslen)
+{
+	if (IS_AUTH(dst) && dst != src && !dst->deaf) {
+		if (poslen > 0 && strcmp(src->context, dst->context) == 0)
+			Client_send_udp(dst, data, len);
+		else
+			Client_send_udp(dst, data, len - poslen);
+	}
+}
+
 /* Handle decrypted voice message */
 int Client_voiceMsg(client_t *client, uint8_t *data, int len)
 {
@@ -627,7 +639,7 @@ int Client_voiceMsg(client_t *client, uint8_t *data, int len)
 		offset = Pds_skip(pdi, counter & 0x7f);
 	} while ((counter & 0x80) && offset > 0);
 
-	poslen = pdi->maxsize - pdi->offset; /* XXX - Add stripping of positional audio */
+	poslen = pdi->maxsize - pdi->offset; /* For stripping of positional info */
 	
 	Pds_add_numval(pds, client->sessionId);
 	Pds_append_data_nosize(pds, data + 1, len - 1);
@@ -645,9 +657,7 @@ int Client_voiceMsg(client_t *client, uint8_t *data, int len)
 		list_iterate(itr, &ch->clients) {
 			client_t *c;
 			c = list_get_entry(itr, client_t, chan_node);
-			if (c != client && !c->deaf) {
-				Client_send_udp(c, buffer, pds->offset + 1);
-			}
+			Client_send_voice(client, c, buffer, pds->offset + 1, poslen);
 		}
 		/* Channel links */
 		if (!list_empty(&ch->channel_links)) {
@@ -658,10 +668,8 @@ int Client_voiceMsg(client_t *client, uint8_t *data, int len)
 				list_iterate(itr, &ch_link->clients) {
 					client_t *c;
 					c = list_get_entry(itr, client_t, chan_node);
-					if (c != client && !c->deaf) {
-						Log_debug("Linked voice from %s -> %s", ch->name, ch_link->name);
-						Client_send_udp(c, buffer, pds->offset + 1);
-					}
+					Log_debug("Linked voice from %s -> %s", ch->name, ch_link->name);
+					Client_send_voice(client, c, buffer, pds->offset + 1, poslen);
 				}
 			}
 		}
@@ -677,9 +685,7 @@ int Client_voiceMsg(client_t *client, uint8_t *data, int len)
 			list_iterate(itr, &ch->clients) {
 				client_t *c;
 				c = list_get_entry(itr, client_t, chan_node);
-				if (c != client && !c->deaf && IS_AUTH(c)) {
-					Client_send_udp(c, buffer, pds->offset + 1);
-				}
+				Client_send_voice(client, c, buffer, pds->offset + 1, poslen);
 			}
 		}			
 		/* Sessions */
@@ -687,8 +693,8 @@ int Client_voiceMsg(client_t *client, uint8_t *data, int len)
 			client_t *c;
 			Log_debug("Whisper session %d", vt->sessions[i]);
 			while (Client_iterate(&c) != NULL) {
-				if (c->sessionId == vt->sessions[i] && c != client && !c->deaf && IS_AUTH(c)) {
-					Client_send_udp(c, buffer, pds->offset + 1);
+				if (c->sessionId == vt->sessions[i]) {
+					Client_send_voice(client, c, buffer, pds->offset + 1, poslen);
 					break;
 				}
 			}

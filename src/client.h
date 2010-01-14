@@ -80,8 +80,8 @@ typedef struct {
 	struct dlist node;
 	struct dlist txMsgQueue;
 	int txQueueCount;
-	/* Channel */
-	void *channel; /*Ugly... */
+	void *channel; /* Ugly... */
+	char *context;
 	struct dlist chan_node;
 	struct dlist voicetargets;
 } client_t;

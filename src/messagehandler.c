@@ -315,13 +315,22 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		if (msg->payload.userState->has_channel_id) {
 			Chan_playerJoin_id(msg->payload.userState->channel_id, client);
 		}
+		if (msg->payload.userState->plugin_context != NULL) {
+			if (client->context)
+				free(client->context);
+			client->context = strdup(msg->payload.userState->plugin_context);
+			if (client->context == NULL)
+				Log_fatal("Out of memory");
+			
+			break; /* Don't inform other users about this state */
+		}
+		
 		/* Re-use message */
 		Msg_inc_ref(msg);
 		msg->payload.userState->has_actor = true;
 		msg->payload.userState->actor = client->sessionId;
 		Client_send_message_except(NULL, msg);
 		break;
-		
 	case TextMessage:
 		msg->payload.textMessage->has_actor = true;
 		msg->payload.textMessage->actor = client->sessionId;
