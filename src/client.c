@@ -1,4 +1,4 @@
-/* Copyright (C) 2010, Martin Johansson <martin@fatbob.nu>
+/* Copyright (C) 2009-2010, Martin Johansson <martin@fatbob.nu>
    Copyright (C) 2005-2010, Thorvald Natvig <thorvald@natvig.com>
 
    All rights reserved.
@@ -97,7 +97,11 @@ void Client_janitor()
 		
 		if (Timer_isElapsed(&c->lastActivity, 1000000LL * INACTICITY_TIMEOUT)) {
 			/* No activity from client - assume it is lost and close. */
-			Log_info("Session ID %d timeout - closing", c->sessionId);
+			Log_info("Timeout, closing session %d - %s@%s:%d",
+					 c->sessionId,
+					 c->playerName,
+					 inet_ntoa(c->remote_tcp.sin_addr),
+					 ntohs(c->remote_tcp.sin_port));
 			Client_free(c);
 		}
 	}
@@ -208,7 +212,9 @@ void Client_free(client_t *client)
 	struct dlist *itr, *save;
 	message_t *sendmsg;
 
-	Log_info("Disconnect client ID %d addr %s port %d", client->sessionId,
+	Log_info("Disconnect session %d - %s@%s:%d",
+			 client->sessionId,
+			 client->playerName,
 			 inet_ntoa(client->remote_tcp.sin_addr),
 			 ntohs(client->remote_tcp.sin_port));
 
@@ -347,7 +353,11 @@ int Client_read(client_t *client)
 					/* Hmm. This is where we end up when the client closes its connection.
 					 * Kind of strange...
 					 */
-					Log_info("Connection closed by peer");
+					Log_info("Connection closed by peer. Session %d - %s@%s:%d",
+							 client->sessionId,
+							 client->playerName,
+							 inet_ntoa(client->remote_tcp.sin_addr),
+							 ntohs(client->remote_tcp.sin_port));
 				}
 				else {
 					Log_warn("SSL error: %d - Closing connection.", SSL_get_error(client->ssl, rc));
@@ -504,7 +514,12 @@ static bool_t checkDecrypt(client_t *client, const uint8_t *encrypted, uint8_t *
 			Timer_restart(&client->cryptState.tLastRequest);
 			
 			sendmsg = Msg_create(CryptSetup);
-			Log_info("Requesting voice channel crypt resync");
+			Log_info("Requesting voice channel crypt resync. Session %d - %s@%s:%d",
+					 client->sessionId,
+					 client->playerName,
+					 inet_ntoa(client->remote_tcp.sin_addr),
+					 ntohs(client->remote_tcp.sin_port));
+		
 			Client_send_message(client, sendmsg);
 		}
 	}
@@ -569,7 +584,11 @@ int Client_read_udp()
 			if (itr->remote_tcp.sin_addr.s_addr == from.sin_addr.s_addr) {
 				if (checkDecrypt(itr, encrypted, buffer, len)) {
 					itr->key = key;
-					Log_info("New UDP connection from %s port %d sessionId %d", inet_ntoa(from.sin_addr), ntohs(from.sin_port), itr->sessionId);
+					Log_info("New UDP connection from session %d - %s@%s:%d",
+							 itr->sessionId,
+							 itr->playerName,
+							 inet_ntoa(from.sin_addr),
+							 ntohs(from.sin_port));
 					memcpy(&itr->remote_udp, &from, sizeof(struct sockaddr_in));
 					break;
 				}

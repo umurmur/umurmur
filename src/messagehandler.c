@@ -1,4 +1,4 @@
-/* Copyright (C) 2010, Martin Johansson <martin@fatbob.nu>
+/* Copyright (C) 2009-2010, Martin Johansson <martin@fatbob.nu>
    Copyright (C) 2005-2010, Thorvald Natvig <thorvald@natvig.com>
 
    All rights reserved.
@@ -51,6 +51,14 @@ static void sendServerReject(client_t *client, const char *reason, MumbleProto__
 	msg->payload.reject->type = type;
 	msg->payload.reject->has_type = true;
 	Client_send_message(client, msg);
+	
+	Log_info("Server reject reason: %s. Disconnecting session %d - %s@%s:%d",
+			 reason,
+			 client->sessionId,
+			 client->playerName,
+			 inet_ntoa(client->remote_tcp.sin_addr),
+			 ntohs(client->remote_tcp.sin_port));
+	
 }
 
 static void sendPermissionDenied(client_t *client, const char *reason)
@@ -217,7 +225,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			sendmsg->payload.userState->has_channel_id = true;
 			sendmsg->payload.userState->channel_id = ((channel_t *)client_itr->channel)->id;
 
-			/* XXX - check if self_* is correct */
+			/* Only self_mute/deaf supported */
 			if (client_itr->deaf) {
 				sendmsg->payload.userState->has_self_deaf = true;
 				sendmsg->payload.userState->self_deaf = true;
