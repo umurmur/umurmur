@@ -42,6 +42,8 @@
 #include "version.h"
 #include "voicetarget.h"
 
+extern char system_string[], version_string[];
+
 static int Client_read(client_t *client);
 static int Client_write(client_t *client);
 static int Client_send_udp(client_t *client, uint8_t *data, int len);
@@ -199,9 +201,8 @@ int Client_add(int fd, struct sockaddr_in *remote)
 	sendmsg->payload.version->has_version = true;
 	sendmsg->payload.version->version = PROTOCOL_VERSION;
 	sendmsg->payload.version->release = strdup(UMURMUR_VERSION);
-	/* XXX - set OS to something relevant? */
-	/* sendmsg->payload.version->os = strdup("Linux/OpenWRT"); */
-		
+	sendmsg->payload.version->os = strdup(system_string);
+	sendmsg->payload.version->os_version = strdup(version_string);
 	Client_send_message(newclient, sendmsg);
 
 	return 0;

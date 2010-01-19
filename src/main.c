@@ -34,6 +34,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/utsname.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <sched.h>
@@ -46,6 +47,8 @@
 #include "client.h"
 #include "conf.h"
 #include "version.h"
+
+char system_string[64], version_string[64];
 
 void lockfile(const char *pidfile)
 {
@@ -134,6 +137,7 @@ int main(int argc, char **argv)
 	bool_t realtime = false;
 	char *conffile = NULL, *pidfile = NULL;
 	int c;
+	struct utsname utsbuf;
 	
 	/* Arguments */
 	while ((c = getopt(argc, argv, "drp:c:h")) != EOF) {
@@ -180,7 +184,17 @@ int main(int argc, char **argv)
 	signal(SIGTTIN, SIG_IGN);
 	signal(SIGHUP, signal_handler); /* catch hangup signal */
 	signal(SIGTERM, signal_handler); /* catch kill signal */
-
+	
+	/* Build system string */
+	if (uname(&utsbuf) == 0) {
+		snprintf(system_string, 64, "%s %s", utsbuf.sysname, utsbuf.machine);
+		snprintf(version_string, 64, "%s", utsbuf.release);
+	}
+	else {
+		snprintf(system_string, 64, "unknown unknown");
+		snprintf(version_string, 64, "unknown");
+	}
+	
 	/* Initializing */
 	SSL_init();
 	Chan_init();
