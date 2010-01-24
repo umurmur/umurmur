@@ -72,10 +72,14 @@ static void sendPermissionDenied(client_t *client, const char *reason)
 
 void Mh_handle_message(client_t *client, message_t *msg)
 {
-	message_t *sendmsg;
+	message_t *sendmsg = NULL;
 	channel_t *ch_itr = NULL;
 	client_t *client_itr;
-	
+
+	if (!client->authenticated && !(msg->messageType == Authenticate ||
+									msg->messageType == Version)) {
+		goto out;
+	}	
 	switch (msg->messageType) {
 	case Authenticate:
 		/*
@@ -321,7 +325,14 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			client->mute = msg->payload.userState->self_mute;			
 		}
 		if (msg->payload.userState->has_channel_id) {
-			Chan_playerJoin_id(msg->payload.userState->channel_id, client);
+			int leave_id;
+			leave_id = Chan_playerJoin_id(msg->payload.userState->channel_id, client);
+			if (leave_id > 0) {
+				/* XXX - need to send update to remove channel if temporary */
+				Log_debug("Removing channel ID %d", leave_id);
+				sendmsg = Msg_create(ChannelRemove);
+				sendmsg->payload.channelRemove->channel_id = leave_id;
+			}
 		}
 		if (msg->payload.userState->plugin_context != NULL) {
 			if (client->context)
@@ -338,13 +349,16 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		msg->payload.userState->has_actor = true;
 		msg->payload.userState->actor = client->sessionId;
 		Client_send_message_except(NULL, msg);
+
+		/* Need to send remove channel message _after_ UserState message */
+		if (sendmsg != NULL)
+			Client_send_message_except(NULL, sendmsg);
 		break;
 	case TextMessage:
 		msg->payload.textMessage->has_actor = true;
 		msg->payload.textMessage->actor = client->sessionId;
 
-		/* XXX - Allow HTML stuff? */
-		
+		/* XXX - HTML is allowed and can't be turned off */
 		if (msg->payload.textMessage->n_tree_id > 0) {
 			sendPermissionDenied(client, "Tree message not supported");
 			break;
@@ -447,9 +461,73 @@ void Mh_handle_message(client_t *client, message_t *msg)
 	case UDPTunnel:
 		Client_voiceMsg(client, msg->payload.UDPTunnel->packet.data, msg->payload.UDPTunnel->packet.len);
 	    break;
+	case ChannelState:
+	{
+		channel_t *ch_itr, *parent, *newchan;
+		
+		/* Don't allow any changes to existing channels */
+		if (msg->payload.channelState->has_channel_id) {
+			sendPermissionDenied(client, "Not supported by uMurmur");
+			break;
+		}
+		/* Must have parent */
+		if (!msg->payload.channelState->has_parent) {
+			sendPermissionDenied(client, "Not supported by uMurmur");
+			break;
+		}
+		/* Must have name */
+		if (msg->payload.channelState->name == NULL) {
+			sendPermissionDenied(client, "Not supported by uMurmur");
+			break;
+		}
+		/* Must be temporary channel */
+		if (msg->payload.channelState->temporary != true) {
+			sendPermissionDenied(client, "Only temporary channels are supported by uMurmur");
+			break;
+		}
+		/* Check channel name is OK */
+		if (strlen(msg->payload.channelState->name) > MAX_TEXT) {
+			sendPermissionDenied(client, "Channel name too long");
+			break;
+		}
+			
+		parent = Chan_fromId(msg->payload.channelState->parent);
+		if (parent == NULL)
+			break;
+		ch_itr = NULL;
+		while (Chan_iterate_siblings(parent, &ch_itr) != NULL) {
+			if (strcmp(ch_itr->name, msg->payload.channelState->name) == 0) {
+				sendPermissionDenied(client, "Channel already exists");
+				break;
+			}
+		}
+		/* XXX - Murmur looks for "\\w" and sends perm denied if not found.
+		 * I don't know why so I don't do that here...
+		 */
+
+		/* Create the channel */
+		newchan = Chan_createChannel(msg->payload.channelState->name,
+									 msg->payload.channelState->description);
+		newchan->temporary = true;
+		Chan_addChannel(parent, newchan);
+		msg->payload.channelState->has_channel_id = true;
+		msg->payload.channelState->channel_id = newchan->id;
+		Msg_inc_ref(msg);
+		Client_send_message_except(NULL, msg);
+
+		/* Join the creating user */
+		sendmsg = Msg_create(UserState);
+		sendmsg->payload.userState->has_session = true;
+		sendmsg->payload.userState->session = client->sessionId;
+		sendmsg->payload.userState->has_channel_id = true;
+		sendmsg->payload.userState->channel_id = newchan->id;
+		Client_send_message_except(NULL, sendmsg);
+		Chan_playerJoin(newchan, client);
+	}		
+	break;
+
 		/* Permission denied for all these messages. Not implemented. */
 	case ChannelRemove:
-	case ChannelState:
 	case ContextAction:
 	case ContextActionAdd:
 	case ACL:
@@ -463,8 +541,10 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		Log_warn("Message %d not handled", msg->messageType);
 		break;
 	}
+out:
 	Msg_free(msg);
 	return;
+	
 disconnect:
 	Msg_free(msg);
 	Client_close(client);

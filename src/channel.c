@@ -28,6 +28,7 @@
    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+#include <limits.h>
 #include "log.h"
 #include "list.h"
 #include "client.h"
@@ -35,7 +36,6 @@
 #include "conf.h"
 
 
-static int nextchanId;
 static channel_t *rootChan;
 channel_t *defaultChan;
 declare_list(channels); /* A flat list of the channels */
@@ -59,8 +59,24 @@ static channel_t *createChannel(int id, const char *name, const char *desc)
 	return ch;
 }
 
+static int findFreeId()
+{
+	int id = 0;
+	channel_t *ch_itr = NULL;
+	for (id = 0; id < INT_MAX; id++) {
+		ch_itr = NULL;
+		while ((ch_itr = Chan_iterate(&ch_itr)) != NULL) {
+			if (ch_itr->id == id)
+				break;
+		}
+		if (ch_itr == NULL) /* Found free id */
+			return id;
+	}
+	return -1;
+}
+
 #if 0
-/* Might be used when tree travesal becomes neccessary */
+/* Might be used when tree traversal becomes neccessary */
 static channel_t *first_subchannel(channel_t *ch)
 {
 	if (list_empty(&ch->subs))
@@ -78,7 +94,7 @@ static channel_t *next_channel(channel_t *ch)
 }
 #endif
 
-void Chan_iterate(channel_t **channelpptr)
+channel_t *Chan_iterate(channel_t **channelpptr)
 {
 	channel_t *ch = *channelpptr;
 
@@ -94,6 +110,26 @@ void Chan_iterate(channel_t **channelpptr)
 	}
 
 	*channelpptr = ch;
+	return ch;
+}
+
+channel_t *Chan_iterate_siblings(channel_t *parent, channel_t **channelpptr)
+{
+	channel_t *ch = *channelpptr;
+
+	if (!list_empty(&parent->subs)) {
+		if (ch == NULL)
+			ch = list_get_entry(list_get_first(&parent->subs), channel_t, node);
+		else {
+			if (list_get_next(&ch->node) == &parent->subs)
+				ch = NULL;
+			else
+				ch = list_get_entry(list_get_next(&ch->node), channel_t, node);
+		}
+	}
+
+	*channelpptr = ch;
+	return ch;
 }
 			
 void Chan_init()
@@ -168,7 +204,7 @@ void Chan_init()
 			ch_dst = ch_itr;
 		
 		list_add_tail(&ch_dst->link_node, &ch_src->channel_links);
-		Log_debug("Adding channel link %s -> %s", ch_src->name, ch_dst->name);
+		Log_info("Adding channel link %s -> %s", ch_src->name, ch_dst->name);
 	}
 }
 
@@ -184,9 +220,10 @@ void Chan_free()
 
 channel_t *Chan_createChannel(const char *name, const char *desc)
 {
-	/* Get an ID */
-	nextchanId += 1; 
-	return createChannel(nextchanId, name, desc);
+	int id = findFreeId();
+	if (id < 0)
+		Log_fatal("No free channel ID found");
+	return createChannel(id, name, desc);
 }
 
 void Chan_freeChannel(channel_t *ch)
@@ -204,31 +241,42 @@ void Chan_addChannel(channel_t *parent, channel_t *ch)
 }
 
 
-void Chan_playerJoin(channel_t *ch, client_t *client)
+int Chan_playerJoin(channel_t *ch, client_t *client)
 {
+	channel_t *leaving = NULL;
+	int leaving_id = -1;
+	
 	/* Only allowed in one channel at a time */
 	Log_debug("Add player %s to channel %s", client->playerName, ch->name); 
 
-	if (client->channel)
+	if (client->channel) {
 		list_del(&client->chan_node);
+		leaving = (channel_t *)client->channel;
+		if (leaving->temporary && list_empty(&leaving->clients)) {
+			leaving_id = leaving->id;
+			Chan_freeChannel(leaving);
+		}
+	}
 	list_add_tail(&client->chan_node, &ch->clients);
 	client->channel = (void *)ch;
-	
+	return leaving_id;
 }
 
-void Chan_playerJoin_id(int channelid, client_t *client)
+int Chan_playerJoin_id(int channelid, client_t *client)
 {
 	channel_t *ch_itr = NULL;
 	do {
 		Chan_iterate(&ch_itr);
 	} while (ch_itr != NULL && ch_itr->id != channelid);
-	if (ch_itr == NULL)
+	if (ch_itr == NULL) {
 		Log_warn("Channel id %d not found - ignoring.", channelid);
+		return -1;
+	}
 	else
-		Chan_playerJoin(ch_itr, client);
-	
+		return Chan_playerJoin(ch_itr, client);	
 }
 
+#if 0
 void Chan_addChannel_id(int parentId, channel_t *ch)
 {
 	channel_t *ch_itr = NULL;
@@ -240,6 +288,7 @@ void Chan_addChannel_id(int parentId, channel_t *ch)
 	else
 		list_add_tail(&ch->node, &ch_itr->subs);
 }
+#endif
 
 channel_t *Chan_fromId(int channelid)
 {

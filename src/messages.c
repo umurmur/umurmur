@@ -212,6 +212,15 @@ int Msg_messageToNetwork(message_t *msg, uint8_t *buffer)
 		Msg_addPreamble(buffer, msg->messageType, len);
 		mumble_proto__permission_query__pack(msg->payload.permissionQuery, bufptr);
 		break;
+	case ChannelRemove:
+		len = mumble_proto__channel_remove__get_packed_size(msg->payload.channelRemove);
+		if (len > MAX_MSGSIZE) {
+			Log_warn("Too big tx message. Discarding");
+			break;
+			}
+		Msg_addPreamble(buffer, msg->messageType, len);
+		mumble_proto__channel_remove__pack(msg->payload.channelRemove, bufptr);
+		break;
 
 	default:
 		Log_warn("Unsupported message %d", msg->messageType);
@@ -282,6 +291,10 @@ message_t *Msg_create(messageType_t messageType)
 		msg->payload.userState = malloc(sizeof(MumbleProto__UserState));
 		mumble_proto__user_state__init(msg->payload.userState);
 		break;
+	case ChannelState:
+		msg->payload.channelState = malloc(sizeof(MumbleProto__ChannelState));
+		mumble_proto__channel_state__init(msg->payload.channelState);
+		break;
 	case UserRemove:
 		msg->payload.userRemove = malloc(sizeof(MumbleProto__UserRemove));
 		mumble_proto__user_remove__init(msg->payload.userRemove);
@@ -294,13 +307,13 @@ message_t *Msg_create(messageType_t messageType)
 		msg->payload.codecVersion = malloc(sizeof(MumbleProto__CodecVersion));
 		mumble_proto__codec_version__init(msg->payload.codecVersion);
 		break;
-	case ChannelState:
-		msg->payload.channelState = malloc(sizeof(MumbleProto__ChannelState));
-		mumble_proto__channel_state__init(msg->payload.channelState);
-		break;
 	case PermissionQuery:
 		msg->payload.permissionQuery = malloc(sizeof(MumbleProto__PermissionQuery));
 		mumble_proto__permission_query__init(msg->payload.permissionQuery);
+		break;
+	case ChannelRemove:
+		msg->payload.channelRemove = malloc(sizeof(MumbleProto__ChannelRemove));
+		mumble_proto__channel_remove__init(msg->payload.channelRemove);
 		break;
 
 	default:
@@ -410,6 +423,15 @@ void Msg_free(message_t *msg)
 			free(msg->payload.userState);
 		}
 		break;
+	case ChannelState:
+		if (msg->unpacked)
+			mumble_proto__channel_state__free_unpacked(msg->payload.channelState, NULL);
+		else {
+			free(msg->payload.channelState->name);
+			free(msg->payload.channelState->description);
+			free(msg->payload.channelState);
+		}
+		break;
 	case UserRemove:
 		if (msg->unpacked)
 			mumble_proto__user_remove__free_unpacked(msg->payload.userRemove, NULL);
@@ -431,21 +453,18 @@ void Msg_free(message_t *msg)
 			free(msg->payload.codecVersion);
 		}
 		break;
-	case ChannelState:
-		if (msg->unpacked)
-			mumble_proto__channel_state__free_unpacked(msg->payload.channelState, NULL);
-		else {
-			if (msg->payload.channelState->description)
-				free(msg->payload.channelState->description);
-			free(msg->payload.channelState->name);
-			free(msg->payload.channelState);
-		}
-		break;
 	case PermissionQuery:
 		if (msg->unpacked)
 			mumble_proto__permission_query__free_unpacked(msg->payload.permissionQuery, NULL);
 		else {
 			free(msg->payload.permissionQuery);
+		}
+		break;
+	case ChannelRemove:
+		if (msg->unpacked)
+			mumble_proto__channel_remove__free_unpacked(msg->payload.channelRemove, NULL);
+		else {
+			free(msg->payload.channelRemove);
 		}
 		break;
 
@@ -569,6 +588,13 @@ message_t *Msg_networkToMessage(uint8_t *data, int size)
 		msg->payload.userState = mumble_proto__user_state__unpack(NULL, msgLen, msgData);
 		break;
 	}
+	case ChannelState:
+	{
+		msg = Msg_create_nopayload(ChannelState);
+		msg->unpacked = true;
+		msg->payload.channelState = mumble_proto__channel_state__unpack(NULL, msgLen, msgData);
+		break;
+	}
 	case VoiceTarget:
 	{
 		msg = Msg_create_nopayload(VoiceTarget);
@@ -588,6 +614,13 @@ message_t *Msg_networkToMessage(uint8_t *data, int size)
 		msg = Msg_create_nopayload(PermissionQuery);
 		msg->unpacked = true;
 		msg->payload.permissionQuery = mumble_proto__permission_query__unpack(NULL, msgLen, msgData);
+		break;
+	}
+	case ChannelRemove:
+	{
+		msg = Msg_create_nopayload(ChannelRemove);
+		msg->unpacked = true;
+		msg->payload.channelRemove = mumble_proto__channel_remove__unpack(NULL, msgLen, msgData);
 		break;
 	}
 
