@@ -40,7 +40,7 @@ typedef struct channel {
 	char name[MAX_TEXT];
 	char desc[MAX_TEXT];
 	struct channel *parent;
-	bool_t temporary;
+	bool_t temporary, noenter;
 	struct dlist node;
 	struct dlist subs;
 	struct dlist clients;
@@ -57,6 +57,7 @@ void Chan_addClient(channel_t *c, client_t *client);
 void Chan_removeClient(channel_t *c, client_t *client);
 int Chan_playerJoin(channel_t *ch, client_t *client);
 int Chan_playerJoin_id(int channelid, client_t *client);
+bool_t Chan_playerJoin_id_test(int channelid);
 channel_t *Chan_iterate(channel_t **channelpptr);
 channel_t *Chan_iterate_siblings(channel_t *parent, channel_t **channelpptr);
 channel_t *Chan_createChannel(const char *name, const char *desc);

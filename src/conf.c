@@ -195,20 +195,28 @@ int Conf_getNextChannel(conf_channel_t *chdesc, int index)
 	sprintf(configstr, "channels.[%d].name", index);
 	setting = config_lookup(&configuration, configstr);
 	if (setting == NULL)
-		return -1;
+		return -1; /* Required */
 	strncpy(chdesc->name, config_setting_get_string(setting), MAX_TEXT);
 	
 	sprintf(configstr, "channels.[%d].parent", index);
 	setting = config_lookup(&configuration, configstr);
 	if (setting == NULL)
-		return -1;
+		return -1; /* Required */
 	strncpy(chdesc->parent, config_setting_get_string(setting), MAX_TEXT);
 	
 	sprintf(configstr, "channels.[%d].description", index);
 	setting = config_lookup(&configuration, configstr);
-	if (setting == NULL)
-		return -1;
-	strncpy(chdesc->description, config_setting_get_string(setting), MAX_TEXT);
+	if (setting == NULL) /* Optional */
+		strncpy(chdesc->description, "", MAX_TEXT);
+	else
+		strncpy(chdesc->description, config_setting_get_string(setting), MAX_TEXT);
+	
+	sprintf(configstr, "channels.[%d].noenter", index);
+	setting = config_lookup(&configuration, configstr);
+	if (setting == NULL) /* Optional */
+		chdesc->noenter = false;
+	else
+		chdesc->noenter = config_setting_get_bool(setting);
 
 	return 0;
 }

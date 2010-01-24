@@ -49,6 +49,7 @@ typedef struct {
 	char parent[MAX_TEXT];
 	char name[MAX_TEXT];
 	char description[MAX_TEXT];
+	bool_t noenter;
 } conf_channel_t;
 
 typedef struct {

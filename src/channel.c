@@ -149,6 +149,7 @@ void Chan_init()
 		}
 		if (i == 0) {
 			rootChan = createChannel(0, chdesc.name, chdesc.description);
+			rootChan->noenter = chdesc.noenter;
 			list_add_tail(&rootChan->flatlist_node, &channels);
 			if (strcmp(defaultChannelName, chdesc.name) == 0)
 				defaultChan = rootChan;
@@ -156,6 +157,7 @@ void Chan_init()
 		else {
 			channel_t *ch, *ch_itr = NULL;
 			ch = Chan_createChannel(chdesc.name, chdesc.description);
+			ch->noenter = chdesc.noenter;
 			
 			if (strcmp(defaultChannelName, chdesc.name) == 0) {
 				Log_info("Setting default channel %s", ch->name); 
@@ -176,6 +178,9 @@ void Chan_init()
 	}
 	if (defaultChan == NULL)
 		defaultChan = rootChan;
+	
+	if (defaultChan->noenter)
+		Log_fatal("Error in channel configuration: default channel is marked as noenter");
 
 	/* Channel links */
 	for (i = 0; ; i++) {
@@ -274,6 +279,22 @@ int Chan_playerJoin_id(int channelid, client_t *client)
 	}
 	else
 		return Chan_playerJoin(ch_itr, client);	
+}
+
+bool_t Chan_playerJoin_id_test(int channelid)
+{
+	channel_t *ch_itr = NULL;
+	do {
+		Chan_iterate(&ch_itr);
+	} while (ch_itr != NULL && ch_itr->id != channelid);
+	if (ch_itr == NULL) {
+		Log_warn("Channel id %d not found - ignoring.", channelid);
+		return false;
+	}
+	if (ch_itr->noenter)
+		return false;
+	else
+		return true;
 }
 
 #if 0

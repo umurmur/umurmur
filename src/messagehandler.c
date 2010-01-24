@@ -326,9 +326,10 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		}
 		if (msg->payload.userState->has_channel_id) {
 			int leave_id;
+			if (!Chan_playerJoin_id_test(msg->payload.userState->channel_id))
+				break;
 			leave_id = Chan_playerJoin_id(msg->payload.userState->channel_id, client);
 			if (leave_id > 0) {
-				/* XXX - need to send update to remove channel if temporary */
 				Log_debug("Removing channel ID %d", leave_id);
 				sendmsg = Msg_create(ChannelRemove);
 				sendmsg->payload.channelRemove->channel_id = leave_id;
@@ -354,6 +355,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		if (sendmsg != NULL)
 			Client_send_message_except(NULL, sendmsg);
 		break;
+		
 	case TextMessage:
 		msg->payload.textMessage->has_actor = true;
 		msg->payload.textMessage->actor = client->sessionId;
@@ -464,7 +466,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 	case ChannelState:
 	{
 		channel_t *ch_itr, *parent, *newchan;
-		
+		int leave_id;		
 		/* Don't allow any changes to existing channels */
 		if (msg->payload.channelState->has_channel_id) {
 			sendPermissionDenied(client, "Not supported by uMurmur");
@@ -501,6 +503,15 @@ void Mh_handle_message(client_t *client, message_t *msg)
 				break;
 			}
 		}
+		if (ch_itr != NULL)
+			break;
+		
+		/* Disallow temporary channels as siblings to temporary channels */
+		if (parent->temporary) {
+			sendPermissionDenied(client, "Parent channel is temporary channel");
+			break;
+		}
+			
 		/* XXX - Murmur looks for "\\w" and sends perm denied if not found.
 		 * I don't know why so I don't do that here...
 		 */
@@ -522,7 +533,14 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		sendmsg->payload.userState->has_channel_id = true;
 		sendmsg->payload.userState->channel_id = newchan->id;
 		Client_send_message_except(NULL, sendmsg);
-		Chan_playerJoin(newchan, client);
+		
+		leave_id = Chan_playerJoin(newchan, client);
+		if (leave_id > 0) {
+			Log_debug("Removing channel ID %d", leave_id);
+			sendmsg = Msg_create(ChannelRemove);
+			sendmsg->payload.channelRemove->channel_id = leave_id;
+			Client_send_message_except(NULL, sendmsg);
+		}
 	}		
 	break;
 
