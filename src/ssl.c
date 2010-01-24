@@ -264,7 +264,7 @@ void SSL_getdigest(char *s, int l)
 
 void SSL_init(void)
 {
-	SSL_METHOD *method;
+	const SSL_METHOD *method;
 	SSL *ssl;
 	int i, offset = 0;
 	STACK_OF(SSL_CIPHER) *cipherlist = NULL, *cipherlist_new = NULL;
