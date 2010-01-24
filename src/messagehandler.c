@@ -35,10 +35,13 @@
 #include "list.h"
 #include "client.h"
 #include "messages.h"
+#include "messagehandler.h"
 #include "crypt.h"
 #include "channel.h"
 #include "conf.h"
 #include "voicetarget.h"
+
+#define MAX_TEXT 512
 
 extern channel_t *defaultChan;
 extern int iCodecAlpha, iCodecBeta;
@@ -112,12 +115,14 @@ void Mh_handle_message(client_t *client, message_t *msg)
 				goto disconnect;
 			}				
 		}
-		if (msg->payload.authenticate->password && strncmp(getStrConf(PASSPHRASE), msg->payload.authenticate->password, MAX_TEXT) != 0) {
-			char buf[64];
-			sprintf(buf, "Wrong server password");
-			Log_debug("Wrong server password: %s", msg->payload.authenticate->password);
-			sendServerReject(client, buf, MUMBLE_PROTO__REJECT__REJECT_TYPE__WrongServerPW);
-			goto disconnect;
+		if (strlen(getStrConf(PASSPHRASE)) > 0) {
+			if (!msg->payload.authenticate->password || strncmp(getStrConf(PASSPHRASE), msg->payload.authenticate->password, MAX_TEXT) != 0) {
+				char buf[64];
+				sprintf(buf, "Wrong server password");
+				sendServerReject(client, buf, MUMBLE_PROTO__REJECT__REJECT_TYPE__WrongServerPW);
+				Log_debug("Wrong server password: %s", msg->payload.authenticate->password);
+				goto disconnect;
+			}
 		}				
 		if (strlen(msg->payload.authenticate->username) == 0 ||
 			strlen(msg->payload.authenticate->username) >= MAX_TEXT) { /* XXX - other invalid names? */
@@ -195,9 +200,8 @@ void Mh_handle_message(client_t *client, message_t *msg)
 				sendmsg->payload.channelState->parent = ch_itr->parent->id;
 			}
 			sendmsg->payload.channelState->name = strdup(ch_itr->name);
-			if (strlen(ch_itr->desc) > 0) {
+			if (ch_itr->desc)
 				sendmsg->payload.channelState->description = strdup(ch_itr->desc);
-			}
 			Log_debug("Send channel info: %s", sendmsg->payload.channelState->name);
 			Client_send_message(client, sendmsg);
 			

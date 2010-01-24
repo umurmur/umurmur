@@ -49,8 +49,9 @@ static channel_t *createChannel(int id, const char *name, const char *desc)
 		Log_fatal("out of memory");
 	memset(ch, 0, sizeof(channel_t));
 	ch->id = id;
-	strncpy(ch->name, name, MAX_TEXT);
-	strncpy(ch->desc, desc, MAX_TEXT);
+	ch->name = strdup(name);
+	if (desc)
+		ch->desc = strdup(desc);
 	init_list_entry(&ch->subs);
 	init_list_entry(&ch->node);
 	init_list_entry(&ch->clients);
@@ -139,7 +140,7 @@ void Chan_init()
 	conf_channel_link_t chlink;
 	const char *defaultChannelName;
 
-	defaultChannelName = getStrConf(DEAFULT_CHANNEL);
+	defaultChannelName = getStrConf(DEFAULT_CHANNEL);
 	
 	for (i = 0; ; i++) {
 		if (Conf_getNextChannel(&chdesc, i) < 0) {
@@ -195,7 +196,8 @@ void Chan_init()
 			Chan_iterate(&ch_itr);
 		} while (ch_itr != NULL && strcmp(ch_itr->name, chlink.source) != 0);
 		if (ch_itr == NULL)
-			Log_fatal("Error in channel link configuration: source channel '%s' not found.", chlink.source);
+			Log_fatal("Error in channel link configuration: source channel '%s' not found.",
+					  chlink.source);
 		else
 			ch_src = ch_itr;
 		
@@ -204,7 +206,8 @@ void Chan_init()
 			Chan_iterate(&ch_itr);
 		} while (ch_itr != NULL && strcmp(ch_itr->name, chlink.destination) != 0);
 		if (ch_itr == NULL)
-			Log_fatal("Error in channel link configuration: destination channel '%s' not found", chlink.destination);
+			Log_fatal("Error in channel link configuration: destination channel '%s' not found",
+					  chlink.destination);
 		else
 			ch_dst = ch_itr;
 		
@@ -216,10 +219,15 @@ void Chan_init()
 void Chan_free()
 {
 	struct dlist *itr, *save;
+	channel_t *ch;
 	
 	list_iterate_safe(itr, save, &channels) {
-		Log_debug("Free channel %s", list_get_entry(itr, channel_t, flatlist_node)->name);
-		free(list_get_entry(itr, channel_t, flatlist_node));
+		ch = list_get_entry(itr, channel_t, flatlist_node);
+		Log_debug("Free channel %s", ch->name);
+		free(ch->name);
+		if (ch->desc)
+			free(ch->desc);
+		free(ch);
 	}
 }
 

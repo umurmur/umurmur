@@ -42,19 +42,19 @@ typedef enum param {
 	WELCOMETEXT,
 	MAX_BANDWIDTH,
 	MAX_CLIENTS,
-	DEAFULT_CHANNEL,
+	DEFAULT_CHANNEL,
 } param_t;
 
 typedef struct {
-	char parent[MAX_TEXT];
-	char name[MAX_TEXT];
-	char description[MAX_TEXT];
+	const char *parent;
+	const char *name;
+	const char *description;
 	bool_t noenter;
 } conf_channel_t;
 
 typedef struct {
-	char source[MAX_TEXT];
-	char destination[MAX_TEXT];
+	const char *source;
+	const char *destination;
 } conf_channel_link_t;
 
 int Conf_init(const char *conffile);

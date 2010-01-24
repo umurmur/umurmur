@@ -135,7 +135,7 @@ const char *getStrConf(param_t param)
 			return DEFAULT_WELCOME;
 		}
 		break;
-	case DEAFULT_CHANNEL:
+	case DEFAULT_CHANNEL:
 		setting = config_lookup(&configuration, "default_channel");
 		if (!setting)
 			return "";
@@ -196,20 +196,20 @@ int Conf_getNextChannel(conf_channel_t *chdesc, int index)
 	setting = config_lookup(&configuration, configstr);
 	if (setting == NULL)
 		return -1; /* Required */
-	strncpy(chdesc->name, config_setting_get_string(setting), MAX_TEXT);
+	chdesc->name =  config_setting_get_string(setting);
 	
 	sprintf(configstr, "channels.[%d].parent", index);
 	setting = config_lookup(&configuration, configstr);
 	if (setting == NULL)
 		return -1; /* Required */
-	strncpy(chdesc->parent, config_setting_get_string(setting), MAX_TEXT);
+	chdesc->parent = config_setting_get_string(setting);
 	
 	sprintf(configstr, "channels.[%d].description", index);
 	setting = config_lookup(&configuration, configstr);
 	if (setting == NULL) /* Optional */
-		strncpy(chdesc->description, "", MAX_TEXT);
+		chdesc->description = NULL;
 	else
-		strncpy(chdesc->description, config_setting_get_string(setting), MAX_TEXT);
+		chdesc->description = config_setting_get_string(setting);
 	
 	sprintf(configstr, "channels.[%d].noenter", index);
 	setting = config_lookup(&configuration, configstr);
@@ -230,13 +230,13 @@ int Conf_getNextChannelLink(conf_channel_link_t *chlink, int index)
 	setting = config_lookup(&configuration, configstr);
 	if (setting == NULL)
 		return -1;
-	strncpy(chlink->source, config_setting_get_string(setting), MAX_TEXT);
+	chlink->source = config_setting_get_string(setting);
 
 	sprintf(configstr, "channel_links.[%d].destination", index);
 	setting = config_lookup(&configuration, configstr);
 	if (setting == NULL)
 		return -1;
-	strncpy(chlink->destination, config_setting_get_string(setting), MAX_TEXT);
+	chlink->destination = config_setting_get_string(setting);
 
 	return 0;
 }

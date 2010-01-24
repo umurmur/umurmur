@@ -41,9 +41,6 @@
 #define PROTVER_PATCH 0
 #define PROTOCOL_VERSION ((PROTVER_MAJOR << 16) | (PROTVER_MINOR << 8) | (PROTVER_PATCH))
 
-#define MAX_TEXT 512
-
-
 #define PERM_NONE 0x0
 #define PERM_WRITE 0x1
 #define PERM_TRAVERSE 0x2

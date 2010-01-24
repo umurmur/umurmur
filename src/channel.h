@@ -37,8 +37,8 @@
 
 typedef struct channel {
 	int id;
-	char name[MAX_TEXT];
-	char desc[MAX_TEXT];
+	char *name;
+	char *desc;
 	struct channel *parent;
 	bool_t temporary, noenter;
 	struct dlist node;
