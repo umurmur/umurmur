@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=umurmur
-PKG_VERSION:=0.1.3
+PKG_NAME:=umurmur_12x
+PKG_VERSION:=0.2.0
 PKG_RELEASE:=1
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
@@ -9,16 +9,16 @@ PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
 include $(INCLUDE_DIR)/package.mk
 
 
-define Package/umurmur
+define Package/umurmur_12x
 	SECTION:=net
 	CATEGORY:=Network
-	TITLE:=uMurmur
+	TITLE:=uMurmur_12x
 	DEPENDS:=+libopenssl +libconfig
 	URL:=http://code.google.com/p/umurmur
 	MAINTAINER:=Martin Johansson <martin@fatbob.nu>
 endef
 
-define Package/umurmur/description
+define Package/umurmur_12x/description
 	Minimalistic Mumble server daemon.
 endef
 
@@ -33,19 +33,19 @@ endef
 
 define Build/CompileTarget
 	CFLAGS="$(TARGET_CFLAGS)" LDFLAGS="$(TARGET_LDFLAGS)"\
-	$(MAKE) -C $(PKG_BUILD_DIR)/umurmur.$(1)/umurmur \
+	$(MAKE) -C $(PKG_BUILD_DIR)/umurmur_12x.$(1)/umurmur_12x \
 		all
 endef
 
-define Package/umurmur/install
+define Package/umurmur_12x/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/umurmurd $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/umurmur_12x $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/etc
 	$(INSTALL_CONF) ./files/umurmur.conf $(1)/etc/
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/umurmur.init $(1)/etc/init.d/umurmur
+	$(INSTALL_BIN) ./files/umurmur.init $(1)/etc/init.d/umurmur_12x
 	$(INSTALL_DIR) $(1)/etc/umurmur
 endef
 
-$(eval $(call BuildPackage,umurmur))
+$(eval $(call BuildPackage,umurmur_12x))
 
