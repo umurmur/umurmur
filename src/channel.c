@@ -254,14 +254,11 @@ void Chan_addChannel(channel_t *parent, channel_t *ch)
 }
 
 
-int Chan_playerJoin(channel_t *ch, client_t *client)
+int Chan_playerLeave(client_t *client)
 {
 	channel_t *leaving = NULL;
 	int leaving_id = -1;
 	
-	/* Only allowed in one channel at a time */
-	Log_debug("Add player %s to channel %s", client->playerName, ch->name); 
-
 	if (client->channel) {
 		list_del(&client->chan_node);
 		leaving = (channel_t *)client->channel;
@@ -270,6 +267,17 @@ int Chan_playerJoin(channel_t *ch, client_t *client)
 			Chan_freeChannel(leaving);
 		}
 	}
+	return leaving_id;
+}
+
+int Chan_playerJoin(channel_t *ch, client_t *client)
+{
+	int leaving_id;
+	
+	Log_debug("Add player %s to channel %s", client->playerName, ch->name); 
+
+	/* Only allowed in one channel at a time */
+	leaving_id = Chan_playerLeave(client);
 	list_add_tail(&client->chan_node, &ch->clients);
 	client->channel = (void *)ch;
 	return leaving_id;

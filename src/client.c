@@ -220,6 +220,13 @@ void Client_free(client_t *client)
 			 ntohs(client->remote_tcp.sin_port));
 
 	if (client->authenticated) {
+		int leave_id;
+		leave_id = Chan_playerLeave(client);
+		if (leave_id > 0) { /* Remove temp channel */
+			sendmsg = Msg_create(ChannelRemove);
+			sendmsg->payload.channelRemove->channel_id = leave_id;
+			Client_send_message_except(client, sendmsg);
+		}
 		sendmsg = Msg_create(UserRemove);
 		sendmsg->payload.userRemove->session = client->sessionId;
 		Client_send_message_except(client, sendmsg);
@@ -231,7 +238,6 @@ void Client_free(client_t *client)
 	Voicetarget_free_all(client);
 	
 	list_del(&client->node);
-	list_del(&client->chan_node);
 	if (client->ssl)
 		SSL_free(client->ssl);
 	close(client->tcpfd);
