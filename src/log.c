@@ -37,7 +37,7 @@
 
 #include "log.h"
 
-#define BUFSIZE 254
+#define STRSIZE 254
 
 static bool_t termprint;
 
@@ -58,14 +58,14 @@ void Log_free()
 void logthis(const char *logstring, ...)
 {
 	va_list argp;
-	char buf[BUFSIZE + 2];
+	char buf[STRSIZE + 2];
 	
 	va_start(argp, logstring);
-	vsnprintf(&buf[0], BUFSIZE, logstring, argp);
+	vsnprintf(&buf[0], STRSIZE, logstring, argp);
 	va_end(argp);
 	strcat(buf, "\n");
 	if (termprint)
-		fprintf(stderr, "%s", buf); /* XXX - other targets for logging */
+		fprintf(stderr, "%s", buf);
 	else
 		syslog(LOG_INFO, buf);
 }
@@ -73,16 +73,16 @@ void logthis(const char *logstring, ...)
 void Log_warn(const char *logstring, ...)
 {
 	va_list argp;
-	char buf[BUFSIZE + 2];
+	char buf[STRSIZE + 2];
 	int offset = 0;
 	
 	va_start(argp, logstring);
 	offset = sprintf(buf, "WARN: ");
-	vsnprintf(&buf[offset], BUFSIZE - offset, logstring, argp);
+	vsnprintf(&buf[offset], STRSIZE - offset, logstring, argp);
 	va_end(argp);
 	strcat(buf, "\n");
 	if (termprint)
-		fprintf(stderr, "%s", buf); /* XXX - other targets for logging */
+		fprintf(stderr, "%s", buf);
 	else
 		syslog(LOG_WARNING, buf);
 }
@@ -90,34 +90,56 @@ void Log_warn(const char *logstring, ...)
 void Log_info(const char *logstring, ...)
 {
 	va_list argp;
-	char buf[BUFSIZE + 2];
+	char buf[STRSIZE + 2];
 	int offset = 0;
 	
 	va_start(argp, logstring);
 	offset = sprintf(buf, "INFO: ");
-	vsnprintf(&buf[offset], BUFSIZE - offset, logstring, argp);
+	vsnprintf(&buf[offset], STRSIZE - offset, logstring, argp);
 	va_end(argp);
 	strcat(buf, "\n");
 	if (termprint)
-		fprintf(stderr, "%s", buf); /* XXX - other targets for logging */
+		fprintf(stderr, "%s", buf);
 	else
 		syslog(LOG_INFO, buf);
+}
+void Log_info_client(client_t *client, const char *logstring, ...)
+{
+	va_list argp;
+	char buf[STRSIZE + 2];
+	int offset = 0;
+	
+	va_start(argp, logstring);
+	offset = sprintf(buf, "INFO: ");
+	offset += vsnprintf(&buf[offset], STRSIZE - offset, logstring, argp);
+	va_end(argp);
+	offset += snprintf(&buf[offset], STRSIZE - offset, " - [%d] %s@%s:%d",
+					   client->sessionId,
+					   client->playerName,
+					   inet_ntoa(client->remote_tcp.sin_addr),
+					   ntohs(client->remote_tcp.sin_port));
+	strcat(buf, "\n");
+	if (termprint)
+		fprintf(stderr, "%s", buf);
+	else
+		syslog(LOG_INFO, buf);
+	
 }
 
 #ifdef DEBUG
 void Log_debug(const char *logstring, ...)
 {
 	va_list argp;
-	char buf[BUFSIZE + 2];
+	char buf[STRSIZE + 2];
 	int offset = 0;
 	
 	va_start(argp, logstring);
 	offset = sprintf(buf, "DEBUG: ");
-	vsnprintf(&buf[offset], BUFSIZE - offset, logstring, argp);
+	vsnprintf(&buf[offset], STRSIZE - offset, logstring, argp);
 	va_end(argp);
 	strcat(buf, "\n");
 	if (termprint)
-		fprintf(stderr, "%s", buf); /* XXX - other targets for logging */
+		fprintf(stderr, "%s", buf);
 	else
 		syslog(LOG_DEBUG, buf);
 }
@@ -126,15 +148,15 @@ void Log_debug(const char *logstring, ...)
 void Log_fatal(const char *logstring, ...)
 {
 	va_list argp;
-	char buf[BUFSIZE + 2];
+	char buf[STRSIZE + 2];
 	int offset = 0;
 	va_start(argp, logstring);
 	offset = sprintf(buf, "FATAL: ");
-	vsnprintf(&buf[offset], BUFSIZE - offset, logstring, argp);
+	vsnprintf(&buf[offset], STRSIZE - offset, logstring, argp);
 	va_end(argp);
 	strcat(buf, "\n");
 	if (termprint)
-		fprintf(stderr, "%s", buf); /* XXX - other targets for logging */
+		fprintf(stderr, "%s", buf);
 	else
 		syslog(LOG_CRIT, buf);
 	exit(1);

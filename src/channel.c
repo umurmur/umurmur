@@ -212,7 +212,7 @@ void Chan_init()
 			ch_dst = ch_itr;
 		
 		list_add_tail(&ch_dst->link_node, &ch_src->channel_links);
-		Log_info("Adding channel link %s -> %s", ch_src->name, ch_dst->name);
+		Log_info("Adding channel link '%s' -> '%s'", ch_src->name, ch_dst->name);
 	}
 }
 
@@ -223,7 +223,7 @@ void Chan_free()
 	
 	list_iterate_safe(itr, save, &channels) {
 		ch = list_get_entry(itr, channel_t, flatlist_node);
-		Log_debug("Free channel %s", ch->name);
+		Log_debug("Free channel '%s'", ch->name);
 		free(ch->name);
 		if (ch->desc)
 			free(ch->desc);

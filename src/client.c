@@ -99,11 +99,7 @@ void Client_janitor()
 		
 		if (Timer_isElapsed(&c->lastActivity, 1000000LL * INACTICITY_TIMEOUT)) {
 			/* No activity from client - assume it is lost and close. */
-			Log_info("Timeout, closing session %d - %s@%s:%d",
-					 c->sessionId,
-					 c->playerName,
-					 inet_ntoa(c->remote_tcp.sin_addr),
-					 ntohs(c->remote_tcp.sin_port));
+			Log_info_client(c, "Timeout, closing.");
 			Client_free(c);
 		}
 	}
@@ -180,7 +176,8 @@ int Client_add(int fd, struct sockaddr_in *remote)
 	memcpy(&newclient->remote_tcp, remote, sizeof(struct sockaddr_in));
 	newclient->ssl = SSL_newconnection(newclient->tcpfd, &newclient->SSLready);
 	if (newclient->ssl == NULL) {
-		Log_warn("SSL negotiation failed");
+		Log_warn("SSL negotiation failed with %s:%d", inet_ntoa(remote->sin_addr),
+				 ntohs(remote->sin_port));
 		free(newclient);
 		return -1;
 	}
@@ -212,12 +209,6 @@ void Client_free(client_t *client)
 {
 	struct dlist *itr, *save;
 	message_t *sendmsg;
-
-	Log_info("Disconnect session %d - %s@%s:%d",
-			 client->sessionId,
-			 client->playerName,
-			 inet_ntoa(client->remote_tcp.sin_addr),
-			 ntohs(client->remote_tcp.sin_port));
 
 	if (client->authenticated) {
 		int leave_id;
@@ -330,7 +321,7 @@ int Client_read(client_t *client)
 					client->msgsize = ntohl(msgLen);
 				}
 				if (client->msgsize > BUFSIZE - 6 && client->drainleft == 0) {
-					Log_warn("Too big message received (%d). Discarding.", client->msgsize);
+					Log_info_client(client, "Too big message received (%d bytes). Discarding.", client->msgsize);
 					client->rxcount = client->msgsize = 0;
 					client->drainleft = client->msgsize;
 				}
@@ -351,7 +342,7 @@ int Client_read(client_t *client)
 				return 0;
 			}
 			else if (SSL_get_error(client->ssl, rc) == SSL_ERROR_ZERO_RETURN) {
-				Log_warn("Error: Zero return - closing");
+				Log_info_client(client, "Connection closed by peer");
 				if (!client->shutdown_wait)
 					Client_close(client);
 			}
@@ -360,14 +351,10 @@ int Client_read(client_t *client)
 					/* Hmm. This is where we end up when the client closes its connection.
 					 * Kind of strange...
 					 */
-					Log_info("Connection closed by peer. Session %d - %s@%s:%d",
-							 client->sessionId,
-							 client->playerName,
-							 inet_ntoa(client->remote_tcp.sin_addr),
-							 ntohs(client->remote_tcp.sin_port));
+					Log_info_client(client, "Connection closed by peer");
 				}
 				else {
-					Log_warn("SSL error: %d - Closing connection.", SSL_get_error(client->ssl, rc));
+					Log_info_client(client, "SSL error: %d - Closing connection", SSL_get_error(client->ssl, rc));
 				}
 				Client_free(client);
 				return -1;
@@ -521,12 +508,7 @@ static bool_t checkDecrypt(client_t *client, const uint8_t *encrypted, uint8_t *
 			Timer_restart(&client->cryptState.tLastRequest);
 			
 			sendmsg = Msg_create(CryptSetup);
-			Log_info("Requesting voice channel crypt resync. Session %d - %s@%s:%d",
-					 client->sessionId,
-					 client->playerName,
-					 inet_ntoa(client->remote_tcp.sin_addr),
-					 ntohs(client->remote_tcp.sin_port));
-		
+			Log_info_client(client, "Requesting voice channel crypt resync");		
 			Client_send_message(client, sendmsg);
 		}
 	}
@@ -591,11 +573,7 @@ int Client_read_udp()
 			if (itr->remote_tcp.sin_addr.s_addr == from.sin_addr.s_addr) {
 				if (checkDecrypt(itr, encrypted, buffer, len)) {
 					itr->key = key;
-					Log_info("New UDP connection from session %d - %s@%s:%d",
-							 itr->sessionId,
-							 itr->playerName,
-							 inet_ntoa(from.sin_addr),
-							 ntohs(from.sin_port));
+					Log_info_client(itr, "New UDP connection port %d", ntohs(from.sin_port));
 					memcpy(&itr->remote_udp, &from, sizeof(struct sockaddr_in));
 					break;
 				}

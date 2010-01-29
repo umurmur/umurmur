@@ -55,13 +55,7 @@ static void sendServerReject(client_t *client, const char *reason, MumbleProto__
 	msg->payload.reject->has_type = true;
 	Client_send_message(client, msg);
 	
-	Log_info("Server reject reason: %s. Disconnecting session %d - %s@%s:%d",
-			 reason,
-			 client->sessionId,
-			 client->playerName,
-			 inet_ntoa(client->remote_tcp.sin_addr),
-			 ntohs(client->remote_tcp.sin_port));
-	
+	Log_info_client(client, "Server reject reason: %s", reason);
 }
 
 static void sendPermissionDenied(client_t *client, const char *reason)
@@ -256,7 +250,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		sendmsg->payload.serverSync->allow_html = true; /* Support this? */
 		Client_send_message(client, sendmsg);
 		
-		Log_info("User %s authenticated", client->playerName);
+		Log_info_client(client, "User %s authenticated", client->playerName);
 		break;
 		
 	case Ping:
@@ -378,9 +372,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 				do {
 					Chan_iterate(&ch_itr);
 				} while (ch_itr != NULL && ch_itr->id != msg->payload.textMessage->channel_id[i]);
-				if (ch_itr == NULL)
-					Log_warn("Channel id %d not found - ignoring.", msg->payload.textMessage->channel_id[i]);
-				else {
+				if (ch_itr != NULL) {
 					struct dlist *itr;
 					list_iterate(itr, &ch_itr->clients) {
 						client_t *c;
