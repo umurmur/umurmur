@@ -115,7 +115,7 @@ void Log_info_client(client_t *client, const char *logstring, ...)
 	va_end(argp);
 	offset += snprintf(&buf[offset], STRSIZE - offset, " - [%d] %s@%s:%d",
 					   client->sessionId,
-					   client->playerName,
+					   client->playerName == NULL ? "" : client->playerName,
 					   inet_ntoa(client->remote_tcp.sin_addr),
 					   ntohs(client->remote_tcp.sin_port));
 	strcat(buf, "\n");
