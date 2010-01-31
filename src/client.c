@@ -51,7 +51,6 @@ void Client_free(client_t *client);
 
 declare_list(clients);
 static int clientcount; /* = 0 */
-static int session = 1;
 static int maxBandwidth;
 
 int iCodecAlpha, iCodecBeta;
@@ -162,6 +161,23 @@ void recheckCodecVersions()
 	
 }
 
+static int findFreeSessionId()
+{
+	int id;
+	client_t *itr = NULL;
+
+	for (id = 1; id < INT_MAX; id++) {
+		itr = NULL;
+		while ((itr = Client_iterate(&itr)) != NULL) {
+			if (itr->sessionId == id)
+				break;
+		}
+		if (itr == NULL) /* Found free id */
+			return id;
+	}
+	return -1;
+}
+
 int Client_add(int fd, struct sockaddr_in *remote)
 {
 	client_t *newclient;
@@ -183,7 +199,9 @@ int Client_add(int fd, struct sockaddr_in *remote)
 	}
 	newclient->availableBandwidth = maxBandwidth;
 	Timer_init(&newclient->lastActivity);
-	newclient->sessionId = session++; /* XXX - more elaborate? */
+	newclient->sessionId = findFreeSessionId();
+	if (newclient->sessionId < 0)
+		Log_fatal("Could not find a free session ID");
 	
 	init_list_entry(&newclient->txMsgQueue);
 	init_list_entry(&newclient->chan_node);
