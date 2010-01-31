@@ -39,6 +39,7 @@
 #include "pds.h"
 #include "log.h"
 
+#define PREAMBLE_SIZE 6
 
 void dumpmsg(uint8_t *data, int size);
 static message_t *Msg_create_nopayload(messageType_t messageType);
@@ -68,11 +69,11 @@ static void Msg_getPreamble(uint8_t *buffer, int *type, int *len)
 	*len = (int)ntohl(msgLen);
 }
 
-#define MAX_MSGSIZE (BUFSIZE - 6)
+#define MAX_MSGSIZE (BUFSIZE - PREAMBLE_SIZE)
 int Msg_messageToNetwork(message_t *msg, uint8_t *buffer)
 {
 	int len;
-	uint8_t *bufptr = buffer + 6;
+	uint8_t *bufptr = buffer + PREAMBLE_SIZE;
 		
 	Log_debug("To net: msg type %d", msg->messageType);
 	switch (msg->messageType) {
@@ -83,8 +84,6 @@ int Msg_messageToNetwork(message_t *msg, uint8_t *buffer)
 			break;
 		}
 		Msg_addPreamble(buffer, msg->messageType, len);
-		Log_debug("To net: Version->release: %s Version->os: %s",
-				  msg->payload.version->release, msg->payload.version->os);
 		mumble_proto__version__pack(msg->payload.version, bufptr);
 		break;
 	case UDPTunnel: /* Non-standard handling of tunneled voice traffic. */
@@ -92,6 +91,7 @@ int Msg_messageToNetwork(message_t *msg, uint8_t *buffer)
 			Log_warn("Too big tx message. Discarding");
 			break;
 		}
+		len = msg->payload.UDPTunnel->packet.len;
 		Msg_addPreamble(buffer, msg->messageType, msg->payload.UDPTunnel->packet.len);
 		memcpy(bufptr, msg->payload.UDPTunnel->packet.data, msg->payload.UDPTunnel->packet.len);
 		break;
@@ -176,6 +176,15 @@ int Msg_messageToNetwork(message_t *msg, uint8_t *buffer)
 		Msg_addPreamble(buffer, msg->messageType, len);
 		mumble_proto__user_state__pack(msg->payload.userState, bufptr);
 		break;
+	case UserRemove:
+		len = mumble_proto__user_remove__get_packed_size(msg->payload.userRemove);
+		if (len > MAX_MSGSIZE) {
+			Log_warn("Too big tx message. Discarding");
+			break;
+			}
+		Msg_addPreamble(buffer, msg->messageType, len);
+		mumble_proto__user_remove__pack(msg->payload.userRemove, bufptr);
+		break;
 	case ChannelState:
 		len = mumble_proto__channel_state__get_packed_size(msg->payload.channelState);
 		if (len > MAX_MSGSIZE) {
@@ -223,10 +232,10 @@ int Msg_messageToNetwork(message_t *msg, uint8_t *buffer)
 		break;
 
 	default:
-		Log_warn("Unsupported message %d", msg->messageType);
+		Log_warn("Msg_networkToMessage: Unsupported message %d", msg->messageType);
 		return 0;
 	}
-	return len + 6;
+	return len + PREAMBLE_SIZE;
 }
 
 message_t *Msg_create_nopayload(messageType_t messageType)
