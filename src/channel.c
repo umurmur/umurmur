@@ -254,7 +254,7 @@ void Chan_addChannel(channel_t *parent, channel_t *ch)
 }
 
 
-int Chan_playerLeave(client_t *client)
+int Chan_userLeave(client_t *client)
 {
 	channel_t *leaving = NULL;
 	int leaving_id = -1;
@@ -270,20 +270,20 @@ int Chan_playerLeave(client_t *client)
 	return leaving_id;
 }
 
-int Chan_playerJoin(channel_t *ch, client_t *client)
+int Chan_userJoin(channel_t *ch, client_t *client)
 {
 	int leaving_id;
 	
-	Log_debug("Add player %s to channel %s", client->playerName, ch->name); 
+	Log_debug("Add user %s to channel %s", client->username, ch->name); 
 
 	/* Only allowed in one channel at a time */
-	leaving_id = Chan_playerLeave(client);
+	leaving_id = Chan_userLeave(client);
 	list_add_tail(&client->chan_node, &ch->clients);
 	client->channel = (void *)ch;
 	return leaving_id;
 }
 
-int Chan_playerJoin_id(int channelid, client_t *client)
+int Chan_userJoin_id(int channelid, client_t *client)
 {
 	channel_t *ch_itr = NULL;
 	do {
@@ -294,10 +294,10 @@ int Chan_playerJoin_id(int channelid, client_t *client)
 		return -1;
 	}
 	else
-		return Chan_playerJoin(ch_itr, client);	
+		return Chan_userJoin(ch_itr, client);	
 }
 
-bool_t Chan_playerJoin_id_test(int channelid)
+bool_t Chan_userJoin_id_test(int channelid)
 {
 	channel_t *ch_itr = NULL;
 	do {

@@ -69,7 +69,7 @@ typedef struct {
 	uint32_t rxcount, msgsize, drainleft, txcount, txsize;
 	int sessionId;
 	uint64_t key;
-	char *playerName;
+	char *username;
 	bool_t authenticated, deaf, mute;
 	char *os, *release;
 	uint32_t version;

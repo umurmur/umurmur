@@ -91,7 +91,7 @@ void Client_janitor()
 	list_iterate(itr, &clients) {
 		client_t *c;
 		c = list_get_entry(itr, client_t, node);
-		Log_debug("Client %s BW available %d", c->playerName, c->availableBandwidth);
+		Log_debug("Client %s BW available %d", c->username, c->availableBandwidth);
 		c->availableBandwidth += maxBandwidth;
 		if (c->availableBandwidth > bwTop)
 			c->availableBandwidth = bwTop;
@@ -230,7 +230,7 @@ void Client_free(client_t *client)
 
 	if (client->authenticated) {
 		int leave_id;
-		leave_id = Chan_playerLeave(client);
+		leave_id = Chan_userLeave(client);
 		if (leave_id > 0) { /* Remove temp channel */
 			sendmsg = Msg_create(ChannelRemove);
 			sendmsg->payload.channelRemove->channel_id = leave_id;
@@ -255,8 +255,8 @@ void Client_free(client_t *client)
 		free(client->release);
 	if (client->os)
 		free(client->os);			
-	if (client->playerName)
-		free(client->playerName);
+	if (client->username)
+		free(client->username);
 	if (client->context)
 		free(client->context);
 	free(client);
@@ -501,7 +501,7 @@ int Client_send_message_except(client_t *client, message_t *msg)
 		if (itr != client) {
 			if (count++ > 0)
 				Msg_inc_ref(msg); /* One extra reference for each new copy */
-			Log_debug("Msg %d to %s refcount %d",  msg->messageType, itr->playerName, msg->refcount);
+			Log_debug("Msg %d to %s refcount %d",  msg->messageType, itr->username, msg->refcount);
 			Client_send_message(itr, msg);
 		}
 	}

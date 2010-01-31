@@ -79,18 +79,6 @@ void Mh_handle_message(client_t *client, message_t *msg)
 	}	
 	switch (msg->messageType) {
 	case Authenticate:
-		/*
-		 * 1. Check stuff, Serverreject if not ok
-		 * 2. Setup UDP encryption -> MessageCryptSetup
-		 * 3. (Enter channel)
-		 * 4. MessageChannelAdd + MessageChannelDescUpdate for all channels
-		 * 5. (MessageChannelLink)
-		 * 6. MessageServerJoin
-		 * 7. MessagePlayerMove
-		 * 8. MessageServerJoin for all connected users
-		 * 9. PlayerDeaf/PlayerMute/PlayerSelfMuteDeaf for all users it applies to
-		 * 10. MessageServerSync
-		 */
 				
 		Log_debug("Authenticate message received");
 		Log_debug("Username: %s", msg->payload.authenticate->username);
@@ -101,7 +89,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		while (Client_iterate(&client_itr) != NULL) {
 			if (!IS_AUTH(client_itr))
 				continue;
-			if (client_itr->playerName && strncmp(client_itr->playerName, msg->payload.authenticate->username, MAX_TEXT) == 0) {
+			if (client_itr->username && strncmp(client_itr->username, msg->payload.authenticate->username, MAX_TEXT) == 0) {
 				char buf[64];
 				sprintf(buf, "Username already in use");
 				Log_debug("Username already in use");
@@ -135,7 +123,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		}
 		
 		/* Name & password */
-		client->playerName = strdup(msg->payload.authenticate->username);				
+		client->username = strdup(msg->payload.authenticate->username);				
 		
 		/* Setup UDP encryption */
 		CryptState_init(&client->cryptState);
@@ -153,7 +141,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		Client_send_message(client, sendmsg);
 
 		/* Channel stuff */
-		Chan_playerJoin(defaultChan, client); /* Join default channel */
+		Chan_userJoin(defaultChan, client); /* Join default channel */
 
 		/* Codec version */
 		if (msg->payload.authenticate->n_celt_versions > MAX_CODECS)
@@ -210,7 +198,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		sendmsg->payload.userState->session = client->sessionId;
 		sendmsg->payload.userState->has_user_id = true;
 		sendmsg->payload.userState->user_id = client->sessionId;
-		sendmsg->payload.userState->name = strdup(client->playerName);
+		sendmsg->payload.userState->name = strdup(client->username);
 		sendmsg->payload.userState->has_channel_id = true;
 		sendmsg->payload.userState->channel_id = ((channel_t *)client->channel)->id;
 		
@@ -223,7 +211,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			sendmsg = Msg_create(UserState);
 			sendmsg->payload.userState->has_session = true;
 			sendmsg->payload.userState->session = client_itr->sessionId;
-			sendmsg->payload.userState->name = strdup(client_itr->playerName);
+			sendmsg->payload.userState->name = strdup(client_itr->username);
 			sendmsg->payload.userState->has_channel_id = true;
 			sendmsg->payload.userState->channel_id = ((channel_t *)client_itr->channel)->id;
 
@@ -250,7 +238,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		sendmsg->payload.serverSync->allow_html = true; /* Support this? */
 		Client_send_message(client, sendmsg);
 		
-		Log_info_client(client, "User %s authenticated", client->playerName);
+		Log_info_client(client, "User %s authenticated", client->username);
 		break;
 		
 	case Ping:
@@ -324,9 +312,9 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		}
 		if (msg->payload.userState->has_channel_id) {
 			int leave_id;
-			if (!Chan_playerJoin_id_test(msg->payload.userState->channel_id))
+			if (!Chan_userJoin_id_test(msg->payload.userState->channel_id))
 				break;
-			leave_id = Chan_playerJoin_id(msg->payload.userState->channel_id, client);
+			leave_id = Chan_userJoin_id(msg->payload.userState->channel_id, client);
 			if (leave_id > 0) {
 				Log_debug("Removing channel ID %d", leave_id);
 				sendmsg = Msg_create(ChannelRemove);
@@ -530,7 +518,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		sendmsg->payload.userState->channel_id = newchan->id;
 		Client_send_message_except(NULL, sendmsg);
 		
-		leave_id = Chan_playerJoin(newchan, client);
+		leave_id = Chan_userJoin(newchan, client);
 		if (leave_id > 0) {
 			Log_debug("Removing channel ID %d", leave_id);
 			sendmsg = Msg_create(ChannelRemove);
