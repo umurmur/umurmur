@@ -518,7 +518,6 @@ int Client_send_message(client_t *client, message_t *msg)
 		Log_debug("Queueing message");
 	} else {
 		int len;
-		memset(client->txbuf, 0, BUFSIZE);
 		len = Msg_messageToNetwork(msg, client->txbuf);
 		doAssert(len < BUFSIZE);
 
