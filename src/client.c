@@ -31,6 +31,7 @@
 #include <sys/poll.h>
 #include <sys/socket.h>
 #include <errno.h>
+#include <limits.h>
 #include "log.h"
 #include "list.h"
 #include "client.h"
@@ -104,35 +105,91 @@ void Client_janitor()
 	}
 }
 
+void Client_codec_add(client_t *client, int codec)
+{
+	codec_t *cd = malloc(sizeof(codec_t));
+	if (cd == NULL)
+		Log_fatal("Out of memory");
+	init_list_entry(&cd->node);
+	cd->codec = codec;
+	list_add_tail(&cd->node, &client->codecs);
+}
+
+void Client_codec_free(client_t *client)
+{
+	struct dlist *itr, *save;
+	list_iterate_safe(itr, save, &client->codecs) {
+		list_del(&list_get_entry(itr, codec_t, node)->node);
+		free(list_get_entry(itr, codec_t, node));
+	}
+}
+
+codec_t *Client_codec_iterate(client_t *client, codec_t **codec_itr)
+{
+	codec_t *cd = *codec_itr;
+
+	if (list_empty(&client->codecs))
+		return NULL;
+	
+	if (cd == NULL) {
+		cd = list_get_entry(list_get_first(&client->codecs), codec_t, node);
+	} else {
+		if (list_get_next(&cd->node) == &client->codecs)
+			cd = NULL;
+		else
+			cd = list_get_entry(list_get_next(&cd->node), codec_t, node);
+	}
+	*codec_itr = cd;
+	return cd;
+}
+
 void recheckCodecVersions()
 {
-	int codec_map[MAX_CODECS][2];
-	client_t *itr = NULL;
-	int i, codecindex, max = 0, version, current_version;
+	client_t *client_itr = NULL;
+	int max = 0, version, current_version;
 	message_t *sendmsg;
+	struct dlist codec_list, *itr, *save;
+	codec_t *codec_itr, *cd;
+	bool_t found;
 	
-	memset(codec_map, 0, MAX_CODECS * 2 * sizeof(int));
-	while (Client_iterate(&itr) != NULL) {
-		for (i = 0; i < itr->codec_count; i++) {
-			for (codecindex = 0; codecindex < MAX_CODECS; codecindex++) {
-				if (codec_map[codecindex][0] == 0) {
-					codec_map[codecindex][0] = itr->codecs[i];
-					codec_map[codecindex][1] = 1;
-					break;
+	init_list_entry(&codec_list);
+	
+	while (Client_iterate(&client_itr) != NULL) {
+		codec_itr = NULL;
+		while (Client_codec_iterate(client_itr, &codec_itr) != NULL) {
+			found = false;
+			list_iterate(itr, &codec_list) {
+				cd = list_get_entry(itr, codec_t, node);
+				if (cd->codec == codec_itr->codec) {
+					cd->count++;
+					found = true;
 				}
-				if (itr->codecs[i] == codec_map[codecindex][0])
-					codec_map[codecindex][1]++;
+			}
+			if (!found) {
+				cd = malloc(sizeof(codec_t));
+				if (!cd)
+					Log_fatal("Out of memory");
+				memset(cd, 0, sizeof(codec_t));
+				init_list_entry(&cd->node);
+				cd->codec = codec_itr->codec;
+				cd->count = 1;
+				list_add_tail(&cd->node, &codec_list);
 			}
 		}
 	}
-	for (codecindex = 0; codecindex < MAX_CODECS; codecindex++) {
-		if (codec_map[codecindex][0] == 0)
-			break;
-		if (codec_map[codecindex][1] > max) {
-			max = codec_map[codecindex][1];
-			version = codec_map[codecindex][0];
+	
+	list_iterate(itr, &codec_list) {
+		cd = list_get_entry(itr, codec_t, node);
+		if (cd->count > max) {
+			max = cd->count;
+			version = cd->codec;
 		}
 	}
+	list_iterate_safe(itr, save, &codec_list) {
+		list_del(&list_get_entry(itr, codec_t, node)->node);
+		free(list_get_entry(itr, codec_t, node));
+	}
+	
 	current_version = bPreferAlpha ? iCodecAlpha : iCodecBeta;
 	if (current_version == version)
 		return;
@@ -207,6 +264,7 @@ int Client_add(int fd, struct sockaddr_in *remote)
 	init_list_entry(&newclient->chan_node);
 	init_list_entry(&newclient->node);
 	init_list_entry(&newclient->voicetargets);
+	init_list_entry(&newclient->codecs);
 	
 	list_add_tail(&newclient->node, &clients);
 	clientcount++;
@@ -244,6 +302,7 @@ void Client_free(client_t *client)
 		list_del(&list_get_entry(itr, message_t, node)->node);
 		Msg_free(list_get_entry(itr, message_t, node));
 	}
+	Client_codec_free(client);
 	Voicetarget_free_all(client);
 	
 	list_del(&client->node);

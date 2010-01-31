@@ -74,7 +74,7 @@ typedef struct {
 	char *os, *release;
 	uint32_t version;
 	int codec_count;
-	int32_t codecs[MAX_CODECS];
+	struct dlist codecs;
 	int availableBandwidth;
 	etimer_t lastActivity;
 	struct dlist node;
@@ -86,6 +86,10 @@ typedef struct {
 	struct dlist voicetargets;
 } client_t;
 
+typedef struct {
+	int codec, count;
+	struct dlist node;
+} codec_t;
 
 void Client_init();
 int Client_getfds(struct pollfd *pollfds);
@@ -102,5 +106,8 @@ int Client_read_udp(void);
 void Client_disconnect_all();
 int Client_voiceMsg(client_t *client, uint8_t *data, int len);
 void recheckCodecVersions();
+void Client_codec_add(client_t *client, int codec);
+void Client_codec_free(client_t *client);
+codec_t *Client_codec_iterate(client_t *client, codec_t **codec_itr);
 
 #endif

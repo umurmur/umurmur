@@ -143,22 +143,22 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		/* Channel stuff */
 		Chan_userJoin(defaultChan, client); /* Join default channel */
 
-		/* Codec version */
-		if (msg->payload.authenticate->n_celt_versions > MAX_CODECS)
-			Log_warn("Client has more than %d CELT codecs. Ignoring %d codecs",
-					 MAX_CODECS, msg->payload.authenticate->n_celt_versions - MAX_CODECS);
-		
-		Log_debug("Client %d has %d CELT codecs", client->sessionId, msg->payload.authenticate->n_celt_versions);
+		/* Codec version */		
+		Log_debug("Client %d has %d CELT codecs", client->sessionId,
+				  msg->payload.authenticate->n_celt_versions);
 		if (msg->payload.authenticate->n_celt_versions > 0) {
 			int i;
-			client->codec_count = msg->payload.authenticate->n_celt_versions > MAX_CODECS ?
-				MAX_CODECS : msg->payload.authenticate->n_celt_versions;
-			for (i = 0; i < client->codec_count; i++) {
-				client->codecs[i] = msg->payload.authenticate->celt_versions[i];
-				Log_debug("Client %d CELT codec ver 0x%x", client->sessionId, client->codecs[i]);
-			}
+			codec_t *codec_itr;
+			client->codec_count = msg->payload.authenticate->n_celt_versions;
+			
+			for (i = 0; i < client->codec_count; i++)
+			Client_codec_add(client, msg->payload.authenticate->celt_versions[i]);
+			codec_itr = NULL;
+			while (Client_codec_iterate(client, &codec_itr) != NULL)
+				Log_debug("Client %d CELT codec ver 0x%x", client->sessionId, codec_itr->codec);
+				
 		} else {
-			client->codecs[0] = (int32_t)0x8000000a;
+			Client_codec_add(client, (int32_t)0x8000000a);
 			client->codec_count = 1;
 		}
 		
