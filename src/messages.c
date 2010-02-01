@@ -518,6 +518,8 @@ message_t *Msg_networkToMessage(uint8_t *data, int size)
 		msg = Msg_create_nopayload(Version);
 		msg->unpacked = true;
 		msg->payload.version = mumble_proto__version__unpack(NULL, msgLen, msgData);
+		if (msg->payload.version == NULL)
+			goto err_out;
 		break;
 	}
 	case UDPTunnel: /* Non-standard handling of tunneled voice data */
@@ -539,6 +541,8 @@ message_t *Msg_networkToMessage(uint8_t *data, int size)
 		msg = Msg_create_nopayload(Authenticate);
 		msg->unpacked = true;
 		msg->payload.authenticate = mumble_proto__authenticate__unpack(NULL, msgLen, msgData);
+		if (msg->payload.authenticate == NULL)
+			goto err_out;
 		break;
 	}
 	case Ping:
@@ -546,6 +550,8 @@ message_t *Msg_networkToMessage(uint8_t *data, int size)
 		msg = Msg_create_nopayload(Ping);
 		msg->unpacked = true;
 		msg->payload.ping = mumble_proto__ping__unpack(NULL, msgLen, msgData);
+		if (msg->payload.ping == NULL)
+			goto err_out;
 		break;
 	}
 	case Reject:
@@ -553,6 +559,8 @@ message_t *Msg_networkToMessage(uint8_t *data, int size)
 		msg = Msg_create_nopayload(Reject);
 		msg->unpacked = true;
 		msg->payload.reject = mumble_proto__reject__unpack(NULL, msgLen, msgData);
+		if (msg->payload.reject == NULL)
+			goto err_out;
 		break;
 	}
 	case ServerSync:
@@ -560,6 +568,8 @@ message_t *Msg_networkToMessage(uint8_t *data, int size)
 		msg = Msg_create_nopayload(ServerSync);
 		msg->unpacked = true;
 		msg->payload.serverSync = mumble_proto__server_sync__unpack(NULL, msgLen, msgData);
+		if (msg->payload.serverSync == NULL)
+			goto err_out;
 		break;
 	}
 	case TextMessage:
@@ -567,6 +577,8 @@ message_t *Msg_networkToMessage(uint8_t *data, int size)
 		msg = Msg_create_nopayload(TextMessage);
 		msg->unpacked = true;
 		msg->payload.textMessage = mumble_proto__text_message__unpack(NULL, msgLen, msgData);
+		if (msg->payload.textMessage == NULL)
+			goto err_out;
 		break;
 	}
 	case PermissionDenied:
@@ -574,6 +586,8 @@ message_t *Msg_networkToMessage(uint8_t *data, int size)
 		msg = Msg_create_nopayload(PermissionDenied);
 		msg->unpacked = true;
 		msg->payload.permissionDenied = mumble_proto__permission_denied__unpack(NULL, msgLen, msgData);
+		if (msg->payload.permissionDenied == NULL)
+			goto err_out;
 		break;
 	}
 	case CryptSetup:
@@ -581,6 +595,8 @@ message_t *Msg_networkToMessage(uint8_t *data, int size)
 		msg = Msg_create_nopayload(CryptSetup);
 		msg->unpacked = true;
 		msg->payload.cryptSetup = mumble_proto__crypt_setup__unpack(NULL, msgLen, msgData);
+		if (msg->payload.cryptSetup == NULL)
+			goto err_out;
 		break;
 	}
 	case UserList:
@@ -588,6 +604,8 @@ message_t *Msg_networkToMessage(uint8_t *data, int size)
 		msg = Msg_create_nopayload(UserList);
 		msg->unpacked = true;
 		msg->payload.userList = mumble_proto__user_list__unpack(NULL, msgLen, msgData);
+		if (msg->payload.userList == NULL)
+			goto err_out;
 		break;
 	}
 	case UserState:
@@ -595,6 +613,8 @@ message_t *Msg_networkToMessage(uint8_t *data, int size)
 		msg = Msg_create_nopayload(UserState);
 		msg->unpacked = true;
 		msg->payload.userState = mumble_proto__user_state__unpack(NULL, msgLen, msgData);
+		if (msg->payload.userState == NULL)
+			goto err_out;
 		break;
 	}
 	case ChannelState:
@@ -602,6 +622,8 @@ message_t *Msg_networkToMessage(uint8_t *data, int size)
 		msg = Msg_create_nopayload(ChannelState);
 		msg->unpacked = true;
 		msg->payload.channelState = mumble_proto__channel_state__unpack(NULL, msgLen, msgData);
+		if (msg->payload.channelState == NULL)
+			goto err_out;
 		break;
 	}
 	case VoiceTarget:
@@ -609,6 +631,8 @@ message_t *Msg_networkToMessage(uint8_t *data, int size)
 		msg = Msg_create_nopayload(VoiceTarget);
 		msg->unpacked = true;
 		msg->payload.voiceTarget = mumble_proto__voice_target__unpack(NULL, msgLen, msgData);
+		if (msg->payload.voiceTarget == NULL)
+			goto err_out;
 		break;
 	}
 	case CodecVersion:
@@ -616,6 +640,8 @@ message_t *Msg_networkToMessage(uint8_t *data, int size)
 		msg = Msg_create_nopayload(CodecVersion);
 		msg->unpacked = true;
 		msg->payload.codecVersion = mumble_proto__codec_version__unpack(NULL, msgLen, msgData);
+		if (msg->payload.codecVersion == NULL)
+			goto err_out;
 		break;
 	}
 	case PermissionQuery:
@@ -623,6 +649,8 @@ message_t *Msg_networkToMessage(uint8_t *data, int size)
 		msg = Msg_create_nopayload(PermissionQuery);
 		msg->unpacked = true;
 		msg->payload.permissionQuery = mumble_proto__permission_query__unpack(NULL, msgLen, msgData);
+		if (msg->payload.permissionQuery == NULL)
+			goto err_out;
 		break;
 	}
 	case ChannelRemove:
@@ -630,6 +658,8 @@ message_t *Msg_networkToMessage(uint8_t *data, int size)
 		msg = Msg_create_nopayload(ChannelRemove);
 		msg->unpacked = true;
 		msg->payload.channelRemove = mumble_proto__channel_remove__unpack(NULL, msgLen, msgData);
+		if (msg->payload.channelRemove == NULL)
+			goto err_out;
 		break;
 	}
 
@@ -638,4 +668,8 @@ message_t *Msg_networkToMessage(uint8_t *data, int size)
 		break;
 	}
 	return msg;
+	
+err_out:
+	free(msg);
+	return NULL;
 }
