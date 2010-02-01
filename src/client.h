@@ -48,7 +48,7 @@
 #include "timer.h"
 #include "pds.h"
 
-#define BUFSIZE 2048
+#define BUFSIZE 8192
 #define UDP_BUFSIZE 512
 #define INACTICITY_TIMEOUT 15 /* Seconds */
 #define MAX_CODECS 10

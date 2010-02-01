@@ -382,33 +382,33 @@ int Client_read(client_t *client)
 		errno = 0;
 		if (!client->msgsize) 
 			rc = SSL_read(client->ssl, &client->rxbuf[client->rxcount], 6 - client->rxcount);
-		else if (client->drainleft > 0)
-			rc = SSL_read(client->ssl, client->rxbuf, client->drainleft > BUFSIZE ? BUFSIZE : client->drainleft);
 		else
 			rc = SSL_read(client->ssl, &client->rxbuf[client->rxcount], client->msgsize);
 		if (rc > 0) {
 			message_t *msg;
-			if (client->drainleft > 0)
-				client->drainleft -= rc;
-			else {
-				client->rxcount += rc;
-				if (!client->msgsize && client->rxcount >= 6) {
-					uint32_t msgLen;
-					memcpy(&msgLen, &client->rxbuf[2], sizeof(uint32_t));
-					client->msgsize = ntohl(msgLen);
-				}
-				if (client->msgsize > BUFSIZE - 6 && client->drainleft == 0) {
-					Log_info_client(client, "Too big message received (%d bytes). Discarding.", client->msgsize);
-					client->rxcount = client->msgsize = 0;
-					client->drainleft = client->msgsize;
-				}
-				else if (client->rxcount == client->msgsize + 6) { /* Got all of the message */
-					msg = Msg_networkToMessage(client->rxbuf, client->msgsize + 6);
-					/* pass messsage to handler */
-					if (msg)
-							Mh_handle_message(client, msg);
-					client->rxcount = client->msgsize = 0;
-				}
+			client->rxcount += rc;
+			if (!client->msgsize && client->rxcount >= 6) {
+				uint32_t msgLen;
+				memcpy(&msgLen, &client->rxbuf[2], sizeof(uint32_t));
+				client->msgsize = ntohl(msgLen);
+			}
+			if (client->msgsize > BUFSIZE - 6) {
+				/* XXX - figure out how to handle this. A large size here can represent two cases:
+				 * 1. A valid size. The only message that is this big is UserState message with a big texture
+				 * 2. An invalid size = protocol error, e.g. connecting with a 1.1.x client
+				 */
+				Log_warn("Too big message received (%d bytes). Playing safe and disconnecting client %s:%d",
+						 client->msgsize, inet_ntoa(client->remote_tcp.sin_addr), ntohs(client->remote_tcp.sin_port));
+				Client_free(client);
+				return -1;
+				/* client->rxcount = client->msgsize = 0; */
+			}
+			else if (client->rxcount == client->msgsize + 6) { /* Got all of the message */
+				msg = Msg_networkToMessage(client->rxbuf, client->msgsize + 6);
+				/* pass messsage to handler */
+				if (msg)
+					Mh_handle_message(client, msg);
+				client->rxcount = client->msgsize = 0;
 			}
 		} else /* rc <= 0 */ {
 			if (SSL_get_error(client->ssl, rc) == SSL_ERROR_WANT_READ) {
@@ -438,7 +438,8 @@ int Client_read(client_t *client)
 			}
 		}
 	} while (SSL_pending(client->ssl));
-	return 0;	
+	
+	return 0;
 }
 
 int Client_write_fd(int fd)
