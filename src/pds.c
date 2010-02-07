@@ -95,7 +95,7 @@ uint8_t Pds_next8(pds_t *pds)
 
 int Pds_skip(pds_t *pds, int offset)
 {
-	if (pds->offset + offset < pds->maxsize) {
+	if (pds->offset + offset <= pds->maxsize) {
 		pds->offset += offset;
 		return offset;
 	} else {
