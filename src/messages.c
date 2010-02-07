@@ -41,10 +41,10 @@
 
 #define PREAMBLE_SIZE 6
 
-void dumpmsg(uint8_t *data, int size);
+static void dumpmsg(uint8_t *data, int size);
 static message_t *Msg_create_nopayload(messageType_t messageType);
 
-void Msg_addPreamble(uint8_t *buffer, uint16_t type, uint32_t len)
+static void Msg_addPreamble(uint8_t *buffer, uint16_t type, uint32_t len)
 {
 	type = htons(type);
 	len = htonl(len);
@@ -232,13 +232,13 @@ int Msg_messageToNetwork(message_t *msg, uint8_t *buffer)
 		break;
 
 	default:
-		Log_warn("Msg_networkToMessage: Unsupported message %d", msg->messageType);
+		Log_warn("Msg_MessageToNetwork: Unsupported message %d", msg->messageType);
 		return 0;
 	}
 	return len + PREAMBLE_SIZE;
 }
 
-message_t *Msg_create_nopayload(messageType_t messageType)
+static message_t *Msg_create_nopayload(messageType_t messageType)
 {
 	message_t *msg = malloc(sizeof(message_t));
 
@@ -501,6 +501,23 @@ void dumpmsg(uint8_t *data, int size)
 	} 
 }
 
+message_t *Msg_CreateVoiceMsg(uint8_t *data, int size)
+{
+	message_t *msg = NULL;
+	
+	msg = Msg_create_nopayload(UDPTunnel);
+	msg->unpacked = false;
+	msg->payload.UDPTunnel = malloc(sizeof(struct _MumbleProto__UDPTunnel));
+	if (msg->payload.UDPTunnel == NULL)
+		Log_fatal("Out of memory");
+	msg->payload.UDPTunnel->packet.data = malloc(size);
+	if (msg->payload.UDPTunnel->packet.data == NULL)
+		Log_fatal("Out of memory");
+	memcpy(msg->payload.UDPTunnel->packet.data, data, size);
+	msg->payload.UDPTunnel->packet.len = size;
+	return msg;
+}
+
 message_t *Msg_networkToMessage(uint8_t *data, int size)
 {
 	message_t *msg = NULL;
@@ -524,16 +541,7 @@ message_t *Msg_networkToMessage(uint8_t *data, int size)
 	}
 	case UDPTunnel: /* Non-standard handling of tunneled voice data */
 	{
-		msg = Msg_create_nopayload(UDPTunnel);
-		msg->unpacked = false;
-		msg->payload.UDPTunnel = malloc(sizeof(struct _MumbleProto__UDPTunnel));
-		if (msg->payload.UDPTunnel == NULL)
-			Log_fatal("Out of memory");
-		msg->payload.UDPTunnel->packet.data = malloc(msgLen);
-		if (msg->payload.UDPTunnel->packet.data == NULL)
-			Log_fatal("Out of memory");
-		memcpy(msg->payload.UDPTunnel->packet.data, msgData, msgLen);
-		msg->payload.UDPTunnel->packet.len = msgLen;
+		msg = Msg_CreateVoiceMsg(msgData, msgLen);
 		break;
 	}
 	case Authenticate:

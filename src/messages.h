@@ -139,6 +139,7 @@ message_t *Msg_networkToMessage(uint8_t *data, int size);
 void Msg_free(message_t *msg);
 void Msg_inc_ref(message_t *msg);
 
+message_t *Msg_CreateVoiceMsg(uint8_t *data, int size);
 message_t *Msg_create(messageType_t messageType);
 
 #endif

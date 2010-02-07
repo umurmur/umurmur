@@ -413,9 +413,12 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			for (j = 0; j < target->n_session; j++)
 				Voicetarget_add_session(client, targetId, target->session[j]);
 			if (target->has_channel_id) {
-				if (target->has_links || target->has_children)
-					Log_warn("Whisper to children or linked channels not implemented. Ignoring.");
-				Voicetarget_add_channel(client, targetId, target->channel_id);
+				bool_t linked = false, children = false;
+				if (target->has_links)
+					linked = target->links;
+				if (target->has_children)
+					children = target->children;
+				Voicetarget_add_channel(client, targetId, target->channel_id, linked, children);
 			}
 		}
 		break;
@@ -445,6 +448,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		Client_send_message(client, msg);
 		break;
 	case UDPTunnel:
+		client->bUDP = false;
 		Client_voiceMsg(client, msg->payload.UDPTunnel->packet.data, msg->payload.UDPTunnel->packet.len);
 	    break;
 	case ChannelState:

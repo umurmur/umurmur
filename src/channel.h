@@ -49,6 +49,11 @@ typedef struct channel {
 	struct dlist link_node;
 } channel_t;
 
+typedef struct {
+	channel_t *chan;
+	struct dlist node;
+} channellist_t;
+
 void Chan_init();
 void Chan_free();
 void Chan_addChannel(channel_t *parent, channel_t *sub);
@@ -64,5 +69,7 @@ channel_t *Chan_iterate_siblings(channel_t *parent, channel_t **channelpptr);
 channel_t *Chan_createChannel(const char *name, const char *desc);
 channel_t *Chan_fromId(int channelid);
 void Chan_freeChannel(channel_t *ch);
+void Chan_buildTreeList(channel_t *ch, struct dlist *head);
+void Chan_freeTreeList(struct dlist *head);
 
 #endif

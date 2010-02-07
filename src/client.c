@@ -658,16 +658,17 @@ int Client_read_udp()
 			}
 		} /* while */
 	}
-	if (itr == NULL) {
+	if (itr == NULL) { /* Couldn't find this peer among connected clients */
 		goto out;
 	}
 	
+	len -= 4; /* Adjust for crypt header */
 	msgType = (UDPMessageType_t)((buffer[0] >> 5) & 0x7);
 	switch (msgType) {
 	case UDPVoiceSpeex:
 	case UDPVoiceCELTAlpha:
 	case UDPVoiceCELTBeta:
-		// u->bUdp = true;
+		itr->bUDP = true;
 		Client_voiceMsg(itr, buffer, len);
 		break;
 	case UDPPing:
@@ -678,6 +679,7 @@ int Client_read_udp()
 		Log_debug("Unknown UDP message type from %s port %d", inet_ntoa(from.sin_addr), ntohs(from.sin_port));
 		break;
 	}
+	
 out:
 	return 0;
 }
@@ -689,7 +691,7 @@ static inline void Client_send_voice(client_t *src, client_t *dst, uint8_t *data
 			src->context != NULL && dst->context != NULL && /* ...both source and destination has context */
 			strcmp(src->context, dst->context) == 0) /* ...and the contexts match */
 			Client_send_udp(dst, data, len);
-		else
+		else 
 			Client_send_udp(dst, data, len - poslen);
 	}
 }
@@ -743,27 +745,14 @@ int Client_voiceMsg(client_t *client, uint8_t *data, int len)
 			c = list_get_entry(itr, client_t, chan_node);
 			Client_send_voice(client, c, buffer, pds->offset + 1, poslen);
 		}
-		/* Channel links */
-		if (!list_empty(&ch->channel_links)) {
-			struct dlist *ch_itr;
-			list_iterate(ch_itr, &ch->channel_links) {
-				channel_t *ch_link;
-				ch_link = list_get_entry(ch_itr, channel_t, link_node);
-				list_iterate(itr, &ch_link->clients) {
-					client_t *c;
-					c = list_get_entry(itr, client_t, chan_node);
-					Log_debug("Linked voice from %s -> %s", ch->name, ch_link->name);
-					Client_send_voice(client, c, buffer, pds->offset + 1, poslen);
-				}
-			}
-		}
 	} else if ((vt = Voicetarget_get_id(client, target)) != NULL) {	/* Targeted whisper */
 		int i;
 		channel_t *ch;
 		/* Channels */
-		for (i = 0; i < TARGET_MAX_CHANNELS && vt->channels[i] != -1; i++) {
+		for (i = 0; i < TARGET_MAX_CHANNELS && vt->channels[i].channel != -1; i++) {
+			buffer[0] = (uint8_t) (type | 1);
 			Log_debug("Whisper channel %d", vt->channels[i]);
-			ch = Chan_fromId(vt->channels[i]);
+			ch = Chan_fromId(vt->channels[i].channel);
 			if (ch == NULL)
 				continue;
 			list_iterate(itr, &ch->clients) {
@@ -771,10 +760,42 @@ int Client_voiceMsg(client_t *client, uint8_t *data, int len)
 				c = list_get_entry(itr, client_t, chan_node);
 				Client_send_voice(client, c, buffer, pds->offset + 1, poslen);
 			}
+			/* Channel links */
+			if (vt->channels[i].linked && !list_empty(&ch->channel_links)) {
+				struct dlist *ch_itr;
+				list_iterate(ch_itr, &ch->channel_links) {
+					channel_t *ch_link;
+					ch_link = list_get_entry(ch_itr, channel_t, link_node);
+					list_iterate(itr, &ch_link->clients) {
+						client_t *c;
+						c = list_get_entry(itr, client_t, chan_node);
+						Log_debug("Linked voice from %s -> %s", ch->name, ch_link->name);
+						Client_send_voice(client, c, buffer, pds->offset + 1, poslen);
+					}
+				}
+			}
+			/* children */
+			if (vt->channels[i].children) {
+				struct dlist chanlist, *ch_itr;
+				init_list_entry(&chanlist);
+				Chan_buildTreeList(ch, &chanlist);
+				list_iterate(ch_itr, &chanlist) {
+					channel_t *sub;
+					sub = list_get_entry(ch_itr, channellist_t, node)->chan;
+					list_iterate(itr, &sub->clients) {
+						client_t *c;
+						c = list_get_entry(itr, client_t, chan_node);
+						Log_debug("Child voice from %s -> %s", ch->name, sub->name);
+						Client_send_voice(client, c, buffer, pds->offset + 1, poslen);
+					}
+				}
+				Chan_freeTreeList(&chanlist);
+			}
 		}			
 		/* Sessions */
 		for (i = 0; i < TARGET_MAX_SESSIONS && vt->sessions[i] != -1; i++) {
 			client_t *c;
+			buffer[0] = (uint8_t) (type | 2);
 			Log_debug("Whisper session %d", vt->sessions[i]);
 			while (Client_iterate(&c) != NULL) {
 				if (c->sessionId == vt->sessions[i]) {
@@ -796,7 +817,8 @@ static int Client_send_udp(client_t *client, uint8_t *data, int len)
 {
 	uint8_t *buf, *mbuf;
 
-	if (client->remote_udp.sin_port != 0 && CryptState_isValid(&client->cryptState)) {
+	if (client->remote_udp.sin_port != 0 && CryptState_isValid(&client->cryptState) &&
+		client->bUDP) {
 #if defined(__LP64__)
 		buf = mbuf = malloc(len + 4 + 16);
 		buf += 4;
@@ -813,12 +835,7 @@ static int Client_send_udp(client_t *client, uint8_t *data, int len)
 		free(mbuf);
 	} else {
 		message_t *msg;
-		buf = malloc(len);
-		memcpy(buf, data, len);
-		msg = Msg_create(UDPTunnel);
-		
-		msg->payload.UDPTunnel->packet.data = buf;
-		msg->payload.UDPTunnel->packet.len = len;
+		msg = Msg_CreateVoiceMsg(data, len);
 		Client_send_message(client, msg);
 	}
 	return 0;

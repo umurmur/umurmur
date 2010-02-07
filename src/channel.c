@@ -342,3 +342,28 @@ void Chan_removeChannel(channel_t *ch)
 {
 	list_del(&ch->node);
 }
+
+void Chan_buildTreeList(channel_t *ch, struct dlist *head)
+{
+	channellist_t *chl;
+	struct dlist *itr;
+	channel_t *sub;
+	
+	chl = malloc(sizeof(channellist_t));
+	chl->chan = ch;
+	init_list_entry(&chl->node);
+	list_add_tail(&chl->node, head);
+
+	list_iterate(itr, &ch->subs) {
+		sub = list_get_entry(itr, channel_t, node);
+		Chan_buildTreeList(sub, head);
+	}
+}
+
+void Chan_freeTreeList(struct dlist *head)
+{
+	struct dlist *itr, *save;
+	list_iterate_safe(itr, save, head) {
+		free(list_get_entry(itr, channellist_t, node));
+	}
+}

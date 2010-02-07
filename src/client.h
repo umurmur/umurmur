@@ -70,7 +70,7 @@ typedef struct {
 	int sessionId;
 	uint64_t key;
 	char *username;
-	bool_t authenticated, deaf, mute;
+	bool_t bUDP, authenticated, deaf, mute;
 	char *os, *release;
 	uint32_t version;
 	int codec_count;

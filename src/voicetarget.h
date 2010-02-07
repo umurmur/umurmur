@@ -38,8 +38,14 @@
 #define TARGET_MAX_SESSIONS 32
 
 typedef struct {
+	int channel;
+	bool_t linked;
+	bool_t children;
+} channeltarget_t;
+
+typedef struct {
 	int id;
-	int channels[TARGET_MAX_CHANNELS];
+	channeltarget_t channels[TARGET_MAX_CHANNELS];
 	int sessions[TARGET_MAX_SESSIONS];
 	struct dlist node;
 } voicetarget_t;
@@ -48,7 +54,8 @@ void Voicetarget_add_id(client_t *client, int targetId);
 void Voicetarget_del_id(client_t *client, int targetId);
 
 void Voicetarget_add_session(client_t *client, int targetId, int sessionId);
-void Voicetarget_add_channel(client_t *client, int targetId, int channelId);
+void Voicetarget_add_channel(client_t *client, int targetId, int channelId,
+							 bool_t linked, bool_t children);
 voicetarget_t *Voicetarget_get_id(client_t *client, int targetId);
 
 void Voicetarget_free_all(client_t *client);

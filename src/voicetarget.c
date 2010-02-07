@@ -52,7 +52,8 @@ void Voicetarget_add_session(client_t *client, int targetId, int sessionId)
 	}
 }
 
-void Voicetarget_add_channel(client_t *client, int targetId, int channelId)
+void Voicetarget_add_channel(client_t *client, int targetId, int channelId,
+							 bool_t linked, bool_t children)
 {
 	struct dlist *itr;
 	voicetarget_t *vt;
@@ -62,8 +63,10 @@ void Voicetarget_add_channel(client_t *client, int targetId, int channelId)
 			int i;
 			vt = list_get_entry(itr, voicetarget_t, node);
 			for (i = 0; i < TARGET_MAX_CHANNELS; i++) {
-				if (vt->channels[i] == -1) {
-					vt->channels[i] = channelId;
+				if (vt->channels[i].channel == -1) {
+					vt->channels[i].channel = channelId;
+					vt->channels[i].linked = linked;
+					vt->channels[i].children = children;
 					Log_debug("Adding channel ID %d to voicetarget ID %d", channelId, targetId);
 					return;
 				}
@@ -83,7 +86,7 @@ void Voicetarget_add_id(client_t *client, int targetId)
 		Log_fatal("Out of memory");
 	memset(newtarget, 0, sizeof(voicetarget_t));
 	for (i = 0; i < TARGET_MAX_CHANNELS; i++)
-		newtarget->channels[i] = -1;
+		newtarget->channels[i].channel = -1;
 	for (i = 0; i < TARGET_MAX_SESSIONS; i++)
 		newtarget->sessions[i] = -1;
 	newtarget->id = targetId;
