@@ -662,13 +662,13 @@ int Client_read_udp()
 		goto out;
 	}
 	
+	itr->bUDP = true;
 	len -= 4; /* Adjust for crypt header */
 	msgType = (UDPMessageType_t)((buffer[0] >> 5) & 0x7);
 	switch (msgType) {
 	case UDPVoiceSpeex:
 	case UDPVoiceCELTAlpha:
 	case UDPVoiceCELTBeta:
-		itr->bUDP = true;
 		Client_voiceMsg(itr, buffer, len);
 		break;
 	case UDPPing:
