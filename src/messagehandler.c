@@ -172,8 +172,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		
 		/* Iterate channels and send channel info */
 		ch_itr = NULL;
-		Chan_iterate(&ch_itr);
-		do {
+		while (Chan_iterate(&ch_itr) != NULL) {
 			sendmsg = Msg_create(ChannelState);
 			sendmsg->payload.channelState->has_channel_id = true;
 			sendmsg->payload.channelState->channel_id = ch_itr->id;
@@ -185,12 +184,32 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			if (ch_itr->desc)
 				sendmsg->payload.channelState->description = strdup(ch_itr->desc);
 			Log_debug("Send channel info: %s", sendmsg->payload.channelState->name);
-			Client_send_message(client, sendmsg);
-			
-			Chan_iterate(&ch_itr);
-		} while (ch_itr != NULL);
+			Client_send_message(client, sendmsg);			
+		}
 
-		/* Not supporting channel links yet */
+		/* Iterate channels and send channel links info */
+		ch_itr = NULL;
+		while (Chan_iterate(&ch_itr) != NULL) {
+			if (ch_itr->linkcount > 0) { /* Has links */
+				uint32_t *links;
+				int i = 0;
+				struct dlist *itr;
+				
+				sendmsg = Msg_create(ChannelState);
+				sendmsg->payload.channelState->has_channel_id = true;
+				sendmsg->payload.channelState->channel_id = ch_itr->id;
+				sendmsg->payload.channelState->n_links = ch_itr->linkcount;
+				
+				links = (uint32_t *)malloc(ch_itr->linkcount * sizeof(uint32_t));
+				list_iterate(itr, &ch_itr->channel_links) { /* Iterate links */
+					channel_t *ch;
+					ch = list_get_entry(itr, channel_t, link_node);
+					links[i++] = ch->id;
+				}
+				sendmsg->payload.channelState->links = links;
+				Client_send_message(client, sendmsg);
+			}
+		}
 		
 		/* Send user state for connecting user to other users */
 		sendmsg = Msg_create(UserState);

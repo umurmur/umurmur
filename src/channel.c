@@ -212,6 +212,7 @@ void Chan_init()
 			ch_dst = ch_itr;
 		
 		list_add_tail(&ch_dst->link_node, &ch_src->channel_links);
+		ch_src->linkcount++;
 		Log_info("Adding channel link '%s' -> '%s'", ch_src->name, ch_dst->name);
 	}
 }

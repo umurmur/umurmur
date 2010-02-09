@@ -436,8 +436,12 @@ void Msg_free(message_t *msg)
 		if (msg->unpacked)
 			mumble_proto__channel_state__free_unpacked(msg->payload.channelState, NULL);
 		else {
-			free(msg->payload.channelState->name);
-			free(msg->payload.channelState->description);
+			if (msg->payload.channelState->name)
+				free(msg->payload.channelState->name);
+			if (msg->payload.channelState->description)
+				free(msg->payload.channelState->description);
+			if (msg->payload.channelState->links)
+				free(msg->payload.channelState->links);
 			free(msg->payload.channelState);
 		}
 		break;
