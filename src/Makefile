@@ -3,12 +3,29 @@ SRCS:=client.c main.c messages.c pds.c server.c ssl.c log.c conf.c crypt.c \
 
 OBJS:=$(patsubst %.c, %.o, $(SRCS))
 
+POLARSSL_LIB:=../../../../polarssl/polarssl-0.12.1/library/libpolarssl.a
+
+# For Valgrind
 #CFLAGS:=$(CFLAGS) -I. -I/data/export/proj/openssl/include/ -Wall -g -DDEBUG
 #LDFLAGS:=$(LDFLAGS) -L/data/export/proj/openssl/lib/ -lcrypto -lssl -lconfig
-CFLAGS:=$(CFLAGS) -I. -Wall -g
-LDFLAGS:=$(LDFLAGS) -lcrypto -lssl -lconfig
 
-umurmurd:google/protobuf-c/libprotobuf_c.a depend.mak $(OBJS)  
+# PolarSSL
+#CFLAGS:=$(CFLAGS) -DDEBUG -DUSE_POLARSSL -I. -I../../../../polarssl/polarssl-0.12.1/include -Wall -g
+#LDFLAGS:=$(LDFLAGS) -L  -lpolarssl -lconfig
+
+# OpenSSL
+CFLAGS:=$(CFLAGS) -I. -Wall
+LDFLAGS:=$(LDFLAGS) -L  -lcrypto -lssl -lconfig
+
+# Debug
+#CFLAGS:=$(CFLAGS) -DDEBUG -I. -Wall -g
+
+# PolarSSL
+#umurmurd:google/protobuf-c/libprotobuf_c.a depend.mak $(OBJS) $(POLARSSL_LIB)
+#	$(CC) $(LDFLAGS) $(OBJS) $(POLARSSL_LIB) google/protobuf-c/libprotobuf_c.a -o umurmurd
+
+# OpenSSL
+umurmurd:google/protobuf-c/libprotobuf_c.a depend.mak $(OBJS)
 	$(CC) $(LDFLAGS) $(OBJS) google/protobuf-c/libprotobuf_c.a -o umurmurd
 
 google/protobuf-c/libprotobuf_c.a:

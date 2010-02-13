@@ -387,7 +387,6 @@ int Client_read(client_t *client)
 			rc = SSLi_read(client->ssl, &client->rxbuf[client->rxcount], 6 - client->rxcount);
 		else
 			rc = SSLi_read(client->ssl, &client->rxbuf[client->rxcount], client->msgsize);
-		Log_debug("Client_read: rc = %d", rc);
 		if (rc > 0) {
 			message_t *msg;
 			client->rxcount += rc;
@@ -429,9 +428,6 @@ int Client_read(client_t *client)
 			}
 			else {
 				if (SSLi_get_error(client->ssl, rc) == SSLI_ERROR_SYSCALL) {
-					/* Hmm. This is where we end up when the client closes its connection.
-					 * Kind of strange...
-					 */
 					Log_info_client(client, "Connection closed by peer");
 				}
 				else {

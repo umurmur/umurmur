@@ -279,12 +279,12 @@ static void inline ZERO(subblock *block) {
 		block[i]=0;
 }
 
-#ifndef USE_POLARSSL
-#define AESencrypt(src, dst, cryptstate) AES_encrypt((unsigned char *)(src),(unsigned char *)(dst), &(cryptstate)->encrypt_key);
-#define AESdecrypt(src, dst, cryptstate) AES_decrypt((unsigned char *)(src),(unsigned char *)(dst), &(cryptstate)->decrypt_key);
+#ifdef USE_POLARSSL
+#define AESencrypt(src, dst, cryptstate) aes_crypt_ecb(&(cryptstate)->aes_enc, AES_ENCRYPT, (unsigned char *)(src), (unsigned char *)(dst));
+#define AESdecrypt(src, dst, cryptstate) aes_crypt_ecb(&(cryptstate)->aes_dec, AES_DECRYPT, (unsigned char *)(src), (unsigned char *)(dst));
 #else
-#define AESencrypt(src, dst, cryptstate) aes_crypt_ecb(&(cryptstate)->aes_enc, AES_ENCRYPT, (unsigned char *)(src),(unsigned char *)(dst));
-#define AESdecrypt(src, dst, cryptstate) aes_crypt_ecb(&(cryptstate)->aes_dec, AES_DECRYPT, (unsigned char *)(src),(unsigned char *)(dst));
+#define AESencrypt(src, dst, cryptstate) AES_encrypt((unsigned char *)(src), (unsigned char *)(dst), &(cryptstate)->encrypt_key);
+#define AESdecrypt(src, dst, cryptstate) AES_decrypt((unsigned char *)(src), (unsigned char *)(dst), &(cryptstate)->decrypt_key);
 #endif
 
 void CryptState_ocb_encrypt(cryptState_t *cs, const unsigned char *plain, unsigned char *encrypted, unsigned int len, const unsigned char *nonce, unsigned char *tag) {

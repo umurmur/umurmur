@@ -28,17 +28,18 @@
    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#ifndef _CRYPTSTATE_H
-#define _CRYPTSTATE_H
+#ifndef CRYPTSTATE_H_34564356
+#define CRYPTSTATE_H_34564356
 
-#ifndef USE_POLARSSL
-#include <openssl/rand.h>
-#include <openssl/aes.h>
-#else
+#ifdef USE_POLARSSL
 #include <polarssl/havege.h>
 #include <polarssl/aes.h>
 #define AES_BLOCK_SIZE 16
+#else
+#include <openssl/rand.h>
+#include <openssl/aes.h>
 #endif
+
 #include <stdint.h>
 #include "timer.h"
 #include "types.h"
@@ -78,4 +79,5 @@ void CryptState_setDecryptIV(cryptState_t *cs, const unsigned char *iv);
 
 bool_t CryptState_decrypt(cryptState_t *cs, const unsigned char *source, unsigned char *dst, unsigned int crypted_length);
 void CryptState_encrypt(cryptState_t *cs, const unsigned char *source, unsigned char *dst, unsigned int plain_length);
+
 #endif
