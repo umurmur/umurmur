@@ -30,8 +30,11 @@
 */
 #include <sys/poll.h>
 #include <sys/socket.h>
+#include <fcntl.h>
 #include <errno.h>
 #include <limits.h>
+#include <stdlib.h>
+#include <string.h>
 #include "log.h"
 #include "list.h"
 #include "client.h"
@@ -247,7 +250,7 @@ int Client_add(int fd, struct sockaddr_in *remote)
 
 	newclient->tcpfd = fd;
 	memcpy(&newclient->remote_tcp, remote, sizeof(struct sockaddr_in));
-	newclient->ssl = SSL_newconnection(newclient->tcpfd, &newclient->SSLready);
+	newclient->ssl = SSLi_newconnection(&newclient->tcpfd, &newclient->SSLready);
 	if (newclient->ssl == NULL) {
 		Log_warn("SSL negotiation failed with %s:%d", inet_ntoa(remote->sin_addr),
 				 ntohs(remote->sin_port));
@@ -307,7 +310,7 @@ void Client_free(client_t *client)
 	
 	list_del(&client->node);
 	if (client->ssl)
-		SSL_free(client->ssl);
+		SSLi_free(client->ssl);
 	close(client->tcpfd);
 	clientcount--;
 	if (client->release)
@@ -323,7 +326,7 @@ void Client_free(client_t *client)
 
 void Client_close(client_t *client)
 {
-	SSL_shutdown(client->ssl);
+	SSLi_shutdown(client->ssl);
 	client->shutdown_wait = true;
 }
 
@@ -371,7 +374,7 @@ int Client_read(client_t *client)
 	}
 	if (!client->SSLready) {
 		int rc;
-		rc = SSL_nonblockaccept(client->ssl, &client->SSLready);
+		rc = SSLi_nonblockaccept(client->ssl, &client->SSLready);
 		if (rc < 0) {
 			Client_free(client);
 			return -1;
@@ -381,9 +384,10 @@ int Client_read(client_t *client)
 	do {
 		errno = 0;
 		if (!client->msgsize) 
-			rc = SSL_read(client->ssl, &client->rxbuf[client->rxcount], 6 - client->rxcount);
+			rc = SSLi_read(client->ssl, &client->rxbuf[client->rxcount], 6 - client->rxcount);
 		else
-			rc = SSL_read(client->ssl, &client->rxbuf[client->rxcount], client->msgsize);
+			rc = SSLi_read(client->ssl, &client->rxbuf[client->rxcount], client->msgsize);
+		Log_debug("Client_read: rc = %d", rc);
 		if (rc > 0) {
 			message_t *msg;
 			client->rxcount += rc;
@@ -411,33 +415,33 @@ int Client_read(client_t *client)
 				client->rxcount = client->msgsize = 0;
 			}
 		} else /* rc <= 0 */ {
-			if (SSL_get_error(client->ssl, rc) == SSL_ERROR_WANT_READ) {
+			if (SSLi_get_error(client->ssl, rc) == SSLI_ERROR_WANT_READ) {
 				return 0;
 			}
-			else if (SSL_get_error(client->ssl, rc) == SSL_ERROR_WANT_WRITE) {
+			else if (SSLi_get_error(client->ssl, rc) == SSLI_ERROR_WANT_WRITE) {
 				client->readBlockedOnWrite = true;
 				return 0;
 			}
-			else if (SSL_get_error(client->ssl, rc) == SSL_ERROR_ZERO_RETURN) {
+			else if (SSLi_get_error(client->ssl, rc) == SSLI_ERROR_ZERO_RETURN) {
 				Log_info_client(client, "Connection closed by peer");
 				if (!client->shutdown_wait)
 					Client_close(client);
 			}
 			else {
-				if (SSL_get_error(client->ssl, rc) == SSL_ERROR_SYSCALL) {
+				if (SSLi_get_error(client->ssl, rc) == SSLI_ERROR_SYSCALL) {
 					/* Hmm. This is where we end up when the client closes its connection.
 					 * Kind of strange...
 					 */
 					Log_info_client(client, "Connection closed by peer");
 				}
 				else {
-					Log_info_client(client, "SSL error: %d - Closing connection", SSL_get_error(client->ssl, rc));
+					Log_info_client(client, "SSL error: %d - Closing connection", SSLi_get_error(client->ssl, rc));
 				}
 				Client_free(client);
 				return -1;
 			}
 		}
-	} while (SSL_pending(client->ssl));
+	} while (SSLi_data_pending(client->ssl));
 	
 	return 0;
 }
@@ -468,25 +472,25 @@ int Client_write(client_t *client)
 		Log_debug("Client_write: readBlockedOnWrite == true");
 		return Client_read(client);
 	}
-	rc = SSL_write(client->ssl, &client->txbuf[client->txcount], client->txsize - client->txcount);
+	rc = SSLi_write(client->ssl, &client->txbuf[client->txcount], client->txsize - client->txcount);
 	if (rc > 0) {
 		client->txcount += rc;
 		if (client->txcount == client->txsize)
 			client->txsize = client->txcount = 0;
 	}
 	else if (rc < 0) {
-		if (SSL_get_error(client->ssl, rc) == SSL_ERROR_WANT_READ) {
+		if (SSLi_get_error(client->ssl, rc) == SSLI_ERROR_WANT_READ) {
 			client->writeBlockedOnRead = true;
 			return 0;
 		}
-		else if (SSL_get_error(client->ssl, rc) == SSL_ERROR_WANT_WRITE) {
+		else if (SSLi_get_error(client->ssl, rc) == SSLI_ERROR_WANT_WRITE) {
 			return 0;
 		}
 		else {
-			if (SSL_get_error(client->ssl, rc) == SSL_ERROR_SYSCALL)
+			if (SSLi_get_error(client->ssl, rc) == SSLI_ERROR_SYSCALL)
 				Log_warn("Client_write: Error: %s  - Closing connection", strerror(errno));
 			else
-				Log_warn("Client_write: SSL error: %d - Closing connection.", SSL_get_error(client->ssl, rc));
+				Log_warn("Client_write: SSL error: %d - Closing connection.", SSLi_get_error(client->ssl, rc));
 			Client_free(client);
 			return -1;
 		}

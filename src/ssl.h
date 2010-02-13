@@ -28,12 +28,52 @@
    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
+#ifndef SSL_H_987698
+#define SSL_H_987698
+
+#ifdef USE_POLARSSL
+#include <polarssl/ssl.h>
+#else
 #include <openssl/x509v3.h>
 #include <openssl/ssl.h>
-#include "types.h"
+#endif
 
-void SSL_init(void);
-void SSL_deinit(void);
-SSL *SSL_newconnection(int fd, bool_t *SSLready);
-void SSL_closeconnection(SSL *ssl);
-int SSL_nonblockaccept(SSL *ssl, bool_t *SSLready);
+#include "types.h"
+#include <inttypes.h>
+
+#ifdef USE_POLARSSL
+#define SSLI_ERROR_WANT_READ -0x0F300 /* PolarSSL uses -0x0f00 -> --0x0f90 */
+#define SSLI_ERROR_WANT_WRITE -0x0F310
+#define SSLI_ERROR_ZERO_RETURN POLARSSL_ERR_NET_CONN_RESET
+#define SSLI_ERROR_CONNRESET POLARSSL_ERR_NET_CONN_RESET
+#define SSLI_ERROR_SYSCALL POLARSSL_ERR_NET_RECV_FAILED
+
+typedef	ssl_context SSL_handle_t;
+
+#else
+
+#define SSLI_ERROR_WANT_READ SSL_ERROR_WANT_READ
+#define SSLI_ERROR_WANT_WRITE SSL_ERROR_WANT_WRITE
+#define SSLI_ERROR_ZERO_RETURN SSL_ERROR_ZERO_RETURN
+#define SSLI_ERROR_CONNRESET SSL_ERROR_ZERO_RETURN
+#define SSLI_ERROR_SYSCALL SSL_ERROR_SYSCALL
+
+typedef SSL SSL_handle_t;
+
+#endif
+
+void SSLi_init(void);
+void SSLi_deinit(void);
+SSL_handle_t *SSLi_newconnection(int *fd, bool_t *SSLready);
+void SSLi_closeconnection(SSL_handle_t *ssl);
+int SSLi_nonblockaccept(SSL_handle_t *ssl, bool_t *SSLready);
+
+int SSLi_read(SSL_handle_t *ssl, uint8_t *buf, int len);
+int SSLi_write(SSL_handle_t *ssl, uint8_t *buf, int len);
+int SSLi_get_error(SSL_handle_t *ssl, int code);
+bool_t SSLi_data_pending(SSL_handle_t *ssl);
+void SSLi_shutdown(SSL_handle_t *ssl);
+void SSLi_free(SSL_handle_t *ssl);
+
+#endif

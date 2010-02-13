@@ -31,8 +31,14 @@
 #ifndef _CRYPTSTATE_H
 #define _CRYPTSTATE_H
 
+#ifndef USE_POLARSSL
 #include <openssl/rand.h>
 #include <openssl/aes.h>
+#else
+#include <polarssl/havege.h>
+#include <polarssl/aes.h>
+#define AES_BLOCK_SIZE 16
+#endif
 #include <stdint.h>
 #include "timer.h"
 #include "types.h"
@@ -52,9 +58,13 @@ typedef struct CryptState {
 	unsigned int uiRemoteLate;
 	unsigned int uiRemoteLost;
 	unsigned int uiRemoteResync;
-	
+#ifndef USE_POLARSSL
 	AES_KEY	encrypt_key;
 	AES_KEY decrypt_key;
+#else
+	aes_context aes_enc;
+	aes_context aes_dec;
+#endif
 	etimer_t tLastGood;
 	etimer_t tLastRequest;
 	bool_t bInit;	

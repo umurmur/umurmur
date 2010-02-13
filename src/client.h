@@ -31,7 +31,6 @@
 #ifndef CLIENT_H_45786678
 #define CLIENT_H_45786678
 
-#include <openssl/ssl.h>
 #include <stdint.h>
 #include <unistd.h>             /* close() */
 #include <sys/types.h>
@@ -47,6 +46,7 @@
 #include "crypt.h"
 #include "timer.h"
 #include "pds.h"
+#include "ssl.h"
 
 #define BUFSIZE 8192
 #define UDP_BUFSIZE 512
@@ -57,7 +57,7 @@
 
 typedef struct {
 	int tcpfd;
-	SSL *ssl;
+	SSL_handle_t *ssl;
 	bool_t SSLready;
 	bool_t shutdown_wait;
 	cryptState_t cryptState;
