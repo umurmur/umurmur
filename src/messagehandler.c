@@ -29,7 +29,7 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include <string.h>
-#include <openssl/aes.h>
+#include <stdlib.h>
 
 #include "log.h"
 #include "list.h"

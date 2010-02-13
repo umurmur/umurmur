@@ -28,11 +28,18 @@
    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#ifndef _CRYPTSTATE_H
-#define _CRYPTSTATE_H
+#ifndef CRYPTSTATE_H_34564356
+#define CRYPTSTATE_H_34564356
 
+#ifdef USE_POLARSSL
+#include <polarssl/havege.h>
+#include <polarssl/aes.h>
+#define AES_BLOCK_SIZE 16
+#else
 #include <openssl/rand.h>
 #include <openssl/aes.h>
+#endif
+
 #include <stdint.h>
 #include "timer.h"
 #include "types.h"
@@ -52,9 +59,13 @@ typedef struct CryptState {
 	unsigned int uiRemoteLate;
 	unsigned int uiRemoteLost;
 	unsigned int uiRemoteResync;
-	
+#ifndef USE_POLARSSL
 	AES_KEY	encrypt_key;
 	AES_KEY decrypt_key;
+#else
+	aes_context aes_enc;
+	aes_context aes_dec;
+#endif
 	etimer_t tLastGood;
 	etimer_t tLastRequest;
 	bool_t bInit;	
@@ -68,4 +79,5 @@ void CryptState_setDecryptIV(cryptState_t *cs, const unsigned char *iv);
 
 bool_t CryptState_decrypt(cryptState_t *cs, const unsigned char *source, unsigned char *dst, unsigned int crypted_length);
 void CryptState_encrypt(cryptState_t *cs, const unsigned char *source, unsigned char *dst, unsigned int plain_length);
+
 #endif

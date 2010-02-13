@@ -41,7 +41,19 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include "crypt.h"
-#include "log.h"
+
+#ifdef USE_POLARSSL
+#include <polarssl/havege.h>
+#define RAND_bytes(_dst_, _size_) do { \
+	int i; \
+	for (i = 0; i < _size_; i++) { \
+	_dst_[i] = havege_rand(&hs); \
+	} \
+ } while (0);
+
+extern havege_state hs;
+#endif
+
 static void CryptState_ocb_encrypt(cryptState_t *cs, const unsigned char *plain, unsigned char *encrypted, unsigned int len, const unsigned char *nonce, unsigned char *tag);
 static void CryptState_ocb_decrypt(cryptState_t *cs, const unsigned char *encrypted, unsigned char *plain, unsigned int len, const unsigned char *nonce, unsigned char *tag);
 
@@ -67,8 +79,13 @@ void CryptState_genKey(cryptState_t *cs) {
 	RAND_bytes(cs->raw_key, AES_BLOCK_SIZE);
 	RAND_bytes(cs->encrypt_iv, AES_BLOCK_SIZE);
 	RAND_bytes(cs->decrypt_iv, AES_BLOCK_SIZE);
+#ifndef USE_POLARSSL
 	AES_set_encrypt_key(cs->raw_key, 128, &cs->encrypt_key);
 	AES_set_decrypt_key(cs->raw_key, 128, &cs->decrypt_key);
+#else
+	aes_setkey_enc(&cs->aes_enc, cs->raw_key, 128);
+	aes_setkey_dec(&cs->aes_dec, cs->raw_key, 128);
+#endif
 	cs->bInit = true;
 }
 
@@ -77,8 +94,13 @@ void CryptState_setKey(cryptState_t *cs, const unsigned char *rkey, const unsign
 	memcpy(cs->raw_key, rkey, AES_BLOCK_SIZE);
 	memcpy(cs->encrypt_iv, eiv, AES_BLOCK_SIZE);
 	memcpy(cs->decrypt_iv, div, AES_BLOCK_SIZE);
-	AES_set_encrypt_key(cs->raw_key, 128, &cs->encrypt_key);
+#ifndef USE_POLARSSL
+	AES_set_encrypt_key(cs->decrypt_iv, 128, &cs->encrypt_key);
 	AES_set_decrypt_key(cs->raw_key, 128, &cs->decrypt_key);
+#else
+	aes_setkey_enc(&cs->aes_enc, cs->decrypt_iv, 128);
+	aes_setkey_dec(&cs->aes_dec, cs->raw_key, 128);
+#endif
 	cs->bInit = true;
 }
 
@@ -184,7 +206,7 @@ bool_t CryptState_decrypt(cryptState_t *cs, const unsigned char *source, unsigne
 	CryptState_ocb_decrypt(cs, source+4, dst, plain_length, cs->decrypt_iv, tag);
 
 	if (memcmp(tag, source+1, 3) != 0) {
-		memcpy(cs->decrypt_iv, saveiv, AES_BLOCK_SIZE);
+		memcpy(cs->decrypt_iv, saveiv, AES_BLOCK_SIZE);		
 		return false;
 	}
 	cs->decrypt_history[cs->decrypt_iv[0]] = cs->decrypt_iv[1];
@@ -257,20 +279,25 @@ static void inline ZERO(subblock *block) {
 		block[i]=0;
 }
 
-#define AESencrypt(src,dst,key) AES_encrypt((unsigned char *)(src),(unsigned char *)(dst), key);
-#define AESdecrypt(src,dst,key) AES_decrypt((unsigned char *)(src),(unsigned char *)(dst), key);
+#ifdef USE_POLARSSL
+#define AESencrypt(src, dst, cryptstate) aes_crypt_ecb(&(cryptstate)->aes_enc, AES_ENCRYPT, (unsigned char *)(src), (unsigned char *)(dst));
+#define AESdecrypt(src, dst, cryptstate) aes_crypt_ecb(&(cryptstate)->aes_dec, AES_DECRYPT, (unsigned char *)(src), (unsigned char *)(dst));
+#else
+#define AESencrypt(src, dst, cryptstate) AES_encrypt((unsigned char *)(src), (unsigned char *)(dst), &(cryptstate)->encrypt_key);
+#define AESdecrypt(src, dst, cryptstate) AES_decrypt((unsigned char *)(src), (unsigned char *)(dst), &(cryptstate)->decrypt_key);
+#endif
 
 void CryptState_ocb_encrypt(cryptState_t *cs, const unsigned char *plain, unsigned char *encrypted, unsigned int len, const unsigned char *nonce, unsigned char *tag) {
 	subblock checksum[BLOCKSIZE], delta[BLOCKSIZE], tmp[BLOCKSIZE], pad[BLOCKSIZE];
 
 	// Initialize
-	AESencrypt(nonce, delta, &cs->encrypt_key);
+	AESencrypt(nonce, delta, cs);
 	ZERO(checksum);
 
 	while (len > AES_BLOCK_SIZE) {
 		S2(delta);
 		XOR(tmp, delta, (const subblock *)(plain));
-		AESencrypt(tmp, tmp, &cs->encrypt_key);
+		AESencrypt(tmp, tmp, cs);
 		XOR((subblock *)(encrypted), delta, tmp);
 		XOR(checksum, checksum, (subblock *)(plain));
 		len -= AES_BLOCK_SIZE;
@@ -282,7 +309,7 @@ void CryptState_ocb_encrypt(cryptState_t *cs, const unsigned char *plain, unsign
 	ZERO(tmp);
 	tmp[BLOCKSIZE - 1] = SWAPPED(len * 8);
 	XOR(tmp, tmp, delta);
-	AESencrypt(tmp, pad, &cs->encrypt_key);
+	AESencrypt(tmp, pad, cs);
 	memcpy(tmp, plain, len);
 	memcpy((unsigned char *)tmp + len, (unsigned char *)pad + len, AES_BLOCK_SIZE - len);
 	XOR(checksum, checksum, tmp);
@@ -291,20 +318,19 @@ void CryptState_ocb_encrypt(cryptState_t *cs, const unsigned char *plain, unsign
 
 	S3(delta);
 	XOR(tmp, delta, checksum);
-	AESencrypt(tmp, tag, &cs->encrypt_key);
+	AESencrypt(tmp, tag, cs);
 }
 
 void CryptState_ocb_decrypt(cryptState_t *cs, const unsigned char *encrypted, unsigned char *plain, unsigned int len, const unsigned char *nonce, unsigned char *tag) {
 	subblock checksum[BLOCKSIZE], delta[BLOCKSIZE], tmp[BLOCKSIZE], pad[BLOCKSIZE];
-
 	// Initialize
-	AESencrypt(nonce, delta, &cs->encrypt_key);
+	AESencrypt(nonce, delta, cs);
 	ZERO(checksum);
 
 	while (len > AES_BLOCK_SIZE) {
 		S2(delta);
 		XOR(tmp, delta, (const subblock *)(encrypted));
-		AESdecrypt(tmp, tmp, &cs->decrypt_key);
+		AESdecrypt(tmp, tmp, cs);
 		XOR((subblock *)(plain), delta, tmp);
 		XOR(checksum, checksum, (const subblock *)(plain));
 		len -= AES_BLOCK_SIZE;
@@ -316,7 +342,7 @@ void CryptState_ocb_decrypt(cryptState_t *cs, const unsigned char *encrypted, un
 	ZERO(tmp);
 	tmp[BLOCKSIZE - 1] = SWAPPED(len * 8);
 	XOR(tmp, tmp, delta);
-	AESencrypt(tmp, pad, &cs->encrypt_key);
+	AESencrypt(tmp, pad, cs);
 	memset(tmp, 0, AES_BLOCK_SIZE);
 	memcpy(tmp, encrypted, len);
 	XOR(tmp, tmp, pad);
@@ -325,5 +351,5 @@ void CryptState_ocb_decrypt(cryptState_t *cs, const unsigned char *encrypted, un
 
 	S3(delta);
 	XOR(tmp, delta, checksum);
-	AESencrypt(tmp, tag, &cs->encrypt_key);
+	AESencrypt(tmp, tag, cs);
 }

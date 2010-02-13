@@ -28,16 +28,221 @@
    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#include <openssl/x509v3.h>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-#include <openssl/safestack.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "conf.h"
 #include "log.h"
 #include "ssl.h"
 
+#ifdef USE_POLARSSL
+/*
+ * PolarSSL interface
+ */
+
+#include <polarssl/havege.h>
+#include <polarssl/certs.h>
+#include <polarssl/x509.h>
+#include <polarssl/ssl.h>
+#include <polarssl/net.h>
+
+#define CA_CRT_FILENAME "ca.crt"
+
+int ciphers[] =
+{
+    SSL_EDH_RSA_AES_256_SHA,
+    SSL_EDH_RSA_CAMELLIA_256_SHA,
+    SSL_EDH_RSA_DES_168_SHA,
+    SSL_RSA_AES_256_SHA,
+    SSL_RSA_CAMELLIA_256_SHA,
+    SSL_RSA_AES_128_SHA,
+    SSL_RSA_CAMELLIA_128_SHA,
+    SSL_RSA_DES_168_SHA,
+    SSL_RSA_RC4_128_SHA,
+    SSL_RSA_RC4_128_MD5,
+    0
+};
+static x509_cert certificate;
+static rsa_context key;
+havege_state hs; /* exported to crypt.c */
+
+/* DH prime */
+char *my_dhm_P =
+	"9CE85640903BF123906947FEDE767261" \
+	"D9B4A973EB8F7D984A8C656E2BCC161C" \
+	"183D4CA471BA78225F940F16D1D99CA3" \
+	"E66152CC68EDCE1311A390F307741835" \
+	"44FF6AB553EC7073AD0CB608F2A3B480" \
+	"19E6C02BCED40BD30E91BB2469089670" \
+	"DEF409C08E8AC24D1732A6128D2220DC53";
+char *my_dhm_G = "4";
+
+static void initCert()
+{
+	int rc;
+	char *crtfile = (char *)getStrConf(CERTIFICATE);
+	char *ca_file, *p;
+	
+	if (crtfile == NULL)
+		Log_fatal("No certificate file specified"); 
+	rc = x509parse_crtfile(&certificate, crtfile);
+	if (rc != 0)
+		Log_fatal("Could not read certificate file %s", crtfile);
+	
+	/* Look for CA certificate file in same dir */
+	ca_file = malloc(strlen(crtfile) + strlen(CA_CRT_FILENAME) + 1);
+	strcpy(ca_file, crtfile);
+	p = strrchr(ca_file, '/');
+	if (p != NULL)
+		strcpy(p + 1, CA_CRT_FILENAME);
+	else
+		strcpy(ca_file, CA_CRT_FILENAME);
+	
+	rc = x509parse_crtfile(&certificate, ca_file);
+	if (rc != 0) { /* No CA certifiacte found. Assume self-signed. */
+		Log_info("CA certificate file %s not found. Assuming self-signed certificate.", ca_file);
+		/*
+		 * Apparently PolarSSL needs to read something more into certificate chain.
+		 * Doesn't seem to matter what. Read own certificate again.
+		 */
+		rc = x509parse_crtfile(&certificate, crtfile);
+		if (rc != 0)
+			Log_fatal("Could not read certificate file %s", crtfile);
+	}
+}
+
+static void initKey()
+{
+	int rc;
+	char *keyfile = (char *)getStrConf(KEY);
+	
+	if (keyfile == NULL)
+		Log_fatal("No key file specified"); 
+	rc = x509parse_keyfile(&key, keyfile, NULL);
+	if (rc != 0)
+		Log_fatal("Could not read RSA key file %s", keyfile);
+}
+
+#define DEBUG_LEVEL 0
+static void pssl_debug(void *ctx, int level, char *str)
+{
+    if (level <= DEBUG_LEVEL)
+		Log_debug("PolarSSL [level %d]: %s", level, str);
+}
+
+void SSLi_init(void)
+{
+	initCert();
+	initKey();
+    havege_init(&hs);
+	Log_info("PolarSSL library initialized");
+}
+
+void SSLi_deinit(void)
+{
+	x509_free(&certificate);
+	rsa_free(&key);
+}
+
+SSL_handle_t *SSLi_newconnection(int *fd, bool_t *SSLready)
+{
+	ssl_context *ssl;
+	ssl_session *ssn;
+	int rc;
+	
+	ssl = malloc(sizeof(ssl_context));
+	ssn = malloc(sizeof(ssl_session));
+	if (!ssl || !ssn)
+		Log_fatal("Out of memory");
+	memset(ssl, 0, sizeof(ssl_context));
+	memset(ssn, 0, sizeof(ssl_session));
+	
+	rc = ssl_init(ssl);
+	if (rc != 0 )
+		Log_fatal("Failed to initalize: %d", rc);
+	
+	ssl_set_endpoint(ssl, SSL_IS_SERVER);	
+    ssl_set_authmode(ssl, SSL_VERIFY_OPTIONAL);
+
+    ssl_set_rng(ssl, havege_rand, &hs);
+    ssl_set_dbg(ssl, pssl_debug, NULL);
+    ssl_set_bio(ssl, net_recv, fd, net_send, fd);
+
+    ssl_set_ciphers(ssl, ciphers);
+    ssl_set_session(ssl, 0, 0, ssn);
+
+    ssl_set_ca_chain(ssl, certificate.next, NULL, NULL);
+    ssl_set_own_cert(ssl, &certificate, &key);
+    ssl_set_dh_param(ssl, my_dhm_P, my_dhm_G);
+
+	return ssl;
+}
+
+int SSLi_nonblockaccept(SSL_handle_t *ssl, bool_t *SSLready)
+{
+	int rc;
+	
+	rc = ssl_handshake(ssl);
+	if (rc != 0) {
+		if (rc == POLARSSL_ERR_NET_TRY_AGAIN) {
+			return 0;
+		} else {
+			Log_warn("SSL handshake failed: %d", rc);
+			return -1;
+		}
+	}
+	*SSLready = true;
+	return 0;
+}
+
+int SSLi_read(SSL_handle_t *ssl, uint8_t *buf, int len)
+{
+	int rc;
+	rc = ssl_read(ssl, buf, len);
+	if (rc == POLARSSL_ERR_NET_TRY_AGAIN)
+		return SSLI_ERROR_WANT_READ;
+	return rc;
+}
+
+int SSLi_write(SSL_handle_t *ssl, uint8_t *buf, int len)
+{
+	int rc;
+	rc = ssl_write(ssl, buf, len);
+	if (rc == POLARSSL_ERR_NET_TRY_AGAIN)
+		return SSLI_ERROR_WANT_WRITE;
+	return rc;
+}
+
+int SSLi_get_error(SSL_handle_t *ssl, int code)
+{
+	return code;
+}
+
+bool_t SSLi_data_pending(SSL_handle_t *ssl)
+{
+	return ssl_get_bytes_avail(ssl) > 0;
+}
+
+void SSLi_shutdown(SSL_handle_t *ssl)
+{
+	ssl_close_notify(ssl);
+}
+
+void SSLi_free(SSL_handle_t *ssl)
+{
+	free(ssl->session);
+	free(ssl);
+}
+
+#else
+/*
+ * OpenSSL interface
+ */
+
+#include <openssl/x509v3.h>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+#include <openssl/safestack.h>
 static X509 *x509;
 static RSA *rsa;
 static SSL_CTX *context;
@@ -112,7 +317,7 @@ static RSA *SSL_readprivatekey(char *keyfile)
 	return rsa;
 }
 
-void SSL_writecert(char *certfile, X509 *x509)
+static void SSL_writecert(char *certfile, X509 *x509)
 {
 	FILE *fp;
 	BIO *err_output;
@@ -136,7 +341,7 @@ void SSL_writecert(char *certfile, X509 *x509)
 	fclose(fp);
 }
 
-void SSL_writekey(char *keyfile, RSA *rsa)
+static void SSL_writekey(char *keyfile, RSA *rsa)
 {
 	FILE *fp;
 	BIO *err_output;
@@ -159,7 +364,7 @@ void SSL_writekey(char *keyfile, RSA *rsa)
 	fclose(fp);
 }
 
-void SSL_initializeCert() {
+static void SSL_initializeCert() {
 	char *crt, *key, *pass;
 	
 	crt = (char *)getStrConf(CERTIFICATE);
@@ -241,28 +446,7 @@ void SSL_initializeCert() {
 
 }
 
-void SSL_getdigest(char *s, int l)
-{
-	unsigned char md[EVP_MAX_MD_SIZE];
-	unsigned int n;
-	int j;
-	
-	if (!X509_digest (x509, EVP_md5(), md, &n))
-	{
-		snprintf (s, l, "[unable to calculate]");
-	}
-	else
-	{
-		for (j = 0; j < (int) n; j++)
-		{
-			char ch[8];
-			snprintf(ch, 8, "%02X%s", md[j], (j % 2 ? " " : ""));
-			strcat(s, ch);
-		}
-	}
-}
-
-void SSL_init(void)
+void SSLi_init(void)
 {
 	const SSL_METHOD *method;
 	SSL *ssl;
@@ -320,15 +504,17 @@ void SSL_init(void)
 		
 	
 	SSL_free(ssl);
+	Log_info("OpenSSL library initialized");
+
 }
 
-void SSL_deinit(void)
+void SSLi_deinit(void)
 {
 	SSL_CTX_free(context);
 	EVP_cleanup();
 }
 
-int SSL_nonblockaccept(SSL *ssl, bool_t *SSLready)
+int SSLi_nonblockaccept(SSL_handle_t *ssl, bool_t *SSLready)
 {
 	int rc;
 	rc = SSL_accept(ssl);
@@ -346,23 +532,53 @@ int SSL_nonblockaccept(SSL *ssl, bool_t *SSLready)
 	return 0;
 }
 
-SSL *SSL_newconnection(int fd, bool_t *SSLready)
+SSL_handle_t *SSLi_newconnection(int *fd, bool_t *SSLready)
 {
 	SSL *ssl;
 	
 	*SSLready = false;
 	ssl = SSL_new(context);
-	SSL_set_fd(ssl, fd);
-	if (SSL_nonblockaccept(ssl, SSLready) < 0) {
+	SSL_set_fd(ssl, *fd);
+	if (SSLi_nonblockaccept(ssl, SSLready) < 0) {
 		SSL_free(ssl);
 		return NULL;
 	}
 	return ssl;
 }
 
-void SSL_closeconnection(SSL *ssl)
+void SSLi_closeconnection(SSL_handle_t *ssl)
 {
 	SSL_free(ssl);
 }
 
+void SSLi_shutdown(SSL_handle_t *ssl)
+{
+	SSL_shutdown(ssl);
+}
 
+int SSLi_read(SSL_handle_t *ssl, uint8_t *buf, int len)
+{
+	return SSL_read(ssl, buf, len);
+}
+
+int SSLi_write(SSL_handle_t *ssl, uint8_t *buf, int len)
+{
+	return SSL_write(ssl, buf, len);
+}
+
+int SSLi_get_error(SSL_handle_t *ssl, int code)
+{
+	return SSL_get_error(ssl, code);
+}
+
+bool_t SSLi_data_pending(SSL_handle_t *ssl)
+{
+	return SSL_pending(ssl);
+}
+
+void SSLi_free(SSL_handle_t *ssl)
+{
+	SSL_free(ssl);
+}
+
+#endif

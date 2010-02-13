@@ -39,6 +39,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <stdlib.h>
 
 #include "client.h"
 #include "conf.h"

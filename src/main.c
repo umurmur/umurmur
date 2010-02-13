@@ -39,6 +39,8 @@
 #include <signal.h>
 #include <sched.h>
 #include <errno.h>
+#include <string.h>
+#include <stdlib.h>
 
 #include "server.h"
 #include "ssl.h"
@@ -182,6 +184,7 @@ int main(int argc, char **argv)
 	signal(SIGTSTP, SIG_IGN); /* ignore tty signals */
 	signal(SIGTTOU, SIG_IGN);
 	signal(SIGTTIN, SIG_IGN);
+	signal(SIGPIPE, SIG_IGN);
 	signal(SIGHUP, signal_handler); /* catch hangup signal */
 	signal(SIGTERM, signal_handler); /* catch kill signal */
 	
@@ -196,7 +199,7 @@ int main(int argc, char **argv)
 	}
 	
 	/* Initializing */
-	SSL_init();
+	SSLi_init();
 	Chan_init();
 	Client_init();
 
@@ -205,7 +208,7 @@ int main(int argc, char **argv)
 	
 	Server_run();
 	
-	SSL_deinit();
+	SSLi_deinit();
 	Chan_free();
 	Log_free();
 	Conf_deinit();
