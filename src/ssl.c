@@ -109,6 +109,7 @@ static void initCert()
 		if (rc != 0)
 			Log_fatal("Could not read certificate file %s", crtfile);
 	}
+	free(ca_file);
 }
 
 static void initKey()
@@ -230,7 +231,9 @@ void SSLi_shutdown(SSL_handle_t *ssl)
 
 void SSLi_free(SSL_handle_t *ssl)
 {
-	free(ssl->session);
+	Log_debug("SSLi_free");
+	free(ssl->session); /* XXX - Hmmm. */
+	ssl_free(ssl);
 	free(ssl);
 }
 
