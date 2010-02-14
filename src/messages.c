@@ -41,7 +41,6 @@
 
 #define PREAMBLE_SIZE 6
 
-static void dumpmsg(uint8_t *data, int size);
 static message_t *Msg_create_nopayload(messageType_t messageType);
 
 static void Msg_addPreamble(uint8_t *buffer, uint16_t type, uint32_t len)
@@ -486,23 +485,6 @@ void Msg_free(message_t *msg)
 		break;
 	}
 	free(msg);
-}
-
-void dumpmsg(uint8_t *data, int size)
-{
-	int i, r = 0, offset = 0;
-	char buf[512];
-	
-	while (r * 8 + i < size) {
-		for (i = 0; i < 8 && r * 8 + i < size; i++) {
-			offset += sprintf(buf + offset, "%x ", data[r * 8 + i]);
-		}
-		sprintf(buf + offset, "\n");
-		printf(buf);
-		offset = 0;
-		r++;
-		i = 0;
-	} 
 }
 
 message_t *Msg_CreateVoiceMsg(uint8_t *data, int size)
