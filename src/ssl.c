@@ -64,6 +64,8 @@ int ciphers[] =
 };
 static x509_cert certificate;
 static rsa_context key;
+bool_t builtInTestCertificate;
+
 havege_state hs; /* exported to crypt.c */
 
 /* DH prime */
@@ -77,17 +79,51 @@ char *my_dhm_P =
 	"DEF409C08E8AC24D1732A6128D2220DC53";
 char *my_dhm_G = "4";
 
+static void initTestCert()
+{
+	int rc;
+	builtInTestCertificate = true;
+	rc = x509parse_crt(&certificate, (unsigned char *)test_srv_crt,
+					   strlen(test_srv_crt));	
+	if (rc != 0)
+		Log_fatal("Could not parse built-in test certificate");
+	rc = x509parse_crt(&certificate, (unsigned char *)test_ca_crt,
+					   strlen(test_ca_crt));
+	if (rc != 0)
+		Log_fatal("Could not parse built-in test CA certificate");
+}
+
+static void initTestKey()
+{
+	int rc;
+	
+	rc = x509parse_key(&key, (unsigned char *)test_srv_key,
+					   strlen(test_srv_key), NULL, 0);
+	if (rc != 0)
+		Log_fatal("Could not parse built-in test RSA key");
+}
+
+/*
+ * openssl genrsa 1024 > host.key
+ * openssl req -new -x509 -nodes -sha1 -days 365 -key host.key > host.cert
+ */
 static void initCert()
 {
 	int rc;
 	char *crtfile = (char *)getStrConf(CERTIFICATE);
 	char *ca_file, *p;
 	
-	if (crtfile == NULL)
-		Log_fatal("No certificate file specified"); 
+	if (crtfile == NULL) {
+		Log_warn("No certificate file specified");
+		initTestCert();
+		return;
+	}
 	rc = x509parse_crtfile(&certificate, crtfile);
-	if (rc != 0)
-		Log_fatal("Could not read certificate file %s", crtfile);
+	if (rc != 0) {
+		Log_warn("Could not read certificate file %s", crtfile);
+		initTestCert();
+		return;
+	}
 	
 	/* Look for CA certificate file in same dir */
 	ca_file = malloc(strlen(crtfile) + strlen(CA_CRT_FILENAME) + 1);
@@ -116,7 +152,7 @@ static void initKey()
 {
 	int rc;
 	char *keyfile = (char *)getStrConf(KEY);
-	
+
 	if (keyfile == NULL)
 		Log_fatal("No key file specified"); 
 	rc = x509parse_keyfile(&key, keyfile, NULL);
@@ -134,7 +170,13 @@ static void pssl_debug(void *ctx, int level, char *str)
 void SSLi_init(void)
 {
 	initCert();
-	initKey();
+	if (builtInTestCertificate) {
+		Log_warn("*** Using built-in test certificate and RSA key ***");
+		Log_warn("*** This is not secure! Please use a CA-signed certificate or create a self-signed certificate ***");
+		initTestKey();
+	}
+	else
+		initKey();
     havege_init(&hs);
 	Log_info("PolarSSL library initialized");
 }
