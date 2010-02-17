@@ -6,11 +6,12 @@ Contains protobuf-c library code which is Copyright 2008, Dave Benson.
 See http://code.google.com/p/protobuf-c/
 
 1. Requirements
-o OpenSSL library
+o OpenSSL or PolarSSL library
 o libConfig
 
 2. Build
 cd to src directory
+Might need to edit Makefile
 make
 
 3. Install
