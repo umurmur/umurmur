@@ -276,9 +276,12 @@ int Chan_userLeave(client_t *client)
 int Chan_userJoin(channel_t *ch, client_t *client)
 {
 	int leaving_id;
+
+	/* Do nothing if user already is in this channel */
+	if ((channel_t *)client->channel == ch)
+		return 0;
 	
 	Log_debug("Add user %s to channel %s", client->username, ch->name); 
-
 	/* Only allowed in one channel at a time */
 	leaving_id = Chan_userLeave(client);
 	list_add_tail(&client->chan_node, &ch->clients);
