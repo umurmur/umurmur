@@ -79,9 +79,15 @@ void Mh_handle_message(client_t *client, message_t *msg)
 	}	
 	switch (msg->messageType) {
 	case Authenticate:
-				
 		Log_debug("Authenticate message received");
-		Log_debug("Username: %s", msg->payload.authenticate->username);
+		
+		if (IS_AUTH(client) || !msg->payload.authenticate->username) {
+			/* Authenticate message might be sent when a token is set by the user.*/
+			if (msg->payload.authenticate->n_tokens > 0) {
+				Log_debug("Tokens in auth message from %s", client->username);
+			}
+			break;
+		}
 		
 		client->authenticated = true;
 		
