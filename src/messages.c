@@ -44,17 +44,14 @@
 static message_t *Msg_create_nopayload(messageType_t messageType);
 
 static void Msg_addPreamble(uint8_t *buffer, uint16_t type, uint32_t len)
-{
-	type = htons(type);
-	len = htonl(len);
+{	
+	buffer[1] = (type) & 0xff;
+	buffer[0] = (type >> 8) & 0xff;
 	
-	buffer[0] = (type) & 0xff;
-	buffer[1] = (type >> 8) & 0xff;
-	
-	buffer[2] = (len) & 0xff;
-	buffer[3] = (len >> 8) & 0xff;
-	buffer[4] = (len >> 16) & 0xff;
-	buffer[5] = (len >> 24) & 0xff;	
+	buffer[5] = (len) & 0xff;
+	buffer[4] = (len >> 8) & 0xff;
+	buffer[3] = (len >> 16) & 0xff;
+	buffer[2] = (len >> 24) & 0xff;	
 }
 
 static void Msg_getPreamble(uint8_t *buffer, int *type, int *len)
@@ -62,10 +59,10 @@ static void Msg_getPreamble(uint8_t *buffer, int *type, int *len)
 	uint16_t msgType;
 	uint32_t msgLen;
 	
-	msgType = buffer[0] | (buffer[1] << 8);
-	msgLen = buffer[2] | (buffer[3] << 8) | (buffer[4] << 16) | (buffer[5] << 24);
-	*type = (int)ntohs(msgType);
-	*len = (int)ntohl(msgLen);
+	msgType = buffer[1] | (buffer[0] << 8);
+	msgLen = buffer[5] | (buffer[4] << 8) | (buffer[3] << 16) | (buffer[2] << 24);
+	*type = (int)msgType;
+	*len = (int)msgLen;
 }
 
 #define MAX_MSGSIZE (BUFSIZE - PREAMBLE_SIZE)
