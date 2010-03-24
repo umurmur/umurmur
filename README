@@ -5,6 +5,19 @@ http://code.google.com/p/umurmur/
 Contains protobuf-c library code which is Copyright 2008, Dave Benson.
 See http://code.google.com/p/protobuf-c/
 
+uMurmur is available as a precompiled package for some distributions. Check
+your package repository if you are running OpenWRT or Freetz.
+
+There are makefiles in the openwrt subdirectory suitable for buildning with
+the OpenWRT SDK. Move the Makefile of choice to the base directory, e.g.:
+
+# mv openwrt/Makefile.polarssl Makefile
+
+and then put the whole umurmur-X.X.X directory in the SDK's 'packages'
+directory.
+
+
+Instructions for building from source:
 1. Requirements
 o OpenSSL or PolarSSL library
 o libConfig

@@ -1,0 +1,38 @@
+0.2.3:
+Fix byte order confusion which made uMurmur not work on big endian
+platforms.
+
+0.2.2:
+Fix server crash when user adding an Access Token while connected to the
+server.
+Fix server crash when dragging the self user from a temporary channel and
+dropping it back into the very same temporary channel.
+
+0.2.1:
+Just a version string update (accidentally was left at "0.2.0-beta2" in
+release 0.2.0).
+
+
+0.2.0:
+Lots of changes. Highlights:
+
+Uses Mumble protocol 1.2.x, meaning that clients 1.2.x are supported.
+Support for PolarSSL as an alternative to OpenSSL.
+Whisper target to channels, channel trees and linked channels.
+Temporary channels can be created by users.
+Channel links can be configured in the configuration file.
+Channels can be configured non-enterable in configuration file.
+Positional audio is stripped if users are not in the same plugin context
+(playing the same game).
+
+0.1.3:
+Fix TCP-mode memory leak.
+Add command-line switch to enable realtime priority
+
+0.1.2:
+Increase max string size
+Force a close when inactivity timer triggers
+Correct log levels
+
+0.1.1:
+Initial release
