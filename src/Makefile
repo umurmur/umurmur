@@ -9,16 +9,16 @@ OBJS:=$(patsubst %.c, %.o, $(SRCS))
 #EXTRA_LDFLAGS:=$(LDFLAGS) -L/data/export/proj/openssl/lib/ -lcrypto -lssl
 
 # Debug
-CFLAGS:=$(CFLAGS) -DDEBUG -g
+# CFLAGS:=$(CFLAGS) -DDEBUG -g
 # ********** Debug stuff END ************
 
 
 # Build support and link to PolarSSL
 # If PolarSSL is in a nonstandard place.
-POLARSSL_LIB:=../../../polarssl/polarssl-0.12.1/library/libpolarssl.a
-SSL_LIB:=$(POLARSSL_LIB) # If statically linking
-POLARSSL_INCLUDE:=../../../polarssl/polarssl-0.12.1/include
-EXTRA_CFLAGS:=-DUSE_POLARSSL -I$(POLARSSL_INCLUDE)
+# POLARSSL_LIB:=../../../polarssl/polarssl-0.12.1/library/libpolarssl.a
+# SSL_LIB:=$(POLARSSL_LIB) # If statically linking
+# POLARSSL_INCLUDE:=../../../polarssl/polarssl-0.12.1/include
+# EXTRA_CFLAGS:=-DUSE_POLARSSL -I$(POLARSSL_INCLUDE)
 # EXTRA_LDLAGS:=-lpolarssl
 
 
