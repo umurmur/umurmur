@@ -1,3 +1,6 @@
+0.2.4:
+Fsked up the 0.2.3 release with a bad Makefile... Fixed in this one.
+
 0.2.3:
 Fix byte order confusion which made uMurmur not work on big endian
 platforms.
