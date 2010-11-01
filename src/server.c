@@ -100,11 +100,11 @@ void Server_run()
 	val = 0xe0;
 	rc = setsockopt(udpsock, IPPROTO_IP, IP_TOS, &val, sizeof(val));
 	if (rc < 0)
-		Log_fatal("Server: Failed to set TOS for UDP Socket");
+		Log_warn("Server: Failed to set TOS for UDP Socket");
 	val = 0x80;
 	rc = setsockopt(udpsock, IPPROTO_IP, IP_TOS, &val, sizeof(val));
 	if (rc < 0)
-		Log_fatal("Server: Failed to set TOS for UDP Socket");
+		Log_warn("Server: Failed to set TOS for UDP Socket");
 	
 	fcntl(udpsock, F_SETFL, O_NONBLOCK);
 	pollfds[UDP_SOCK].fd = udpsock;
