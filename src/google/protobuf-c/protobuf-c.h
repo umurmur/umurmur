@@ -18,7 +18,6 @@
 #ifndef __PROTOBUF_C_RUNTIME_H_
 #define __PROTOBUF_C_RUNTIME_H_
 
-#include <inttypes.h>
 #include <stddef.h>
 #include <assert.h>
 
@@ -28,6 +27,31 @@
 #else
 # define PROTOBUF_C_BEGIN_DECLS
 # define PROTOBUF_C_END_DECLS
+#endif
+
+#if !defined(PROTOBUF_C_NO_DEPRECATED) && (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 1))
+#define PROTOBUF_C_DEPRECATED __attribute__((__deprecated__))
+#else
+#define PROTOBUF_C_DEPRECATED
+#endif
+
+/* Define int32_t, int64_t, uint32_t, uint64_t, uint8_t.
+
+   Usually, just include <inttypes.h> to do the work.
+   XXX: should we use stdint.h?
+ */
+#ifndef PROTOBUF_C_SKIP_INTTYPES_H
+#  if defined(_MSC_VER)
+     /* On windows, in ms visual studio, define the types ourselves */
+#    define int32_t      signed __int32
+#    define uint32_t     unsigned __int32
+#    define int64_t      signed __int64
+#    define uint64_t     unsigned __int64
+#    define uint8_t      unsigned char
+#  else
+     /* Use the system inttypes.h */
+#    include <inttypes.h>
+#  endif
 #endif
 
 PROTOBUF_C_BEGIN_DECLS
@@ -89,12 +113,17 @@ struct _ProtobufCAllocator
 
 /* This is a configurable allocator.
  * By default, it uses the system allocator (meaning malloc() and free()).
- * This is typically done to incorporate into frameworks that provide
+ * This is typically changed to adapt to frameworks that provide
  * some nonstandard allocation functions.
+ *
+ * NOTE: you may modify this allocator.
  */
 extern ProtobufCAllocator protobuf_c_default_allocator; /* settable */
 
-/* This is the system allocator, meaning it uses malloc() and free() */
+/* This is the system allocator, meaning it uses malloc() and free().
+ *
+ * NOTE: please do NOT modify this allocator.
+ */
 extern ProtobufCAllocator protobuf_c_system_allocator;  /* use malloc, free etc */
 
 /* This is the function that our default allocators call when they 
@@ -175,6 +204,8 @@ struct _ProtobufCEnumDescriptor
 /* --- messages --- */
 typedef struct _ProtobufCMessageDescriptor ProtobufCMessageDescriptor;
 typedef struct _ProtobufCFieldDescriptor ProtobufCFieldDescriptor;
+typedef struct _ProtobufCMessage ProtobufCMessage;
+typedef void (*ProtobufCMessageInit)(ProtobufCMessage *);
 /* ProtobufCFieldDescriptor: description of a single field
  * in a message.
  * 'name' is the name of the field, as given in the .proto file.
@@ -202,9 +233,11 @@ struct _ProtobufCFieldDescriptor
   unsigned offset;
   const void *descriptor;   /* for MESSAGE and ENUM types */
   const void *default_value;   /* or NULL if no default-value */
+  protobuf_c_boolean packed;
 
-  void *reserved1;
+  unsigned reserved_flags;
   void *reserved2;
+  void *reserved3;
 };
 /* ProtobufCMessageDescriptor: description of a message.
  *
@@ -240,10 +273,10 @@ struct _ProtobufCMessageDescriptor
   unsigned n_field_ranges;
   const ProtobufCIntRange *field_ranges;
 
+  ProtobufCMessageInit message_init;
   void *reserved1;
   void *reserved2;
   void *reserved3;
-  void *reserved4;
 };
 
 
@@ -267,7 +300,6 @@ struct _ProtobufCMessageDescriptor
  * 'n_unknown_fields' is the number of fields we didn't recognize.
  * 'unknown_fields' are fields we didn't recognize.
  */
-typedef struct _ProtobufCMessage ProtobufCMessage;
 typedef struct _ProtobufCMessageUnknownField ProtobufCMessageUnknownField;
 struct _ProtobufCMessage
 {
@@ -299,10 +331,9 @@ ProtobufCMessage *
 void      protobuf_c_message_free_unpacked  (ProtobufCMessage    *message,
                                              ProtobufCAllocator  *allocator);
 
-/* WARNING: 'to_init' must be a block of memory 
-   of size description->sizeof_message. */
-size_t    protobuf_c_message_init           (const ProtobufCMessageDescriptor *,
-                                             ProtobufCMessage       *to_init);
+/* WARNING: 'message' must be a block of memory 
+   of size descriptor->sizeof_message. */
+#define protobuf_c_message_init(descriptor, message) ((descriptor)->message_init((ProtobufCMessage*) (message)))
 
 /* --- services --- */
 typedef struct _ProtobufCMethodDescriptor ProtobufCMethodDescriptor;

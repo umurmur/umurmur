@@ -704,6 +704,9 @@ MumbleProto__UserState *
 void   mumble_proto__user_state__free_unpacked
                      (MumbleProto__UserState *message,
                       ProtobufCAllocator *allocator);
+/* MumbleProto__BanList__BanEntry methods */
+void   mumble_proto__ban_list__ban_entry__init
+                     (MumbleProto__BanList__BanEntry         *message);
 /* MumbleProto__BanList methods */
 void   mumble_proto__ban_list__init
                      (MumbleProto__BanList         *message);
@@ -761,6 +764,12 @@ MumbleProto__PermissionDenied *
 void   mumble_proto__permission_denied__free_unpacked
                      (MumbleProto__PermissionDenied *message,
                       ProtobufCAllocator *allocator);
+/* MumbleProto__ACL__ChanGroup methods */
+void   mumble_proto__acl__chan_group__init
+                     (MumbleProto__ACL__ChanGroup         *message);
+/* MumbleProto__ACL__ChanACL methods */
+void   mumble_proto__acl__chan_acl__init
+                     (MumbleProto__ACL__ChanACL         *message);
 /* MumbleProto__ACL methods */
 void   mumble_proto__acl__init
                      (MumbleProto__ACL         *message);
@@ -856,6 +865,9 @@ MumbleProto__ContextAction *
 void   mumble_proto__context_action__free_unpacked
                      (MumbleProto__ContextAction *message,
                       ProtobufCAllocator *allocator);
+/* MumbleProto__UserList__User methods */
+void   mumble_proto__user_list__user__init
+                     (MumbleProto__UserList__User         *message);
 /* MumbleProto__UserList methods */
 void   mumble_proto__user_list__init
                      (MumbleProto__UserList         *message);
@@ -875,6 +887,9 @@ MumbleProto__UserList *
 void   mumble_proto__user_list__free_unpacked
                      (MumbleProto__UserList *message,
                       ProtobufCAllocator *allocator);
+/* MumbleProto__VoiceTarget__Target methods */
+void   mumble_proto__voice_target__target__init
+                     (MumbleProto__VoiceTarget__Target         *message);
 /* MumbleProto__VoiceTarget methods */
 void   mumble_proto__voice_target__init
                      (MumbleProto__VoiceTarget         *message);
