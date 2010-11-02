@@ -221,8 +221,6 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		sendmsg = Msg_create(UserState);
 		sendmsg->payload.userState->has_session = true;
 		sendmsg->payload.userState->session = client->sessionId;
-		sendmsg->payload.userState->has_user_id = true;
-		sendmsg->payload.userState->user_id = client->sessionId;
 		sendmsg->payload.userState->name = strdup(client->username);
 		sendmsg->payload.userState->has_channel_id = true;
 		sendmsg->payload.userState->channel_id = ((channel_t *)client->channel)->id;
@@ -329,11 +327,22 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			sendPermissionDenied(client, "Not supported by uMurmur");
 			break;
 		}
+		
+		msg->payload.userState->has_session = true;
+		msg->payload.userState->session = client->sessionId;
+		msg->payload.userState->has_actor = true;
+		msg->payload.userState->actor = client->sessionId;
+
 		if (msg->payload.userState->has_self_deaf) {
 			client->deaf = msg->payload.userState->self_deaf;
 		}
 		if (msg->payload.userState->has_self_mute) {
-			client->mute = msg->payload.userState->self_mute;			
+			client->mute = msg->payload.userState->self_mute;
+			if (!client->mute) {
+				msg->payload.userState->has_self_deaf = true;
+				msg->payload.userState->self_deaf = false;
+				client->deaf = false;
+			}
 		}
 		if (msg->payload.userState->has_channel_id) {
 			int leave_id;
@@ -358,8 +367,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		
 		/* Re-use message */
 		Msg_inc_ref(msg);
-		msg->payload.userState->has_actor = true;
-		msg->payload.userState->actor = client->sessionId;
+				
 		Client_send_message_except(NULL, msg);
 
 		/* Need to send remove channel message _after_ UserState message */
