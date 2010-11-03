@@ -104,11 +104,14 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			}				
 		}
 		if (strlen(getStrConf(PASSPHRASE)) > 0) {
-			if (!msg->payload.authenticate->password || strncmp(getStrConf(PASSPHRASE), msg->payload.authenticate->password, MAX_TEXT) != 0) {
+			if (!msg->payload.authenticate->password ||
+				(msg->payload.authenticate->password &&
+				 strncmp(getStrConf(PASSPHRASE), msg->payload.authenticate->password, MAX_TEXT) != 0)) {
 				char buf[64];
 				sprintf(buf, "Wrong server password");
 				sendServerReject(client, buf, MUMBLE_PROTO__REJECT__REJECT_TYPE__WrongServerPW);
-				Log_debug("Wrong server password: %s", msg->payload.authenticate->password);
+				Log_debug("Wrong server password: '%s'", msg->payload.authenticate->password != NULL ?
+						  msg->payload.authenticate->password : "(null)");
 				goto disconnect;
 			}
 		}				
