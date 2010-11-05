@@ -137,14 +137,17 @@ static void initCert()
 	rc = x509parse_crtfile(&certificate, ca_file);
 	if (rc != 0) { /* No CA certifiacte found. Assume self-signed. */
 		Log_info("CA certificate file %s not found. Assuming self-signed certificate.", ca_file);
-		/*
-		 * Apparently PolarSSL needs to read something more into certificate chain.
-		 * Doesn't seem to matter what. Read own certificate again.
-		 */
-		rc = x509parse_crtfile(&certificate, crtfile);
-		if (rc != 0)
-			Log_fatal("Could not read certificate file %s", crtfile);
 	}
+	
+	/*
+	 * PolarSSL 0.11 - 0.12,1 has a bug; it ignores the last certificate in the chain.
+	 * Read the certificate again so that it gets last in chain. Later releases like 0.14.0 works
+	 * fine with the extra certificate, so I don't see any harm in doing so.
+	 */
+	rc = x509parse_crtfile(&certificate, crtfile);
+	if (rc != 0)
+		Log_fatal("Could not read certificate file %s", crtfile);
+	
 	free(ca_file);
 }
 
@@ -161,7 +164,7 @@ static void initKey()
 }
 
 #define DEBUG_LEVEL 0
-static void pssl_debug(void *ctx, int level, char *str)
+static void pssl_debug(void *ctx, int level, const char *str)
 {
     if (level <= DEBUG_LEVEL)
 		Log_debug("PolarSSL [level %d]: %s", level, str);
