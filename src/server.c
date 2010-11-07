@@ -54,6 +54,8 @@
 /* globals */
 int udpsock; 
 bool_t shutdown_server;
+extern char *bindaddr;
+extern int bindport;
 
 void Server_run()
 {
@@ -63,11 +65,27 @@ void Server_run()
 	struct sockaddr_in sin;
 	int val, clientcount;
 	etimer_t janitorTimer;
-
+	unsigned short port;
+	in_addr_t inet_address;
+	
 	/* max clients + listen sock + udp sock + client connecting that will be disconnected */
 	pollfds = malloc((getIntConf(MAX_CLIENTS) + 3) * sizeof(struct pollfd));
 	if (pollfds == NULL)
 		Log_fatal("out of memory");
+
+	/* Figure out bind address and port */
+	if (bindport != 0)
+		port = htons(bindport);
+	else
+		port = htons(getIntConf(BINDPORT));
+	
+	if (bindaddr != NULL && inet_addr(bindaddr) != -1)
+		inet_address = inet_addr(bindaddr);
+	else if (inet_addr(getStrConf(BINDADDR)) !=  -1)
+		inet_address = inet_addr(getStrConf(BINDADDR));
+	else
+		inet_address = inet_addr("0.0.0.0");
+	Log_info("Bind to %s:%hu", inet_address == 0 ? "*" : inet_ntoa(*((struct in_addr *)&inet_address)), ntohs(port));
 	
 	/* Prepare TCP socket */
 	memset(&sin, 0, sizeof(sin));
@@ -77,8 +95,9 @@ void Server_run()
 	if (setsockopt(tcpsock, SOL_SOCKET, SO_REUSEADDR, &sockopt, sizeof(int)) != 0)
 		Log_fatal("setsockopt: %s", strerror(errno));
 	sin.sin_family = AF_INET;
-	sin.sin_port = htons(getIntConf(BINDPORT));
-	sin.sin_addr.s_addr = inet_addr(getStrConf(BINDADDR)) ==  -1 ? inet_addr("0.0.0.0") : inet_addr(getStrConf(BINDADDR));
+	sin.sin_port = port;	
+	sin.sin_addr.s_addr = inet_address;
+	
 	rc = bind(tcpsock, (struct sockaddr *) &sin, sizeof (struct sockaddr_in));
 	if (rc < 0) Log_fatal("bind: %s", strerror(errno));
 	rc = listen(tcpsock, 3);
@@ -92,8 +111,9 @@ void Server_run()
 	memset(&sin, 0, sizeof(sin));
 	udpsock = socket(PF_INET, SOCK_DGRAM, 0);
 	sin.sin_family = AF_INET;
-	sin.sin_port = htons(getIntConf(BINDPORT));
-	sin.sin_addr.s_addr = inet_addr(getStrConf(BINDADDR)) ==  -1 ? inet_addr("0.0.0.0") : inet_addr(getStrConf(BINDADDR));
+	sin.sin_port = port;
+	sin.sin_addr.s_addr = inet_address;
+	
 	rc = bind(udpsock, (struct sockaddr *) &sin, sizeof (struct sockaddr_in));
 	if (rc < 0)
 		Log_fatal("bind %d %s: %s", getIntConf(BINDPORT), getStrConf(BINDADDR), strerror(errno));

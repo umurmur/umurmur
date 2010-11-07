@@ -51,6 +51,8 @@
 #include "version.h"
 
 char system_string[64], version_string[64];
+int bindport;
+char *bindaddr;
 
 void lockfile(const char *pidfile)
 {
@@ -129,6 +131,8 @@ void printhelp()
 	printf("       -p <pidfile>   - Write PID to this file\n");
 	printf("       -c <conf file> - Specify configuration file\n");
 	printf("       -r             - Run with realtime priority\n");
+	printf("       -a <address>   - Bind to IP address\n");
+	printf("       -b <port>      - Bind to port\n");
 	printf("       -h             - Print this help\n");
 	exit(0);
 }
@@ -142,13 +146,19 @@ int main(int argc, char **argv)
 	struct utsname utsbuf;
 	
 	/* Arguments */
-	while ((c = getopt(argc, argv, "drp:c:h")) != EOF) {
+	while ((c = getopt(argc, argv, "drp:c:a:b:h")) != EOF) {
 		switch(c) {
 		case 'c':
 			conffile = optarg;
 			break;
 		case 'p':
 			pidfile = optarg;
+			break;
+		case 'a':
+			bindaddr = optarg;
+			break;
+		case 'b':
+			bindport = atoi(optarg);
 			break;
 		case 'd':
 			nodaemon = true;
