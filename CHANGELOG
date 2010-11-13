@@ -1,3 +1,12 @@
+0.2.5:
+Change error handling from fatal + exit to just warn when fail to set
+TOS for UDP socket.
+Fix mute/unmute status not showing up properly in GUI in the other
+clients.
+Fix false 'authenticated' status showing up for other clients.
+Add bind IP and port to commandline parameters.
+Update Protobuf-C to 0.14.
+
 0.2.4:
 Fsked up the 0.2.3 release with a bad Makefile... Fixed in this one.
 
