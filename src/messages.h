@@ -38,7 +38,7 @@
 
 #define PROTVER_MAJOR 1
 #define PROTVER_MINOR 2
-#define PROTVER_PATCH 0
+#define PROTVER_PATCH 3
 #define PROTOCOL_VERSION ((PROTVER_MAJOR << 16) | (PROTVER_MINOR << 8) | (PROTVER_PATCH))
 
 #define PERM_NONE 0x0
@@ -86,6 +86,9 @@ typedef enum {
 	VoiceTarget,
 	PermissionQuery, /* 20 */
 	CodecVersion,
+	UserStats,
+	RequestBlob,
+	ServerConfig
 } messageType_t;
 
 typedef enum {
@@ -123,6 +126,8 @@ typedef union payload {
 	struct  _MumbleProto__VoiceTarget *voiceTarget;
 	struct  _MumbleProto__PermissionQuery *permissionQuery;
 	struct  _MumbleProto__CodecVersion *codecVersion;
+	struct  _MumbleProto__UserStats *userStats;
+	struct  _MumbleProto__ServerConfig *serverConfig;
 } payload_t;
 
 typedef struct message {

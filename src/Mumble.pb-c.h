@@ -13,6 +13,7 @@ typedef struct _MumbleProto__UDPTunnel MumbleProto__UDPTunnel;
 typedef struct _MumbleProto__Authenticate MumbleProto__Authenticate;
 typedef struct _MumbleProto__Ping MumbleProto__Ping;
 typedef struct _MumbleProto__Reject MumbleProto__Reject;
+typedef struct _MumbleProto__ServerConfig MumbleProto__ServerConfig;
 typedef struct _MumbleProto__ServerSync MumbleProto__ServerSync;
 typedef struct _MumbleProto__ChannelRemove MumbleProto__ChannelRemove;
 typedef struct _MumbleProto__ChannelState MumbleProto__ChannelState;
@@ -35,6 +36,9 @@ typedef struct _MumbleProto__VoiceTarget MumbleProto__VoiceTarget;
 typedef struct _MumbleProto__VoiceTarget__Target MumbleProto__VoiceTarget__Target;
 typedef struct _MumbleProto__PermissionQuery MumbleProto__PermissionQuery;
 typedef struct _MumbleProto__CodecVersion MumbleProto__CodecVersion;
+typedef struct _MumbleProto__UserStats MumbleProto__UserStats;
+typedef struct _MumbleProto__UserStats__Stats MumbleProto__UserStats__Stats;
+typedef struct _MumbleProto__RequestBlob MumbleProto__RequestBlob;
 
 
 /* --- enums --- */
@@ -57,7 +61,9 @@ typedef enum _MumbleProto__PermissionDenied__DenyType {
   MUMBLE_PROTO__PERMISSION_DENIED__DENY_TYPE__TextTooLong = 4,
   MUMBLE_PROTO__PERMISSION_DENIED__DENY_TYPE__H9K = 5,
   MUMBLE_PROTO__PERMISSION_DENIED__DENY_TYPE__TemporaryChannel = 6,
-  MUMBLE_PROTO__PERMISSION_DENIED__DENY_TYPE__MissingCertificate = 7
+  MUMBLE_PROTO__PERMISSION_DENIED__DENY_TYPE__MissingCertificate = 7,
+  MUMBLE_PROTO__PERMISSION_DENIED__DENY_TYPE__UserName = 8,
+  MUMBLE_PROTO__PERMISSION_DENIED__DENY_TYPE__ChannelFull = 9
 } MumbleProto__PermissionDenied__DenyType;
 typedef enum _MumbleProto__ContextActionAdd__Context {
   MUMBLE_PROTO__CONTEXT_ACTION_ADD__CONTEXT__Server = 1,
@@ -149,6 +155,24 @@ struct  _MumbleProto__Reject
     , 0,0, NULL }
 
 
+struct  _MumbleProto__ServerConfig
+{
+  ProtobufCMessage base;
+  protobuf_c_boolean has_max_bandwidth;
+  uint32_t max_bandwidth;
+  char *welcome_text;
+  protobuf_c_boolean has_allow_html;
+  protobuf_c_boolean allow_html;
+  protobuf_c_boolean has_message_length;
+  uint32_t message_length;
+  protobuf_c_boolean has_image_message_length;
+  uint32_t image_message_length;
+};
+#define MUMBLE_PROTO__SERVER_CONFIG__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&mumble_proto__server_config__descriptor) \
+    , 0,0, NULL, 0,0, 0,0, 0,0 }
+
+
 struct  _MumbleProto__ServerSync
 {
   ProtobufCMessage base;
@@ -159,12 +183,10 @@ struct  _MumbleProto__ServerSync
   char *welcome_text;
   protobuf_c_boolean has_permissions;
   uint64_t permissions;
-  protobuf_c_boolean has_allow_html;
-  protobuf_c_boolean allow_html;
 };
 #define MUMBLE_PROTO__SERVER_SYNC__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&mumble_proto__server_sync__descriptor) \
-    , 0,0, 0,0, NULL, 0,0, 0,1 }
+    , 0,0, 0,0, NULL, 0,0 }
 
 
 struct  _MumbleProto__ChannelRemove
@@ -196,10 +218,12 @@ struct  _MumbleProto__ChannelState
   protobuf_c_boolean temporary;
   protobuf_c_boolean has_position;
   int32_t position;
+  protobuf_c_boolean has_description_hash;
+  ProtobufCBinaryData description_hash;
 };
 #define MUMBLE_PROTO__CHANNEL_STATE__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&mumble_proto__channel_state__descriptor) \
-    , 0,0, 0,0, NULL, 0,NULL, NULL, 0,NULL, 0,NULL, 0,0, 0,0 }
+    , 0,0, 0,0, NULL, 0,NULL, NULL, 0,NULL, 0,NULL, 0,0, 0,0, 0,{0,NULL} }
 
 
 struct  _MumbleProto__UserRemove
@@ -241,14 +265,23 @@ struct  _MumbleProto__UserState
   protobuf_c_boolean self_deaf;
   protobuf_c_boolean has_texture;
   ProtobufCBinaryData texture;
-  char *plugin_context;
+  protobuf_c_boolean has_plugin_context;
+  ProtobufCBinaryData plugin_context;
   char *plugin_identity;
   char *comment;
   char *hash;
+  protobuf_c_boolean has_comment_hash;
+  ProtobufCBinaryData comment_hash;
+  protobuf_c_boolean has_texture_hash;
+  ProtobufCBinaryData texture_hash;
+  protobuf_c_boolean has_priority_speaker;
+  protobuf_c_boolean priority_speaker;
+  protobuf_c_boolean has_recording;
+  protobuf_c_boolean recording;
 };
 #define MUMBLE_PROTO__USER_STATE__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&mumble_proto__user_state__descriptor) \
-    , 0,0, 0,0, NULL, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,{0,NULL}, NULL, NULL, NULL, NULL }
+    , 0,0, 0,0, NULL, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,{0,NULL}, 0,{0,NULL}, NULL, NULL, NULL, 0,{0,NULL}, 0,{0,NULL}, 0,0, 0,0 }
 
 
 struct  _MumbleProto__BanList__BanEntry
@@ -311,10 +344,11 @@ struct  _MumbleProto__PermissionDenied
   char *reason;
   protobuf_c_boolean has_type;
   MumbleProto__PermissionDenied__DenyType type;
+  char *name;
 };
 #define MUMBLE_PROTO__PERMISSION_DENIED__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&mumble_proto__permission_denied__descriptor) \
-    , 0,0, 0,0, 0,0, NULL, 0,0 }
+    , 0,0, 0,0, 0,0, NULL, 0,0, NULL }
 
 
 struct  _MumbleProto__ACL__ChanGroup
@@ -514,6 +548,80 @@ struct  _MumbleProto__CodecVersion
     , 0, 0, 1 }
 
 
+struct  _MumbleProto__UserStats__Stats
+{
+  ProtobufCMessage base;
+  protobuf_c_boolean has_good;
+  uint32_t good;
+  protobuf_c_boolean has_late;
+  uint32_t late;
+  protobuf_c_boolean has_lost;
+  uint32_t lost;
+  protobuf_c_boolean has_resync;
+  uint32_t resync;
+};
+#define MUMBLE_PROTO__USER_STATS__STATS__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&mumble_proto__user_stats__stats__descriptor) \
+    , 0,0, 0,0, 0,0, 0,0 }
+
+
+struct  _MumbleProto__UserStats
+{
+  ProtobufCMessage base;
+  protobuf_c_boolean has_session;
+  uint32_t session;
+  protobuf_c_boolean has_stats_only;
+  protobuf_c_boolean stats_only;
+  size_t n_certificates;
+  ProtobufCBinaryData *certificates;
+  MumbleProto__UserStats__Stats *from_client;
+  MumbleProto__UserStats__Stats *from_server;
+  protobuf_c_boolean has_udp_packets;
+  uint32_t udp_packets;
+  protobuf_c_boolean has_tcp_packets;
+  uint32_t tcp_packets;
+  protobuf_c_boolean has_udp_ping_avg;
+  float udp_ping_avg;
+  protobuf_c_boolean has_udp_ping_var;
+  float udp_ping_var;
+  protobuf_c_boolean has_tcp_ping_avg;
+  float tcp_ping_avg;
+  protobuf_c_boolean has_tcp_ping_var;
+  float tcp_ping_var;
+  MumbleProto__Version *version;
+  size_t n_celt_versions;
+  int32_t *celt_versions;
+  protobuf_c_boolean has_address;
+  ProtobufCBinaryData address;
+  protobuf_c_boolean has_bandwidth;
+  uint32_t bandwidth;
+  protobuf_c_boolean has_onlinesecs;
+  uint32_t onlinesecs;
+  protobuf_c_boolean has_idlesecs;
+  uint32_t idlesecs;
+  protobuf_c_boolean has_strong_certificate;
+  protobuf_c_boolean strong_certificate;
+};
+#define MUMBLE_PROTO__USER_STATS__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&mumble_proto__user_stats__descriptor) \
+    , 0,0, 0,0, 0,NULL, NULL, NULL, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, NULL, 0,NULL, 0,{0,NULL}, 0,0, 0,0, 0,0, 0,0 }
+
+
+struct  _MumbleProto__RequestBlob
+{
+  ProtobufCMessage base;
+  size_t n_session_texture;
+  uint32_t *session_texture;
+  size_t n_session_comment;
+  uint32_t *session_comment;
+  size_t n_channel_description;
+  uint32_t *channel_description;
+};
+#define MUMBLE_PROTO__REQUEST_BLOB__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&mumble_proto__request_blob__descriptor) \
+    , 0,NULL, 0,NULL, 0,NULL }
+
+
 /* MumbleProto__Version methods */
 void   mumble_proto__version__init
                      (MumbleProto__Version         *message);
@@ -608,6 +716,25 @@ MumbleProto__Reject *
                       const uint8_t       *data);
 void   mumble_proto__reject__free_unpacked
                      (MumbleProto__Reject *message,
+                      ProtobufCAllocator *allocator);
+/* MumbleProto__ServerConfig methods */
+void   mumble_proto__server_config__init
+                     (MumbleProto__ServerConfig         *message);
+size_t mumble_proto__server_config__get_packed_size
+                     (const MumbleProto__ServerConfig   *message);
+size_t mumble_proto__server_config__pack
+                     (const MumbleProto__ServerConfig   *message,
+                      uint8_t             *out);
+size_t mumble_proto__server_config__pack_to_buffer
+                     (const MumbleProto__ServerConfig   *message,
+                      ProtobufCBuffer     *buffer);
+MumbleProto__ServerConfig *
+       mumble_proto__server_config__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   mumble_proto__server_config__free_unpacked
+                     (MumbleProto__ServerConfig *message,
                       ProtobufCAllocator *allocator);
 /* MumbleProto__ServerSync methods */
 void   mumble_proto__server_sync__init
@@ -947,6 +1074,47 @@ MumbleProto__CodecVersion *
 void   mumble_proto__codec_version__free_unpacked
                      (MumbleProto__CodecVersion *message,
                       ProtobufCAllocator *allocator);
+/* MumbleProto__UserStats__Stats methods */
+void   mumble_proto__user_stats__stats__init
+                     (MumbleProto__UserStats__Stats         *message);
+/* MumbleProto__UserStats methods */
+void   mumble_proto__user_stats__init
+                     (MumbleProto__UserStats         *message);
+size_t mumble_proto__user_stats__get_packed_size
+                     (const MumbleProto__UserStats   *message);
+size_t mumble_proto__user_stats__pack
+                     (const MumbleProto__UserStats   *message,
+                      uint8_t             *out);
+size_t mumble_proto__user_stats__pack_to_buffer
+                     (const MumbleProto__UserStats   *message,
+                      ProtobufCBuffer     *buffer);
+MumbleProto__UserStats *
+       mumble_proto__user_stats__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   mumble_proto__user_stats__free_unpacked
+                     (MumbleProto__UserStats *message,
+                      ProtobufCAllocator *allocator);
+/* MumbleProto__RequestBlob methods */
+void   mumble_proto__request_blob__init
+                     (MumbleProto__RequestBlob         *message);
+size_t mumble_proto__request_blob__get_packed_size
+                     (const MumbleProto__RequestBlob   *message);
+size_t mumble_proto__request_blob__pack
+                     (const MumbleProto__RequestBlob   *message,
+                      uint8_t             *out);
+size_t mumble_proto__request_blob__pack_to_buffer
+                     (const MumbleProto__RequestBlob   *message,
+                      ProtobufCBuffer     *buffer);
+MumbleProto__RequestBlob *
+       mumble_proto__request_blob__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   mumble_proto__request_blob__free_unpacked
+                     (MumbleProto__RequestBlob *message,
+                      ProtobufCAllocator *allocator);
 /* --- per-message closures --- */
 
 typedef void (*MumbleProto__Version_Closure)
@@ -963,6 +1131,9 @@ typedef void (*MumbleProto__Ping_Closure)
                   void *closure_data);
 typedef void (*MumbleProto__Reject_Closure)
                  (const MumbleProto__Reject *message,
+                  void *closure_data);
+typedef void (*MumbleProto__ServerConfig_Closure)
+                 (const MumbleProto__ServerConfig *message,
                   void *closure_data);
 typedef void (*MumbleProto__ServerSync_Closure)
                  (const MumbleProto__ServerSync *message,
@@ -1030,6 +1201,15 @@ typedef void (*MumbleProto__PermissionQuery_Closure)
 typedef void (*MumbleProto__CodecVersion_Closure)
                  (const MumbleProto__CodecVersion *message,
                   void *closure_data);
+typedef void (*MumbleProto__UserStats__Stats_Closure)
+                 (const MumbleProto__UserStats__Stats *message,
+                  void *closure_data);
+typedef void (*MumbleProto__UserStats_Closure)
+                 (const MumbleProto__UserStats *message,
+                  void *closure_data);
+typedef void (*MumbleProto__RequestBlob_Closure)
+                 (const MumbleProto__RequestBlob *message,
+                  void *closure_data);
 
 /* --- services --- */
 
@@ -1042,6 +1222,7 @@ extern const ProtobufCMessageDescriptor mumble_proto__authenticate__descriptor;
 extern const ProtobufCMessageDescriptor mumble_proto__ping__descriptor;
 extern const ProtobufCMessageDescriptor mumble_proto__reject__descriptor;
 extern const ProtobufCEnumDescriptor    mumble_proto__reject__reject_type__descriptor;
+extern const ProtobufCMessageDescriptor mumble_proto__server_config__descriptor;
 extern const ProtobufCMessageDescriptor mumble_proto__server_sync__descriptor;
 extern const ProtobufCMessageDescriptor mumble_proto__channel_remove__descriptor;
 extern const ProtobufCMessageDescriptor mumble_proto__channel_state__descriptor;
@@ -1066,6 +1247,9 @@ extern const ProtobufCMessageDescriptor mumble_proto__voice_target__descriptor;
 extern const ProtobufCMessageDescriptor mumble_proto__voice_target__target__descriptor;
 extern const ProtobufCMessageDescriptor mumble_proto__permission_query__descriptor;
 extern const ProtobufCMessageDescriptor mumble_proto__codec_version__descriptor;
+extern const ProtobufCMessageDescriptor mumble_proto__user_stats__descriptor;
+extern const ProtobufCMessageDescriptor mumble_proto__user_stats__stats__descriptor;
+extern const ProtobufCMessageDescriptor mumble_proto__request_blob__descriptor;
 
 PROTOBUF_C_END_DECLS
 

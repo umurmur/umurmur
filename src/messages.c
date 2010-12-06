@@ -226,6 +226,26 @@ int Msg_messageToNetwork(message_t *msg, uint8_t *buffer)
 		Msg_addPreamble(buffer, msg->messageType, len);
 		mumble_proto__channel_remove__pack(msg->payload.channelRemove, bufptr);
 		break;
+	case UserStats:
+	{		
+		len = mumble_proto__user_stats__get_packed_size(msg->payload.userStats);
+		if (len > MAX_MSGSIZE) {
+			Log_warn("Too big tx message. Discarding");
+			break;
+			}
+		Msg_addPreamble(buffer, msg->messageType, len);
+		mumble_proto__user_stats__pack(msg->payload.userStats, bufptr);
+		break;
+	}
+	case ServerConfig:
+		len = mumble_proto__server_config__get_packed_size(msg->payload.serverConfig);
+		if (len > MAX_MSGSIZE) {
+			Log_warn("Too big tx message. Discarding");
+			break;
+			}
+		Msg_addPreamble(buffer, msg->messageType, len);
+		mumble_proto__server_config__pack(msg->payload.serverConfig, bufptr);
+		break;
 
 	default:
 		Log_warn("Msg_MessageToNetwork: Unsupported message %d", msg->messageType);
@@ -319,6 +339,27 @@ message_t *Msg_create(messageType_t messageType)
 	case ChannelRemove:
 		msg->payload.channelRemove = malloc(sizeof(MumbleProto__ChannelRemove));
 		mumble_proto__channel_remove__init(msg->payload.channelRemove);
+		break;
+	case UserStats:
+		msg->payload.userStats = malloc(sizeof(MumbleProto__UserStats));
+		mumble_proto__user_stats__init(msg->payload.userStats);
+		
+		msg->payload.userStats->from_client = malloc(sizeof(MumbleProto__UserStats__Stats));
+		mumble_proto__user_stats__stats__init(msg->payload.userStats->from_client);
+
+		msg->payload.userStats->from_server = malloc(sizeof(MumbleProto__UserStats__Stats));
+		mumble_proto__user_stats__stats__init(msg->payload.userStats->from_server);
+
+		msg->payload.userStats->version = malloc(sizeof(MumbleProto__Version));
+		mumble_proto__version__init(msg->payload.userStats->version);
+		
+		if (!msg->payload.userStats || !msg->payload.userStats->from_client ||
+			!msg->payload.userStats->from_server || !msg->payload.userStats->version)
+			Log_fatal("Out of memory");
+		break;
+	case ServerConfig:
+		msg->payload.serverConfig = malloc(sizeof(MumbleProto__ServerConfig));
+		mumble_proto__server_config__init(msg->payload.serverConfig);
 		break;
 
 	default:
@@ -474,6 +515,44 @@ void Msg_free(message_t *msg)
 			mumble_proto__channel_remove__free_unpacked(msg->payload.channelRemove, NULL);
 		else {
 			free(msg->payload.channelRemove);
+		}
+		break;
+	case UserStats:
+		if (msg->unpacked)
+			mumble_proto__user_stats__free_unpacked(msg->payload.userStats, NULL);
+		else {
+			if (msg->payload.userStats->from_client)
+				free(msg->payload.userStats->from_client);
+			if (msg->payload.userStats->from_server)
+				free(msg->payload.userStats->from_server);
+			if (msg->payload.userStats->version) {
+				if (msg->payload.userStats->version->release)
+					free(msg->payload.userStats->version->release);
+				if (msg->payload.userStats->version->os)
+					free(msg->payload.userStats->version->os);
+				if (msg->payload.userStats->version->os_version)
+					free(msg->payload.userStats->version->os_version);
+
+				free(msg->payload.userStats->version);
+			}
+			if (msg->payload.userStats->celt_versions)
+				free(msg->payload.userStats->celt_versions);
+			if (msg->payload.userStats->certificates) {
+				if (msg->payload.userStats->certificates->data)
+					free(msg->payload.userStats->certificates->data);
+				free(msg->payload.userStats->certificates);
+			}
+			if (msg->payload.userStats->address.data)
+				free(msg->payload.userStats->address.data);
+
+			free(msg->payload.userStats);
+		}
+		break;
+	case ServerConfig:
+		if (msg->unpacked)
+			mumble_proto__server_config__free_unpacked(msg->payload.serverConfig, NULL);
+		else {
+			free(msg->payload.serverConfig);
 		}
 		break;
 
@@ -650,6 +729,15 @@ message_t *Msg_networkToMessage(uint8_t *data, int size)
 		msg->unpacked = true;
 		msg->payload.channelRemove = mumble_proto__channel_remove__unpack(NULL, msgLen, msgData);
 		if (msg->payload.channelRemove == NULL)
+			goto err_out;
+		break;
+	}
+	case UserStats:
+	{
+		msg = Msg_create_nopayload(UserStats);
+		msg->unpacked = true;
+		msg->payload.userStats = mumble_proto__user_stats__unpack(NULL, msgLen, msgData);
+		if (msg->payload.userStats == NULL)
 			goto err_out;
 		break;
 	}

@@ -221,6 +221,49 @@ void   mumble_proto__reject__free_unpacked
   PROTOBUF_C_ASSERT (message->base.descriptor == &mumble_proto__reject__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
+void   mumble_proto__server_config__init
+                     (MumbleProto__ServerConfig         *message)
+{
+  static MumbleProto__ServerConfig init_value = MUMBLE_PROTO__SERVER_CONFIG__INIT;
+  *message = init_value;
+}
+size_t mumble_proto__server_config__get_packed_size
+                     (const MumbleProto__ServerConfig *message)
+{
+  PROTOBUF_C_ASSERT (message->base.descriptor == &mumble_proto__server_config__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t mumble_proto__server_config__pack
+                     (const MumbleProto__ServerConfig *message,
+                      uint8_t       *out)
+{
+  PROTOBUF_C_ASSERT (message->base.descriptor == &mumble_proto__server_config__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t mumble_proto__server_config__pack_to_buffer
+                     (const MumbleProto__ServerConfig *message,
+                      ProtobufCBuffer *buffer)
+{
+  PROTOBUF_C_ASSERT (message->base.descriptor == &mumble_proto__server_config__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+MumbleProto__ServerConfig *
+       mumble_proto__server_config__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (MumbleProto__ServerConfig *)
+     protobuf_c_message_unpack (&mumble_proto__server_config__descriptor,
+                                allocator, len, data);
+}
+void   mumble_proto__server_config__free_unpacked
+                     (MumbleProto__ServerConfig *message,
+                      ProtobufCAllocator *allocator)
+{
+  PROTOBUF_C_ASSERT (message->base.descriptor == &mumble_proto__server_config__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
 void   mumble_proto__server_sync__init
                      (MumbleProto__ServerSync         *message)
 {
@@ -982,6 +1025,98 @@ void   mumble_proto__codec_version__free_unpacked
   PROTOBUF_C_ASSERT (message->base.descriptor == &mumble_proto__codec_version__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
+void   mumble_proto__user_stats__stats__init
+                     (MumbleProto__UserStats__Stats         *message)
+{
+  static MumbleProto__UserStats__Stats init_value = MUMBLE_PROTO__USER_STATS__STATS__INIT;
+  *message = init_value;
+}
+void   mumble_proto__user_stats__init
+                     (MumbleProto__UserStats         *message)
+{
+  static MumbleProto__UserStats init_value = MUMBLE_PROTO__USER_STATS__INIT;
+  *message = init_value;
+}
+size_t mumble_proto__user_stats__get_packed_size
+                     (const MumbleProto__UserStats *message)
+{
+  PROTOBUF_C_ASSERT (message->base.descriptor == &mumble_proto__user_stats__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t mumble_proto__user_stats__pack
+                     (const MumbleProto__UserStats *message,
+                      uint8_t       *out)
+{
+  PROTOBUF_C_ASSERT (message->base.descriptor == &mumble_proto__user_stats__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t mumble_proto__user_stats__pack_to_buffer
+                     (const MumbleProto__UserStats *message,
+                      ProtobufCBuffer *buffer)
+{
+  PROTOBUF_C_ASSERT (message->base.descriptor == &mumble_proto__user_stats__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+MumbleProto__UserStats *
+       mumble_proto__user_stats__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (MumbleProto__UserStats *)
+     protobuf_c_message_unpack (&mumble_proto__user_stats__descriptor,
+                                allocator, len, data);
+}
+void   mumble_proto__user_stats__free_unpacked
+                     (MumbleProto__UserStats *message,
+                      ProtobufCAllocator *allocator)
+{
+  PROTOBUF_C_ASSERT (message->base.descriptor == &mumble_proto__user_stats__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
+void   mumble_proto__request_blob__init
+                     (MumbleProto__RequestBlob         *message)
+{
+  static MumbleProto__RequestBlob init_value = MUMBLE_PROTO__REQUEST_BLOB__INIT;
+  *message = init_value;
+}
+size_t mumble_proto__request_blob__get_packed_size
+                     (const MumbleProto__RequestBlob *message)
+{
+  PROTOBUF_C_ASSERT (message->base.descriptor == &mumble_proto__request_blob__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t mumble_proto__request_blob__pack
+                     (const MumbleProto__RequestBlob *message,
+                      uint8_t       *out)
+{
+  PROTOBUF_C_ASSERT (message->base.descriptor == &mumble_proto__request_blob__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t mumble_proto__request_blob__pack_to_buffer
+                     (const MumbleProto__RequestBlob *message,
+                      ProtobufCBuffer *buffer)
+{
+  PROTOBUF_C_ASSERT (message->base.descriptor == &mumble_proto__request_blob__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+MumbleProto__RequestBlob *
+       mumble_proto__request_blob__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (MumbleProto__RequestBlob *)
+     protobuf_c_message_unpack (&mumble_proto__request_blob__descriptor,
+                                allocator, len, data);
+}
+void   mumble_proto__request_blob__free_unpacked
+                     (MumbleProto__RequestBlob *message,
+                      ProtobufCAllocator *allocator)
+{
+  PROTOBUF_C_ASSERT (message->base.descriptor == &mumble_proto__request_blob__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
 static const ProtobufCFieldDescriptor mumble_proto__version__field_descriptors[4] =
 {
   {
@@ -1433,8 +1568,97 @@ const ProtobufCMessageDescriptor mumble_proto__reject__descriptor =
   (ProtobufCMessageInit) mumble_proto__reject__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const protobuf_c_boolean mumble_proto__server_sync__allow_html__default_value = 1;
-static const ProtobufCFieldDescriptor mumble_proto__server_sync__field_descriptors[5] =
+static const ProtobufCFieldDescriptor mumble_proto__server_config__field_descriptors[5] =
+{
+  {
+    "max_bandwidth",
+    1,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_UINT32,
+    PROTOBUF_C_OFFSETOF(MumbleProto__ServerConfig, has_max_bandwidth),
+    PROTOBUF_C_OFFSETOF(MumbleProto__ServerConfig, max_bandwidth),
+    NULL,
+    NULL,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "welcome_text",
+    2,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_STRING,
+    0,   /* quantifier_offset */
+    PROTOBUF_C_OFFSETOF(MumbleProto__ServerConfig, welcome_text),
+    NULL,
+    NULL,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "allow_html",
+    3,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_BOOL,
+    PROTOBUF_C_OFFSETOF(MumbleProto__ServerConfig, has_allow_html),
+    PROTOBUF_C_OFFSETOF(MumbleProto__ServerConfig, allow_html),
+    NULL,
+    NULL,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "message_length",
+    4,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_UINT32,
+    PROTOBUF_C_OFFSETOF(MumbleProto__ServerConfig, has_message_length),
+    PROTOBUF_C_OFFSETOF(MumbleProto__ServerConfig, message_length),
+    NULL,
+    NULL,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "image_message_length",
+    5,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_UINT32,
+    PROTOBUF_C_OFFSETOF(MumbleProto__ServerConfig, has_image_message_length),
+    PROTOBUF_C_OFFSETOF(MumbleProto__ServerConfig, image_message_length),
+    NULL,
+    NULL,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+};
+static const unsigned mumble_proto__server_config__field_indices_by_name[] = {
+  2,   /* field[2] = allow_html */
+  4,   /* field[4] = image_message_length */
+  0,   /* field[0] = max_bandwidth */
+  3,   /* field[3] = message_length */
+  1,   /* field[1] = welcome_text */
+};
+static const ProtobufCIntRange mumble_proto__server_config__number_ranges[1 + 1] =
+{
+  { 1, 0 },
+  { 0, 5 }
+};
+const ProtobufCMessageDescriptor mumble_proto__server_config__descriptor =
+{
+  PROTOBUF_C_MESSAGE_DESCRIPTOR_MAGIC,
+  "MumbleProto.ServerConfig",
+  "ServerConfig",
+  "MumbleProto__ServerConfig",
+  "MumbleProto",
+  sizeof(MumbleProto__ServerConfig),
+  5,
+  mumble_proto__server_config__field_descriptors,
+  mumble_proto__server_config__field_indices_by_name,
+  1,  mumble_proto__server_config__number_ranges,
+  (ProtobufCMessageInit) mumble_proto__server_config__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
+static const ProtobufCFieldDescriptor mumble_proto__server_sync__field_descriptors[4] =
 {
   {
     "session",
@@ -1484,21 +1708,8 @@ static const ProtobufCFieldDescriptor mumble_proto__server_sync__field_descripto
     0,            /* packed */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
-  {
-    "allow_html",
-    5,
-    PROTOBUF_C_LABEL_OPTIONAL,
-    PROTOBUF_C_TYPE_BOOL,
-    PROTOBUF_C_OFFSETOF(MumbleProto__ServerSync, has_allow_html),
-    PROTOBUF_C_OFFSETOF(MumbleProto__ServerSync, allow_html),
-    NULL,
-    &mumble_proto__server_sync__allow_html__default_value,
-    0,            /* packed */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
 };
 static const unsigned mumble_proto__server_sync__field_indices_by_name[] = {
-  4,   /* field[4] = allow_html */
   1,   /* field[1] = max_bandwidth */
   3,   /* field[3] = permissions */
   0,   /* field[0] = session */
@@ -1507,7 +1718,7 @@ static const unsigned mumble_proto__server_sync__field_indices_by_name[] = {
 static const ProtobufCIntRange mumble_proto__server_sync__number_ranges[1 + 1] =
 {
   { 1, 0 },
-  { 0, 5 }
+  { 0, 4 }
 };
 const ProtobufCMessageDescriptor mumble_proto__server_sync__descriptor =
 {
@@ -1517,7 +1728,7 @@ const ProtobufCMessageDescriptor mumble_proto__server_sync__descriptor =
   "MumbleProto__ServerSync",
   "MumbleProto",
   sizeof(MumbleProto__ServerSync),
-  5,
+  4,
   mumble_proto__server_sync__field_descriptors,
   mumble_proto__server_sync__field_indices_by_name,
   1,  mumble_proto__server_sync__number_ranges,
@@ -1564,7 +1775,7 @@ const ProtobufCMessageDescriptor mumble_proto__channel_remove__descriptor =
 };
 static const protobuf_c_boolean mumble_proto__channel_state__temporary__default_value = 0;
 static const int32_t mumble_proto__channel_state__position__default_value = 0;
-static const ProtobufCFieldDescriptor mumble_proto__channel_state__field_descriptors[9] =
+static const ProtobufCFieldDescriptor mumble_proto__channel_state__field_descriptors[10] =
 {
   {
     "channel_id",
@@ -1674,10 +1885,23 @@ static const ProtobufCFieldDescriptor mumble_proto__channel_state__field_descrip
     0,            /* packed */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
+  {
+    "description_hash",
+    10,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_BYTES,
+    PROTOBUF_C_OFFSETOF(MumbleProto__ChannelState, has_description_hash),
+    PROTOBUF_C_OFFSETOF(MumbleProto__ChannelState, description_hash),
+    NULL,
+    NULL,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
 };
 static const unsigned mumble_proto__channel_state__field_indices_by_name[] = {
   0,   /* field[0] = channel_id */
   4,   /* field[4] = description */
+  9,   /* field[9] = description_hash */
   3,   /* field[3] = links */
   5,   /* field[5] = links_add */
   6,   /* field[6] = links_remove */
@@ -1689,7 +1913,7 @@ static const unsigned mumble_proto__channel_state__field_indices_by_name[] = {
 static const ProtobufCIntRange mumble_proto__channel_state__number_ranges[1 + 1] =
 {
   { 1, 0 },
-  { 0, 9 }
+  { 0, 10 }
 };
 const ProtobufCMessageDescriptor mumble_proto__channel_state__descriptor =
 {
@@ -1699,7 +1923,7 @@ const ProtobufCMessageDescriptor mumble_proto__channel_state__descriptor =
   "MumbleProto__ChannelState",
   "MumbleProto",
   sizeof(MumbleProto__ChannelState),
-  9,
+  10,
   mumble_proto__channel_state__field_descriptors,
   mumble_proto__channel_state__field_indices_by_name,
   1,  mumble_proto__channel_state__number_ranges,
@@ -1783,7 +2007,7 @@ const ProtobufCMessageDescriptor mumble_proto__user_remove__descriptor =
   (ProtobufCMessageInit) mumble_proto__user_remove__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor mumble_proto__user_state__field_descriptors[15] =
+static const ProtobufCFieldDescriptor mumble_proto__user_state__field_descriptors[19] =
 {
   {
     "session",
@@ -1921,8 +2145,8 @@ static const ProtobufCFieldDescriptor mumble_proto__user_state__field_descriptor
     "plugin_context",
     12,
     PROTOBUF_C_LABEL_OPTIONAL,
-    PROTOBUF_C_TYPE_STRING,
-    0,   /* quantifier_offset */
+    PROTOBUF_C_TYPE_BYTES,
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserState, has_plugin_context),
     PROTOBUF_C_OFFSETOF(MumbleProto__UserState, plugin_context),
     NULL,
     NULL,
@@ -1965,28 +2189,80 @@ static const ProtobufCFieldDescriptor mumble_proto__user_state__field_descriptor
     0,            /* packed */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
+  {
+    "comment_hash",
+    16,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_BYTES,
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserState, has_comment_hash),
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserState, comment_hash),
+    NULL,
+    NULL,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "texture_hash",
+    17,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_BYTES,
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserState, has_texture_hash),
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserState, texture_hash),
+    NULL,
+    NULL,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "priority_speaker",
+    18,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_BOOL,
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserState, has_priority_speaker),
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserState, priority_speaker),
+    NULL,
+    NULL,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "recording",
+    19,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_BOOL,
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserState, has_recording),
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserState, recording),
+    NULL,
+    NULL,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
 };
 static const unsigned mumble_proto__user_state__field_indices_by_name[] = {
   1,   /* field[1] = actor */
   4,   /* field[4] = channel_id */
   13,   /* field[13] = comment */
+  15,   /* field[15] = comment_hash */
   6,   /* field[6] = deaf */
   14,   /* field[14] = hash */
   5,   /* field[5] = mute */
   2,   /* field[2] = name */
   11,   /* field[11] = plugin_context */
   12,   /* field[12] = plugin_identity */
+  17,   /* field[17] = priority_speaker */
+  18,   /* field[18] = recording */
   9,   /* field[9] = self_deaf */
   8,   /* field[8] = self_mute */
   0,   /* field[0] = session */
   7,   /* field[7] = suppress */
   10,   /* field[10] = texture */
+  16,   /* field[16] = texture_hash */
   3,   /* field[3] = user_id */
 };
 static const ProtobufCIntRange mumble_proto__user_state__number_ranges[1 + 1] =
 {
   { 1, 0 },
-  { 0, 15 }
+  { 0, 19 }
 };
 const ProtobufCMessageDescriptor mumble_proto__user_state__descriptor =
 {
@@ -1996,7 +2272,7 @@ const ProtobufCMessageDescriptor mumble_proto__user_state__descriptor =
   "MumbleProto__UserState",
   "MumbleProto",
   sizeof(MumbleProto__UserState),
-  15,
+  19,
   mumble_proto__user_state__field_descriptors,
   mumble_proto__user_state__field_indices_by_name,
   1,  mumble_proto__user_state__number_ranges,
@@ -2261,7 +2537,7 @@ const ProtobufCMessageDescriptor mumble_proto__text_message__descriptor =
   (ProtobufCMessageInit) mumble_proto__text_message__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-const ProtobufCEnumValue mumble_proto__permission_denied__deny_type__enum_values_by_number[8] =
+const ProtobufCEnumValue mumble_proto__permission_denied__deny_type__enum_values_by_number[10] =
 {
   { "Text", "MUMBLE_PROTO__PERMISSION_DENIED__DENY_TYPE__TEXT", 0 },
   { "Permission", "MUMBLE_PROTO__PERMISSION_DENIED__DENY_TYPE__PERMISSION", 1 },
@@ -2271,12 +2547,15 @@ const ProtobufCEnumValue mumble_proto__permission_denied__deny_type__enum_values
   { "H9K", "MUMBLE_PROTO__PERMISSION_DENIED__DENY_TYPE__H9K", 5 },
   { "TemporaryChannel", "MUMBLE_PROTO__PERMISSION_DENIED__DENY_TYPE__TEMPORARYCHANNEL", 6 },
   { "MissingCertificate", "MUMBLE_PROTO__PERMISSION_DENIED__DENY_TYPE__MISSINGCERTIFICATE", 7 },
+  { "UserName", "MUMBLE_PROTO__PERMISSION_DENIED__DENY_TYPE__USERNAME", 8 },
+  { "ChannelFull", "MUMBLE_PROTO__PERMISSION_DENIED__DENY_TYPE__CHANNELFULL", 9 },
 };
 static const ProtobufCIntRange mumble_proto__permission_denied__deny_type__value_ranges[] = {
-{0, 0},{0, 8}
+{0, 0},{0, 10}
 };
-const ProtobufCEnumValueIndex mumble_proto__permission_denied__deny_type__enum_values_by_name[8] =
+const ProtobufCEnumValueIndex mumble_proto__permission_denied__deny_type__enum_values_by_name[10] =
 {
+  { "ChannelFull", 9 },
   { "ChannelName", 3 },
   { "H9K", 5 },
   { "MissingCertificate", 7 },
@@ -2285,6 +2564,7 @@ const ProtobufCEnumValueIndex mumble_proto__permission_denied__deny_type__enum_v
   { "TemporaryChannel", 6 },
   { "Text", 0 },
   { "TextTooLong", 4 },
+  { "UserName", 8 },
 };
 const ProtobufCEnumDescriptor mumble_proto__permission_denied__deny_type__descriptor =
 {
@@ -2293,15 +2573,15 @@ const ProtobufCEnumDescriptor mumble_proto__permission_denied__deny_type__descri
   "DenyType",
   "MumbleProto__PermissionDenied__DenyType",
   "MumbleProto",
-  8,
+  10,
   mumble_proto__permission_denied__deny_type__enum_values_by_number,
-  8,
+  10,
   mumble_proto__permission_denied__deny_type__enum_values_by_name,
   1,
   mumble_proto__permission_denied__deny_type__value_ranges,
   NULL,NULL,NULL,NULL   /* reserved[1234] */
 };
-static const ProtobufCFieldDescriptor mumble_proto__permission_denied__field_descriptors[5] =
+static const ProtobufCFieldDescriptor mumble_proto__permission_denied__field_descriptors[6] =
 {
   {
     "permission",
@@ -2363,9 +2643,22 @@ static const ProtobufCFieldDescriptor mumble_proto__permission_denied__field_des
     0,            /* packed */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
+  {
+    "name",
+    6,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_STRING,
+    0,   /* quantifier_offset */
+    PROTOBUF_C_OFFSETOF(MumbleProto__PermissionDenied, name),
+    NULL,
+    NULL,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
 };
 static const unsigned mumble_proto__permission_denied__field_indices_by_name[] = {
   1,   /* field[1] = channel_id */
+  5,   /* field[5] = name */
   0,   /* field[0] = permission */
   3,   /* field[3] = reason */
   2,   /* field[2] = session */
@@ -2374,7 +2667,7 @@ static const unsigned mumble_proto__permission_denied__field_indices_by_name[] =
 static const ProtobufCIntRange mumble_proto__permission_denied__number_ranges[1 + 1] =
 {
   { 1, 0 },
-  { 0, 5 }
+  { 0, 6 }
 };
 const ProtobufCMessageDescriptor mumble_proto__permission_denied__descriptor =
 {
@@ -2384,7 +2677,7 @@ const ProtobufCMessageDescriptor mumble_proto__permission_denied__descriptor =
   "MumbleProto__PermissionDenied",
   "MumbleProto",
   sizeof(MumbleProto__PermissionDenied),
-  5,
+  6,
   mumble_proto__permission_denied__field_descriptors,
   mumble_proto__permission_denied__field_indices_by_name,
   1,  mumble_proto__permission_denied__number_ranges,
@@ -3354,5 +3647,407 @@ const ProtobufCMessageDescriptor mumble_proto__codec_version__descriptor =
   mumble_proto__codec_version__field_indices_by_name,
   1,  mumble_proto__codec_version__number_ranges,
   (ProtobufCMessageInit) mumble_proto__codec_version__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
+static const ProtobufCFieldDescriptor mumble_proto__user_stats__stats__field_descriptors[4] =
+{
+  {
+    "good",
+    1,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_UINT32,
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats__Stats, has_good),
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats__Stats, good),
+    NULL,
+    NULL,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "late",
+    2,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_UINT32,
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats__Stats, has_late),
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats__Stats, late),
+    NULL,
+    NULL,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "lost",
+    3,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_UINT32,
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats__Stats, has_lost),
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats__Stats, lost),
+    NULL,
+    NULL,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "resync",
+    4,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_UINT32,
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats__Stats, has_resync),
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats__Stats, resync),
+    NULL,
+    NULL,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+};
+static const unsigned mumble_proto__user_stats__stats__field_indices_by_name[] = {
+  0,   /* field[0] = good */
+  1,   /* field[1] = late */
+  2,   /* field[2] = lost */
+  3,   /* field[3] = resync */
+};
+static const ProtobufCIntRange mumble_proto__user_stats__stats__number_ranges[1 + 1] =
+{
+  { 1, 0 },
+  { 0, 4 }
+};
+const ProtobufCMessageDescriptor mumble_proto__user_stats__stats__descriptor =
+{
+  PROTOBUF_C_MESSAGE_DESCRIPTOR_MAGIC,
+  "MumbleProto.UserStats.Stats",
+  "Stats",
+  "MumbleProto__UserStats__Stats",
+  "MumbleProto",
+  sizeof(MumbleProto__UserStats__Stats),
+  4,
+  mumble_proto__user_stats__stats__field_descriptors,
+  mumble_proto__user_stats__stats__field_indices_by_name,
+  1,  mumble_proto__user_stats__stats__number_ranges,
+  (ProtobufCMessageInit) mumble_proto__user_stats__stats__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
+static const protobuf_c_boolean mumble_proto__user_stats__stats_only__default_value = 0;
+static const protobuf_c_boolean mumble_proto__user_stats__strong_certificate__default_value = 0;
+static const ProtobufCFieldDescriptor mumble_proto__user_stats__field_descriptors[18] =
+{
+  {
+    "session",
+    1,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_UINT32,
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats, has_session),
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats, session),
+    NULL,
+    NULL,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "stats_only",
+    2,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_BOOL,
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats, has_stats_only),
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats, stats_only),
+    NULL,
+    &mumble_proto__user_stats__stats_only__default_value,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "certificates",
+    3,
+    PROTOBUF_C_LABEL_REPEATED,
+    PROTOBUF_C_TYPE_BYTES,
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats, n_certificates),
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats, certificates),
+    NULL,
+    NULL,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "from_client",
+    4,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_MESSAGE,
+    0,   /* quantifier_offset */
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats, from_client),
+    &mumble_proto__user_stats__stats__descriptor,
+    NULL,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "from_server",
+    5,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_MESSAGE,
+    0,   /* quantifier_offset */
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats, from_server),
+    &mumble_proto__user_stats__stats__descriptor,
+    NULL,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "udp_packets",
+    6,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_UINT32,
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats, has_udp_packets),
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats, udp_packets),
+    NULL,
+    NULL,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "tcp_packets",
+    7,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_UINT32,
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats, has_tcp_packets),
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats, tcp_packets),
+    NULL,
+    NULL,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "udp_ping_avg",
+    8,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_FLOAT,
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats, has_udp_ping_avg),
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats, udp_ping_avg),
+    NULL,
+    NULL,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "udp_ping_var",
+    9,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_FLOAT,
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats, has_udp_ping_var),
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats, udp_ping_var),
+    NULL,
+    NULL,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "tcp_ping_avg",
+    10,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_FLOAT,
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats, has_tcp_ping_avg),
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats, tcp_ping_avg),
+    NULL,
+    NULL,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "tcp_ping_var",
+    11,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_FLOAT,
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats, has_tcp_ping_var),
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats, tcp_ping_var),
+    NULL,
+    NULL,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "version",
+    12,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_MESSAGE,
+    0,   /* quantifier_offset */
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats, version),
+    &mumble_proto__version__descriptor,
+    NULL,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "celt_versions",
+    13,
+    PROTOBUF_C_LABEL_REPEATED,
+    PROTOBUF_C_TYPE_INT32,
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats, n_celt_versions),
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats, celt_versions),
+    NULL,
+    NULL,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "address",
+    14,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_BYTES,
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats, has_address),
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats, address),
+    NULL,
+    NULL,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "bandwidth",
+    15,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_UINT32,
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats, has_bandwidth),
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats, bandwidth),
+    NULL,
+    NULL,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "onlinesecs",
+    16,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_UINT32,
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats, has_onlinesecs),
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats, onlinesecs),
+    NULL,
+    NULL,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "idlesecs",
+    17,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_UINT32,
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats, has_idlesecs),
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats, idlesecs),
+    NULL,
+    NULL,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "strong_certificate",
+    18,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_BOOL,
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats, has_strong_certificate),
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats, strong_certificate),
+    NULL,
+    &mumble_proto__user_stats__strong_certificate__default_value,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+};
+static const unsigned mumble_proto__user_stats__field_indices_by_name[] = {
+  13,   /* field[13] = address */
+  14,   /* field[14] = bandwidth */
+  12,   /* field[12] = celt_versions */
+  2,   /* field[2] = certificates */
+  3,   /* field[3] = from_client */
+  4,   /* field[4] = from_server */
+  16,   /* field[16] = idlesecs */
+  15,   /* field[15] = onlinesecs */
+  0,   /* field[0] = session */
+  1,   /* field[1] = stats_only */
+  17,   /* field[17] = strong_certificate */
+  6,   /* field[6] = tcp_packets */
+  9,   /* field[9] = tcp_ping_avg */
+  10,   /* field[10] = tcp_ping_var */
+  5,   /* field[5] = udp_packets */
+  7,   /* field[7] = udp_ping_avg */
+  8,   /* field[8] = udp_ping_var */
+  11,   /* field[11] = version */
+};
+static const ProtobufCIntRange mumble_proto__user_stats__number_ranges[1 + 1] =
+{
+  { 1, 0 },
+  { 0, 18 }
+};
+const ProtobufCMessageDescriptor mumble_proto__user_stats__descriptor =
+{
+  PROTOBUF_C_MESSAGE_DESCRIPTOR_MAGIC,
+  "MumbleProto.UserStats",
+  "UserStats",
+  "MumbleProto__UserStats",
+  "MumbleProto",
+  sizeof(MumbleProto__UserStats),
+  18,
+  mumble_proto__user_stats__field_descriptors,
+  mumble_proto__user_stats__field_indices_by_name,
+  1,  mumble_proto__user_stats__number_ranges,
+  (ProtobufCMessageInit) mumble_proto__user_stats__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
+static const ProtobufCFieldDescriptor mumble_proto__request_blob__field_descriptors[3] =
+{
+  {
+    "session_texture",
+    1,
+    PROTOBUF_C_LABEL_REPEATED,
+    PROTOBUF_C_TYPE_UINT32,
+    PROTOBUF_C_OFFSETOF(MumbleProto__RequestBlob, n_session_texture),
+    PROTOBUF_C_OFFSETOF(MumbleProto__RequestBlob, session_texture),
+    NULL,
+    NULL,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "session_comment",
+    2,
+    PROTOBUF_C_LABEL_REPEATED,
+    PROTOBUF_C_TYPE_UINT32,
+    PROTOBUF_C_OFFSETOF(MumbleProto__RequestBlob, n_session_comment),
+    PROTOBUF_C_OFFSETOF(MumbleProto__RequestBlob, session_comment),
+    NULL,
+    NULL,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "channel_description",
+    3,
+    PROTOBUF_C_LABEL_REPEATED,
+    PROTOBUF_C_TYPE_UINT32,
+    PROTOBUF_C_OFFSETOF(MumbleProto__RequestBlob, n_channel_description),
+    PROTOBUF_C_OFFSETOF(MumbleProto__RequestBlob, channel_description),
+    NULL,
+    NULL,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+};
+static const unsigned mumble_proto__request_blob__field_indices_by_name[] = {
+  2,   /* field[2] = channel_description */
+  1,   /* field[1] = session_comment */
+  0,   /* field[0] = session_texture */
+};
+static const ProtobufCIntRange mumble_proto__request_blob__number_ranges[1 + 1] =
+{
+  { 1, 0 },
+  { 0, 3 }
+};
+const ProtobufCMessageDescriptor mumble_proto__request_blob__descriptor =
+{
+  PROTOBUF_C_MESSAGE_DESCRIPTOR_MAGIC,
+  "MumbleProto.RequestBlob",
+  "RequestBlob",
+  "MumbleProto__RequestBlob",
+  "MumbleProto",
+  sizeof(MumbleProto__RequestBlob),
+  3,
+  mumble_proto__request_blob__field_descriptors,
+  mumble_proto__request_blob__field_indices_by_name,
+  1,  mumble_proto__request_blob__number_ranges,
+  (ProtobufCMessageInit) mumble_proto__request_blob__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
