@@ -505,6 +505,15 @@ int Client_write(client_t *client)
 	return 0;
 }
 
+int Client_send_message_ver(client_t *client, message_t *msg, uint32_t version)
+{
+	if ((version == 0) || (client->version >= version) ||
+		((version & 0x80000000) && (client->version < (~version))))
+		return Client_send_message(client, msg);
+	else
+		Msg_free(msg);
+}
+
 int Client_send_message(client_t *client, message_t *msg)
 {
 	if (!client->authenticated && msg->messageType != Version) {
@@ -566,6 +575,29 @@ int Client_send_message_except(client_t *client, message_t *msg)
 				Msg_inc_ref(msg); /* One extra reference for each new copy */
 			Log_debug("Msg %d to %s refcount %d",  msg->messageType, itr->username, msg->refcount);
 			Client_send_message(itr, msg);
+		}
+	}
+	Msg_free(msg); /* Free our reference to the message */
+	
+	if (count == 0)
+		Msg_free(msg); /* If only 1 client is connected then no message is passed
+						* to Client_send_message(). Free it here. */
+		
+	return 0;
+}
+
+int Client_send_message_except_ver(client_t *client, message_t *msg, uint32_t version)
+{
+	client_t *itr = NULL;
+	int count = 0;
+	
+	Msg_inc_ref(msg); /* Make sure a reference is held during the whole iteration. */
+	while (Client_iterate(&itr) != NULL) {
+		if (itr != client) {
+			if (count++ > 0)
+				Msg_inc_ref(msg); /* One extra reference for each new copy */
+			Log_debug("Msg %d to %s refcount %d",  msg->messageType, itr->username, msg->refcount);
+			Client_send_message_ver(itr, msg, version);
 		}
 	}
 	Msg_free(msg); /* Free our reference to the message */

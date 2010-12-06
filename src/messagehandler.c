@@ -42,6 +42,7 @@
 #include "voicetarget.h"
 
 #define MAX_TEXT 512
+#define MAX_USERNAME 128
 
 extern channel_t *defaultChan;
 extern int iCodecAlpha, iCodecBeta;
@@ -108,7 +109,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		while (Client_iterate(&client_itr) != NULL) {
 			if (!IS_AUTH(client_itr))
 				continue;
-			if (client_itr->username && strncmp(client_itr->username, msg->payload.authenticate->username, MAX_TEXT) == 0) {
+			if (client_itr->username && strncmp(client_itr->username, msg->payload.authenticate->username, MAX_USERNAME) == 0) {
 				char buf[64];
 				sprintf(buf, "Username already in use");
 				Log_debug("Username already in use");
@@ -129,7 +130,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			}
 		}				
 		if (strlen(msg->payload.authenticate->username) == 0 ||
-			strlen(msg->payload.authenticate->username) >= MAX_TEXT) { /* XXX - other invalid names? */
+			strlen(msg->payload.authenticate->username) >= MAX_USERNAME) { /* XXX - other invalid names? */
 			char buf[64];
 			sprintf(buf, "Invalid username");
 			Log_debug("Invalid username");
@@ -240,7 +241,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		sendmsg->payload.userState->name = strdup(client->username);
 		sendmsg->payload.userState->has_channel_id = true;
 		sendmsg->payload.userState->channel_id = ((channel_t *)client->channel)->id;
-		
+
 		Client_send_message_except(client, sendmsg);
 
 		client_itr = NULL;
@@ -262,6 +263,10 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			if (client_itr->mute) {
 				sendmsg->payload.userState->has_self_mute = true;
 				sendmsg->payload.userState->self_mute = true;
+			}
+			if (client_itr->recording) {
+				sendmsg->payload.userState->has_recording = true;
+				sendmsg->payload.userState->recording = true;
 			}
 			Client_send_message(client, sendmsg);
 		}
@@ -373,6 +378,30 @@ void Mh_handle_message(client_t *client, message_t *msg)
 				client->deaf = false;
 			}
 		}
+		if (msg->payload.userState->has_recording &&
+			msg->payload.userState->recording != client->recording) {
+			client->recording = msg->payload.userState->recording;
+			char *message;
+			uint32_t *tree_id;
+			
+			message = malloc(strlen(client->username) + 32);
+			if (!message)
+				Log_fatal("Out of memory");
+			tree_id = malloc(sizeof(uint32_t));
+			if (!tree_id)
+				Log_fatal("Out of memory");
+			*tree_id = 0;
+			sendmsg = Msg_create(TextMessage);
+			sendmsg->payload.textMessage->message = message;
+			sendmsg->payload.textMessage->n_tree_id = 1;
+			sendmsg->payload.textMessage->tree_id = tree_id;
+			if (client->recording)
+				sprintf(message, "User %s started recording", client->username);
+			else
+				sprintf(message, "User %s stopped recording", client->username);
+			Client_send_message_except_ver(NULL, sendmsg, ~0x010203);
+			sendmsg = NULL;
+		}
 		if (msg->payload.userState->has_channel_id) {
 			int leave_id;
 			if (!Chan_userJoin_id_test(msg->payload.userState->channel_id))
@@ -395,7 +424,6 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			
 			break; /* Don't inform other users about this state */
 		}
-		
 		/* Re-use message */
 		Msg_inc_ref(msg);
 				

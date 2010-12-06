@@ -70,7 +70,7 @@ typedef struct {
 	int sessionId;
 	uint64_t key;
 	char *username;
-	bool_t bUDP, authenticated, deaf, mute;
+	bool_t bUDP, authenticated, deaf, mute, recording;
 	char *os, *release, *os_version;
 	uint32_t version;
 	int codec_count;
@@ -100,6 +100,8 @@ int Client_add(int fd, struct sockaddr_in *remote);
 int Client_read_fd(int fd);
 int Client_write_fd(int fd);
 int Client_send_message(client_t *client, message_t *msg);
+int Client_send_message_ver(client_t *client, message_t *msg, uint32_t version);
+int Client_send_message_except_ver(client_t *client, message_t *msg, uint32_t version);
 int Client_count(void);
 void Client_close(client_t *client);
 client_t *Client_iterate(client_t **client);

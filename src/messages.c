@@ -436,6 +436,14 @@ void Msg_free(message_t *msg)
 		if (msg->unpacked)
 			mumble_proto__text_message__free_unpacked(msg->payload.textMessage, NULL);
 		else {
+			if (msg->payload.textMessage->message)
+				free(msg->payload.textMessage->message);
+			if (msg->payload.textMessage->session)
+				free(msg->payload.textMessage->session);
+			if (msg->payload.textMessage->channel_id)
+				free(msg->payload.textMessage->channel_id);
+			if (msg->payload.textMessage->tree_id)
+				free(msg->payload.textMessage->tree_id);
 			free(msg->payload.textMessage);
 		}
 		break;
