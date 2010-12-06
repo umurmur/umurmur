@@ -71,12 +71,12 @@ typedef struct {
 	uint64_t key;
 	char *username;
 	bool_t bUDP, authenticated, deaf, mute;
-	char *os, *release;
+	char *os, *release, *os_version;
 	uint32_t version;
 	int codec_count;
 	struct dlist codecs;
 	int availableBandwidth;
-	etimer_t lastActivity;
+	etimer_t lastActivity, connectTime, idleTime;
 	struct dlist node;
 	struct dlist txMsgQueue;
 	int txQueueCount;
@@ -84,6 +84,8 @@ typedef struct {
 	char *context;
 	struct dlist chan_node;
 	struct dlist voicetargets;
+	float UDPPingAvg, UDPPingVar, TCPPingAvg, TCPPingVar;
+	uint32_t UDPPackets, TCPPackets;
 } client_t;
 
 typedef struct {

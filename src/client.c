@@ -259,6 +259,8 @@ int Client_add(int fd, struct sockaddr_in *remote)
 	}
 	newclient->availableBandwidth = maxBandwidth;
 	Timer_init(&newclient->lastActivity);
+	Timer_init(&newclient->connectTime);
+	Timer_init(&newclient->idleTime);
 	newclient->sessionId = findFreeSessionId();
 	if (newclient->sessionId < 0)
 		Log_fatal("Could not find a free session ID");
@@ -317,6 +319,8 @@ void Client_free(client_t *client)
 		free(client->release);
 	if (client->os)
 		free(client->os);			
+	if (client->os_version)
+		free(client->os_version);			
 	if (client->username)
 		free(client->username);
 	if (client->context)
@@ -718,6 +722,8 @@ int Client_voiceMsg(client_t *client, uint8_t *data, int len)
 	if (client->availableBandwidth - packetsize < 0)
 		goto out; /* Discard */
 	client->availableBandwidth -= packetsize;
+	
+	Timer_restart(&client->idleTime);
 	
 	counter = Pds_get_numval(pdi); /* step past session id */
 	do {

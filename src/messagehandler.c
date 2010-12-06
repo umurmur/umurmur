@@ -76,7 +76,20 @@ void Mh_handle_message(client_t *client, message_t *msg)
 	if (!client->authenticated && !(msg->messageType == Authenticate ||
 									msg->messageType == Version)) {
 		goto out;
-	}	
+	}
+	
+	switch (msg->messageType) {
+	case UDPTunnel:
+	case Ping:
+	case CryptSetup:
+	case VoiceTarget:
+	case UserStats:
+	case PermissionQuery:
+		break;
+	default:
+		Timer_restart(&client->idleTime);
+	}
+	
 	switch (msg->messageType) {
 	case Authenticate:
 		Log_debug("Authenticate message received");
@@ -260,10 +273,18 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		sendmsg->payload.serverSync->welcome_text = strdup(getStrConf(WELCOMETEXT));
 		sendmsg->payload.serverSync->has_max_bandwidth = true;
 		sendmsg->payload.serverSync->max_bandwidth = getIntConf(MAX_BANDWIDTH);
-		sendmsg->payload.serverSync->has_allow_html = true;
-		sendmsg->payload.serverSync->allow_html = true; /* Support this? */
 		Client_send_message(client, sendmsg);
-		
+
+		/* Server config message */
+		sendmsg = Msg_create(ServerConfig);		
+		sendmsg->payload.serverConfig->has_allow_html = true;
+		sendmsg->payload.serverConfig->allow_html = true; /* Support this? */
+		sendmsg->payload.serverConfig->has_message_length = true;
+		sendmsg->payload.serverConfig->message_length = MAX_TEXT; /* Hardcoded */
+		sendmsg->payload.serverConfig->has_image_message_length = true;
+		sendmsg->payload.serverConfig->image_message_length = 0; /* XXX */
+		Client_send_message(client, sendmsg);
+
 		Log_info_client(client, "User %s authenticated", client->username);
 		break;
 		
@@ -282,7 +303,12 @@ void Mh_handle_message(client_t *client, message_t *msg)
 				  client->cryptState.uiRemoteLost, client->cryptState.uiRemoteResync
 			);
 		
-		/* Ignoring the double values since they don't seem to be used */
+		client->UDPPingAvg = msg->payload.ping->udp_ping_avg;
+		client->UDPPingVar = msg->payload.ping->udp_ping_var;
+		client->TCPPingAvg = msg->payload.ping->tcp_ping_avg;
+		client->TCPPingVar = msg->payload.ping->tcp_ping_var;
+		client->UDPPackets = msg->payload.ping->udp_packets;
+		client->TCPPackets = msg->payload.ping->tcp_packets;
 		
 		sendmsg = Msg_create(Ping);
 
@@ -358,12 +384,14 @@ void Mh_handle_message(client_t *client, message_t *msg)
 				sendmsg->payload.channelRemove->channel_id = leave_id;
 			}
 		}
-		if (msg->payload.userState->plugin_context != NULL) {
+		if (msg->payload.userState->has_plugin_context) {
 			if (client->context)
 				free(client->context);
-			client->context = strdup(msg->payload.userState->plugin_context);
+			client->context = malloc(msg->payload.userState->plugin_context.len);
 			if (client->context == NULL)
 				Log_fatal("Out of memory");
+			memcpy(client->context, msg->payload.userState->plugin_context.data,
+				   msg->payload.userState->plugin_context.len);
 			
 			break; /* Don't inform other users about this state */
 		}
@@ -475,6 +503,11 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			client->os = strdup(msg->payload.version->os);
 			Log_debug("Client OS %s", client->os);
 		}
+		if (msg->payload.version->os_version) {
+			if (client->os_version) free(client->os_version);			
+			client->os_version = strdup(msg->payload.version->os_version);
+			Log_debug("Client OS version %s", client->os_version);
+		}
 		break;
 	case PermissionQuery:
 		Msg_inc_ref(msg); /* Re-use message */
@@ -568,6 +601,106 @@ void Mh_handle_message(client_t *client, message_t *msg)
 	}		
 	break;
 
+	case UserStats:
+	{
+		client_t *target = NULL;
+		codec_t *codec_itr = NULL;
+		int i;
+		bool_t details = true;
+		
+		if (msg->payload.userStats->has_stats_only)
+			details = !msg->payload.userStats->stats_only;
+		
+		if (!msg->payload.userStats->has_session)
+			sendPermissionDenied(client, "Not supported by uMurmur");
+		while (Client_iterate(&target) != NULL) {
+			if (!IS_AUTH(target))
+				continue;
+			if (target->sessionId == msg->payload.userStats->session)
+				break;
+		}
+		if (!target) /* Not found */
+			break;
+		
+		/*
+		 * Differences from Murmur:
+		 * o Ignoring certificates intentionally
+		 * o Ignoring channel local determining
+		 */
+		
+		sendmsg = Msg_create(UserStats);
+		sendmsg->payload.userStats->session = msg->payload.userStats->session;
+		sendmsg->payload.userStats->from_client->has_good = true;
+		sendmsg->payload.userStats->from_client->good = target->cryptState.uiGood;
+		sendmsg->payload.userStats->from_client->has_late = true;
+		sendmsg->payload.userStats->from_client->late = target->cryptState.uiLate;
+		sendmsg->payload.userStats->from_client->has_lost = true;
+		sendmsg->payload.userStats->from_client->lost = target->cryptState.uiLost;
+		sendmsg->payload.userStats->from_client->has_resync = true;
+		sendmsg->payload.userStats->from_client->resync = target->cryptState.uiResync;
+		
+		sendmsg->payload.userStats->from_server->has_good = true;
+		sendmsg->payload.userStats->from_server->good = target->cryptState.uiRemoteGood;
+		sendmsg->payload.userStats->from_server->has_late = true;
+		sendmsg->payload.userStats->from_server->late = target->cryptState.uiRemoteLate;
+		sendmsg->payload.userStats->from_server->has_lost = true;
+		sendmsg->payload.userStats->from_server->lost = target->cryptState.uiRemoteLost;
+		sendmsg->payload.userStats->from_server->has_resync = true;
+		sendmsg->payload.userStats->from_server->resync = target->cryptState.uiRemoteResync;
+
+		sendmsg->payload.userStats->has_udp_packets = true;
+		sendmsg->payload.userStats->udp_packets = target->UDPPackets;
+		sendmsg->payload.userStats->has_udp_ping_avg = true;
+		sendmsg->payload.userStats->udp_ping_avg = target->UDPPingAvg;
+		sendmsg->payload.userStats->has_udp_ping_var = true;
+		sendmsg->payload.userStats->udp_ping_var = target->UDPPingVar;
+		
+		sendmsg->payload.userStats->has_tcp_ping_avg = true;
+		sendmsg->payload.userStats->tcp_ping_avg = target->TCPPingAvg;
+		sendmsg->payload.userStats->has_tcp_ping_var = true;
+		sendmsg->payload.userStats->tcp_ping_var = target->TCPPingVar;
+		sendmsg->payload.userStats->has_tcp_packets = true;
+		sendmsg->payload.userStats->tcp_packets = target->TCPPackets;
+		
+		if (details) {
+
+			sendmsg->payload.userStats->version->has_version = true;
+			sendmsg->payload.userStats->version->version = target->version;
+			sendmsg->payload.userStats->version->release = strdup(target->release);
+			sendmsg->payload.userStats->version->os = strdup(target->os);
+			sendmsg->payload.userStats->version->os_version = strdup(target->os_version);
+			
+			sendmsg->payload.userStats->n_celt_versions = target->codec_count;
+			sendmsg->payload.userStats->celt_versions = malloc(sizeof(int32_t) * target->codec_count);
+			if (!sendmsg->payload.userStats->celt_versions)
+				Log_fatal("Out of memory");
+			i = 0;
+			while (Client_codec_iterate(target, &codec_itr) != NULL)
+				sendmsg->payload.userStats->celt_versions[i++] = codec_itr->codec;
+
+			/* Address */
+			sendmsg->payload.userStats->has_address = true;
+			sendmsg->payload.userStats->address.data = malloc(sizeof(uint8_t) * 16);
+			if (!sendmsg->payload.userStats->address.data)
+				Log_fatal("Out of memory");
+			memset(sendmsg->payload.userStats->address.data, 0, 16);
+			/* ipv4 representation as ipv6 address. Supposedly correct. */
+			memcpy(&sendmsg->payload.userStats->address.data[12], &target->remote_tcp.sin_addr, 4);
+			sendmsg->payload.userStats->address.len = 16;
+		}
+		/* BW */
+		sendmsg->payload.userStats->has_bandwidth = true;
+		sendmsg->payload.userStats->bandwidth = target->availableBandwidth;
+		
+		/* Onlinesecs */
+		sendmsg->payload.userStats->has_onlinesecs = true;
+		sendmsg->payload.userStats->onlinesecs = Timer_elapsed(&target->connectTime) / 1000000LL;		
+		/* Idlesecs */
+		sendmsg->payload.userStats->has_idlesecs = true;
+		sendmsg->payload.userStats->idlesecs = Timer_elapsed(&target->idleTime) / 1000000LL;		
+		Client_send_message(client, sendmsg);
+	}
+	break;
 		/* Permission denied for all these messages. Not implemented. */
 	case ChannelRemove:
 	case ContextAction:
