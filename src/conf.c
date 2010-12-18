@@ -32,11 +32,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef WRT_TARGET
-#include <libconfig/libconfig.h>
-#else
 #include <libconfig.h>
-#endif
 
 #include "types.h"
 #include "conf.h"
