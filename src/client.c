@@ -200,7 +200,7 @@ void recheckCodecVersions()
 	// it as alpha and announce it. If another codec now got the
 	// majority set it as the opposite of the currently valid bPreferAlpha
 	// and announce it.
-	if (version == (uint32_t)0x8000000a)
+	if (version == (uint32_t)0x8000000b)
 		bPreferAlpha = true;
 	else
 		bPreferAlpha = ! bPreferAlpha;
