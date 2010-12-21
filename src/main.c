@@ -37,11 +37,12 @@
 #include <sys/utsname.h>
 #include <fcntl.h>
 #include <signal.h>
-#include <sched.h>
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
-
+#ifdef _POSIX_PRIORITY_SCHEDULING
+#include <sched.h>
+#endif
 #include "server.h"
 #include "ssl.h"
 #include "channel.h"
@@ -111,6 +112,7 @@ void daemonize()
 		
 }
 
+#ifdef _POSIX_PRIORITY_SCHEDULING
 void setscheduler()
 {
 	int rc;
@@ -122,6 +124,7 @@ void setscheduler()
 	if (rc < 0)
 		Log_warn("Failed to set scheduler: %s", strerror(errno));
 }
+#endif
 
 void printhelp()
 {
@@ -130,7 +133,9 @@ void printhelp()
 	printf("       -d             - Do not deamonize\n");
 	printf("       -p <pidfile>   - Write PID to this file\n");
 	printf("       -c <conf file> - Specify configuration file\n");
+#ifdef _POSIX_PRIORITY_SCHEDULING
 	printf("       -r             - Run with realtime priority\n");
+#endif
 	printf("       -a <address>   - Bind to IP address\n");
 	printf("       -b <port>      - Bind to port\n");
 	printf("       -h             - Print this help\n");
@@ -140,13 +145,19 @@ void printhelp()
 int main(int argc, char **argv)
 {
 	bool_t nodaemon = false;
+#ifdef _POSIX_PRIORITY_SCHEDULING
 	bool_t realtime = false;
+#endif
 	char *conffile = NULL, *pidfile = NULL;
 	int c;
 	struct utsname utsbuf;
 	
 	/* Arguments */
+#ifdef _POSIX_PRIORITY_SCHEDULING
 	while ((c = getopt(argc, argv, "drp:c:a:b:h")) != EOF) {
+#else
+	while ((c = getopt(argc, argv, "dp:c:a:b:h")) != EOF) {
+#endif
 		switch(c) {
 		case 'c':
 			conffile = optarg;
@@ -166,9 +177,11 @@ int main(int argc, char **argv)
 		case 'h':
 			printhelp();
 			break;
+#ifdef _POSIX_PRIORITY_SCHEDULING
 		case 'r':
 			realtime = true;
 			break;
+#endif
 		default:
 			fprintf(stderr, "Unrecognized option\n");
 			printhelp();
@@ -213,8 +226,10 @@ int main(int argc, char **argv)
 	Chan_init();
 	Client_init();
 
+#ifdef _POSIX_PRIORITY_SCHEDULING
 	if (realtime)
 		setscheduler();
+#endif
 	
 	Server_run();
 	
