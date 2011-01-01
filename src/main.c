@@ -64,7 +64,7 @@ void lockfile(const char *pidfile)
 	
 	if (lfp < 0)
 		Log_fatal("Cannot open PID-file %s for writing", pidfile);
-	sprintf(str,"%d\n", getpid());
+	snprintf(str,16,"%d\n", getpid());
 	write(lfp, str, strlen(str)); /* record pid to lockfile */
 	Log_info("PID-file: %s", pidfile);
 }

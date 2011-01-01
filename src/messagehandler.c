@@ -140,7 +140,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 
 		if (Client_count() >= getIntConf(MAX_CLIENTS)) {
 			char buf[64];
-			sprintf(buf, "Server is full (max %d users)", getIntConf(MAX_CLIENTS));
+			snprintf(buf, 64, "Server is full (max %d users)", getIntConf(MAX_CLIENTS));
 			sendServerReject(client, buf, MUMBLE_PROTO__REJECT__REJECT_TYPE__ServerFull);
 			goto disconnect;
 		}

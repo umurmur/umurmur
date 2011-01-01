@@ -186,30 +186,31 @@ int getIntConf(param_t param)
 int Conf_getNextChannel(conf_channel_t *chdesc, int index)
 {
 	config_setting_t *setting = NULL;
-	char configstr[64];
+	int maxconfig = 64, ret = 0;
+	char configstr[maxconfig];
 	
-	sprintf(configstr, "channels.[%d].name", index);
+	ret = snprintf(configstr, maxconfig, "channels.[%d].name", index);
 	setting = config_lookup(&configuration, configstr);
-	if (setting == NULL)
+	if (ret >= maxconfig || ret < 0 || setting == NULL)
 		return -1; /* Required */
 	chdesc->name =  config_setting_get_string(setting);
 	
-	sprintf(configstr, "channels.[%d].parent", index);
+	ret = snprintf(configstr, maxconfig, "channels.[%d].parent", index);
 	setting = config_lookup(&configuration, configstr);
-	if (setting == NULL)
+	if (ret >= maxconfig || ret < 0 || setting == NULL)
 		return -1; /* Required */
 	chdesc->parent = config_setting_get_string(setting);
 	
-	sprintf(configstr, "channels.[%d].description", index);
+	ret = snprintf(configstr, maxconfig, "channels.[%d].description", index);
 	setting = config_lookup(&configuration, configstr);
-	if (setting == NULL) /* Optional */
+	if (ret >= maxconfig || ret < 0 || setting == NULL) /* Optional */
 		chdesc->description = NULL;
 	else
 		chdesc->description = config_setting_get_string(setting);
 	
-	sprintf(configstr, "channels.[%d].noenter", index);
+	ret = snprintf(configstr, maxconfig, "channels.[%d].noenter", index);
 	setting = config_lookup(&configuration, configstr);
-	if (setting == NULL) /* Optional */
+	if (ret >= maxconfig || ret < 0 || setting == NULL) /* Optional */
 		chdesc->noenter = false;
 	else
 		chdesc->noenter = config_setting_get_bool(setting);
@@ -220,17 +221,18 @@ int Conf_getNextChannel(conf_channel_t *chdesc, int index)
 int Conf_getNextChannelLink(conf_channel_link_t *chlink, int index)
 {
 	config_setting_t *setting = NULL;
-	char configstr[64];
+	int maxconfig = 64, ret = 0;
+	char configstr[maxconfig];
 	
-	sprintf(configstr, "channel_links.[%d].source", index);
+	ret = snprintf(configstr, maxconfig, "channel_links.[%d].source", index);
 	setting = config_lookup(&configuration, configstr);
-	if (setting == NULL)
+	if (ret >= maxconfig || ret < 0 || setting == NULL)
 		return -1;
 	chlink->source = config_setting_get_string(setting);
 
-	sprintf(configstr, "channel_links.[%d].destination", index);
+	ret = snprintf(configstr, maxconfig, "channel_links.[%d].destination", index);
 	setting = config_lookup(&configuration, configstr);
-	if (setting == NULL)
+	if (ret >= maxconfig || ret < 0 || setting == NULL)
 		return -1;
 	chlink->destination = config_setting_get_string(setting);
 
