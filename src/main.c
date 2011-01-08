@@ -130,7 +130,7 @@ void printhelp()
 {
 	printf("uMurmur version %s. Mumble protocol %d.%d.%d\n", UMURMUR_VERSION, PROTVER_MAJOR, PROTVER_MINOR, PROTVER_PATCH);
 	printf("Usage: umurmurd [-d] [-p <pidfile>] [-c <conf file>] [-h]\n");
-	printf("       -d             - Do not deamonize\n");
+	printf("       -d             - Do not daemonize\n");
 	printf("       -p <pidfile>   - Write PID to this file\n");
 	printf("       -c <conf file> - Specify configuration file\n");
 #ifdef _POSIX_PRIORITY_SCHEDULING
