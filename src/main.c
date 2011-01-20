@@ -60,7 +60,7 @@ void lockfile(const char *pidfile)
 	int lfp;
 	char str[16];
 	
-	lfp = open(pidfile, O_RDWR|O_CREAT, 0640);
+	lfp = open(pidfile, O_RDWR|O_CREAT|O_EXCL, 0640);
 	
 	if (lfp < 0)
 		Log_fatal("Cannot open PID-file %s for writing", pidfile);
