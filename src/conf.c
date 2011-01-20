@@ -50,14 +50,10 @@ const char defaultconfig[] = DEFAULT_CONFIG;
 
 int Conf_init(const char *conffile)
 {
-	const char *conf;
-	
 	config_init(&configuration);
 	if (conffile == NULL)
-		conf = defaultconfig;
-	else
-		conf = conffile;
-	if (config_read_file(&configuration, conf) != CONFIG_TRUE) {
+		conffile = defaultconfig;
+	if (config_read_file(&configuration, conffile) != CONFIG_TRUE) {
 		fprintf(stderr, "Error in config file %s: %s at line %d\n", conffile,
 				config_error_text(&configuration), config_error_line(&configuration));
 		exit(1);
