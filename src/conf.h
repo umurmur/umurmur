@@ -57,7 +57,7 @@ typedef struct {
 	const char *destination;
 } conf_channel_link_t;
 
-int Conf_init(const char *conffile);
+void Conf_init(const char *conffile);
 void Conf_deinit();
 
 const char *getStrConf(param_t param);

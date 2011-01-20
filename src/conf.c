@@ -48,17 +48,15 @@ static config_t configuration;
 
 const char defaultconfig[] = DEFAULT_CONFIG;
 
-int Conf_init(const char *conffile)
+void Conf_init(const char *conffile)
 {
 	config_init(&configuration);
 	if (conffile == NULL)
 		conffile = defaultconfig;
 	if (config_read_file(&configuration, conffile) != CONFIG_TRUE) {
-		fprintf(stderr, "Error in config file %s: %s at line %d\n", conffile,
-				config_error_text(&configuration), config_error_line(&configuration));
-		exit(1);
+		Log_fatal("Error in config file %s line %d: %s", conffile,
+				  config_error_line(&configuration), config_error_text(&configuration));
 	}
-	return 0;
 }
 
 void Conf_deinit()

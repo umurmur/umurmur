@@ -190,11 +190,6 @@ int main(int argc, char **argv)
 		}
 	}
 	
-	if (Conf_init(conffile) != 0) {
-		fprintf(stderr, "Configuration error\n");
-		exit(1);
-	}
-		
 	if (!nodaemon) {
 		Log_init(false);
 		daemonize();
@@ -203,7 +198,9 @@ int main(int argc, char **argv)
 	}
 	else
 		Log_init(true);
-	
+
+	Conf_init(conffile);
+			
 	signal(SIGCHLD, SIG_IGN); /* ignore child */
 	signal(SIGTSTP, SIG_IGN); /* ignore tty signals */
 	signal(SIGTTOU, SIG_IGN);
