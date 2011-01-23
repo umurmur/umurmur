@@ -59,17 +59,50 @@ char *bindaddr;
 
 void lockfile(const char *pidfile)
 {
-	int lfp;
+	int lfp, flags;
 	char str[16];
-	
-	lfp = open(pidfile, O_RDWR|O_CREAT|O_EXCL, 0640);
+
+	/* Don't use O_TRUNC here -- we want to leave the PID file
+	 * unmodified if we cannot lock it.
+	 */
+	lfp = open(pidfile, O_WRONLY|O_CREAT, 0640);
 	
 	if (lfp < 0)
 		Log_fatal("Cannot open PID-file %s for writing", pidfile);
+
+	/* Try to lock the file. */
+	if (lockf(lfp, F_TLOCK, 0) < 0) {
+		close(lfp);
+
+		if (errno == EACCES || errno == EAGAIN)
+			Log_fatal("PID file is locked -- uMurmur already running?");
+
+		Log_fatal("Cannot lock PID file: %s", strerror(errno));
+	}
+
+	/* Now that we locked the file, erase its contents. */
+	if (ftruncate(lfp, 0) < 0) {
+		close(lfp);
+		Log_fatal("Cannot truncate PID file: %s", strerror(errno));
+	}
+
 	snprintf(str,16,"%d\n", getpid());
 	write(lfp, str, strlen(str)); /* record pid to lockfile */
-	close(lfp);
 	Log_info("PID-file: %s", pidfile);
+
+	/* If uMurmur ever starts to fork()+exec(), we don't want it to
+	 * leak the fd to the forked process though. Set the close-on-exec
+	 * flag to prevent leakage.
+	 */
+	flags = fcntl(lfp, F_GETFD, 0);
+	flags |= FD_CLOEXEC;
+	fcntl(lfp, F_SETFD, (long) flags);
+
+	/* Don't close(lfp) here!
+	 * We want the fd to remain opened so the lock is held until the
+	 * process exits.
+	 */
+	lfp = -1;
 }
 
 /* Drops privileges (if configured to do so). */
