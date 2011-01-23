@@ -43,6 +43,8 @@ typedef enum param {
 	MAX_BANDWIDTH,
 	MAX_CLIENTS,
 	DEFAULT_CHANNEL,
+	USERNAME,
+	GROUPNAME,
 } param_t;
 
 typedef struct {

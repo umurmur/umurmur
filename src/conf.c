@@ -136,6 +136,28 @@ const char *getStrConf(param_t param)
 			return "";
 		}
 		break;
+	case USERNAME:
+		setting = config_lookup(&configuration, "username");
+		if (!setting)
+			return "";
+		else {
+			if ((strsetting = config_setting_get_string(setting)) != NULL)
+				return strsetting;
+			else
+			return "";
+		}
+		break;
+	case GROUPNAME:
+		setting = config_lookup(&configuration, "groupname");
+		if (!setting)
+			return "";
+		else {
+			if ((strsetting = config_setting_get_string(setting)) != NULL)
+				return strsetting;
+			else
+			return "";
+		}
+		break;
 	default:
 		doAssert(false);
 		break;

@@ -4,6 +4,8 @@ certificate = "/etc/umurmur/cert.crt";
 private_key = "/etc/umurmur/key.key";
 password = "";
 max_users = 10;
+username = "";
+groupname = "";
 
 # Root channel must always be defined first.
 # If a channel has a parent, the parent must be defined before the child channel(s).

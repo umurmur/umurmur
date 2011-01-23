@@ -36,6 +36,8 @@
 #include <sys/stat.h>
 #include <sys/utsname.h>
 #include <fcntl.h>
+#include <pwd.h>
+#include <grp.h>
 #include <signal.h>
 #include <errno.h>
 #include <string.h>
@@ -70,6 +72,59 @@ void lockfile(const char *pidfile)
 	Log_info("PID-file: %s", pidfile);
 }
 
+/* Drops privileges (if configured to do so). */
+static void switch_user(void)
+{
+	struct passwd *pwd;
+	struct group *grp = NULL;
+	const char *username, *groupname;
+	gid_t gid;
+
+	username = getStrConf(USERNAME);
+	groupname = getStrConf(GROUPNAME);
+
+	if (!*username) {
+		/* It's an error to specify groupname
+		 * but leave username empty.
+		 */
+		if (*groupname)
+			Log_fatal("username missing");
+
+		/* Nothing to do. */
+		return;
+	}
+
+	pwd = getpwnam(username);
+	if (!pwd)
+		Log_fatal("Unknown user '%s'", username);
+
+	if (!*groupname)
+		gid = pwd->pw_gid;
+	else {
+		grp = getgrnam(groupname);
+
+		if (!grp)
+			Log_fatal("Unknown group '%s'", groupname);
+
+		gid = grp->gr_gid;
+	}
+
+	if (initgroups(pwd->pw_name, gid))
+		Log_fatal("initgroups() failed: %s", strerror(errno));
+
+	if (setgid(gid))
+		Log_fatal("setgid() failed: %s", strerror(errno));
+
+	if (setuid(pwd->pw_uid))
+		Log_fatal("setuid() failed: %s", strerror(errno));
+	
+	if (!grp)
+		grp = getgrgid(gid);
+	if (!grp)
+		Log_fatal("getgrgid() failed: %s", strerror(errno));
+	
+	Log_info("Switch to user '%s' group '%s'", pwd->pw_name, grp->gr_name);
+}
 
 void signal_handler(int sig)
 {
@@ -189,18 +244,28 @@ int main(int argc, char **argv)
 			break;
 		}
 	}
-	
-	if (!nodaemon) {
+
+	/* Logging to terminal if not daemonizing, otherwise to syslog.
+	 * Need to initialize logging before calling Conf_init()
+	 */
+	if (!nodaemon)
 		Log_init(false);
+	else
+		Log_init(true);
+	
+	/* Initialize the config subsystem early;
+	 * switch_user() will need to read some config variables.
+	 */
+	Conf_init(conffile);
+
+	if (!nodaemon) {
 		daemonize();
 		if (pidfile != NULL)
 			lockfile(pidfile);
-	}
-	else
-		Log_init(true);
 
-	Conf_init(conffile);
-			
+		switch_user();
+	}
+
 	signal(SIGCHLD, SIG_IGN); /* ignore child */
 	signal(SIGTSTP, SIG_IGN); /* ignore tty signals */
 	signal(SIGTTOU, SIG_IGN);
