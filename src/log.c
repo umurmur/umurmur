@@ -66,7 +66,7 @@ void logthis(const char *logstring, ...)
 	if (termprint)
 		fprintf(stderr, "%s\n", buf);
 	else
-		syslog(LOG_INFO, buf);
+		syslog(LOG_INFO, "%s", buf);
 }
 
 void Log_warn(const char *logstring, ...)
@@ -82,7 +82,7 @@ void Log_warn(const char *logstring, ...)
 	if (termprint)
 		fprintf(stderr, "%s\n", buf);
 	else
-		syslog(LOG_WARNING, buf);
+		syslog(LOG_WARNING, "%s", buf);
 }
 
 void Log_info(const char *logstring, ...)
@@ -98,7 +98,7 @@ void Log_info(const char *logstring, ...)
 	if (termprint)
 		fprintf(stderr, "%s\n", buf);
 	else
-		syslog(LOG_INFO, buf);
+		syslog(LOG_INFO, "%s", buf);
 }
 void Log_info_client(client_t *client, const char *logstring, ...)
 {
@@ -118,7 +118,7 @@ void Log_info_client(client_t *client, const char *logstring, ...)
 	if (termprint)
 		fprintf(stderr, "%s\n", buf);
 	else
-		syslog(LOG_INFO, buf);
+		syslog(LOG_INFO, "%s", buf);
 	
 }
 
@@ -136,7 +136,7 @@ void Log_debug(const char *logstring, ...)
 	if (termprint)
 		fprintf(stderr, "%s\n", buf);
 	else
-		syslog(LOG_DEBUG, buf);
+		syslog(LOG_DEBUG, "%s", buf);
 }
 #endif
 
@@ -152,6 +152,6 @@ void Log_fatal(const char *logstring, ...)
 	if (termprint)
 		fprintf(stderr, "%s\n", buf);
 	else
-		syslog(LOG_CRIT, buf);
+		syslog(LOG_CRIT, "%s", buf);
 	exit(1);
 }
