@@ -58,14 +58,13 @@ void Log_free()
 void logthis(const char *logstring, ...)
 {
 	va_list argp;
-	char buf[STRSIZE + 2];
+	char buf[STRSIZE + 1];
 	
 	va_start(argp, logstring);
 	vsnprintf(&buf[0], STRSIZE, logstring, argp);
 	va_end(argp);
-	strcat(buf, "\n");
 	if (termprint)
-		fprintf(stderr, "%s", buf);
+		fprintf(stderr, "%s\n", buf);
 	else
 		syslog(LOG_INFO, buf);
 }
@@ -73,16 +72,15 @@ void logthis(const char *logstring, ...)
 void Log_warn(const char *logstring, ...)
 {
 	va_list argp;
-	char buf[STRSIZE + 2];
+	char buf[STRSIZE + 1];
 	int offset = 0;
 	
 	va_start(argp, logstring);
 	offset = sprintf(buf, "WARN: ");
 	vsnprintf(&buf[offset], STRSIZE - offset, logstring, argp);
 	va_end(argp);
-	strcat(buf, "\n");
 	if (termprint)
-		fprintf(stderr, "%s", buf);
+		fprintf(stderr, "%s\n", buf);
 	else
 		syslog(LOG_WARNING, buf);
 }
@@ -90,23 +88,22 @@ void Log_warn(const char *logstring, ...)
 void Log_info(const char *logstring, ...)
 {
 	va_list argp;
-	char buf[STRSIZE + 2];
+	char buf[STRSIZE + 1];
 	int offset = 0;
 	
 	va_start(argp, logstring);
 	offset = sprintf(buf, "INFO: ");
 	vsnprintf(&buf[offset], STRSIZE - offset, logstring, argp);
 	va_end(argp);
-	strcat(buf, "\n");
 	if (termprint)
-		fprintf(stderr, "%s", buf);
+		fprintf(stderr, "%s\n", buf);
 	else
 		syslog(LOG_INFO, buf);
 }
 void Log_info_client(client_t *client, const char *logstring, ...)
 {
 	va_list argp;
-	char buf[STRSIZE + 2];
+	char buf[STRSIZE + 1];
 	int offset = 0;
 	
 	va_start(argp, logstring);
@@ -118,9 +115,8 @@ void Log_info_client(client_t *client, const char *logstring, ...)
 					   client->username == NULL ? "" : client->username,
 					   inet_ntoa(client->remote_tcp.sin_addr),
 					   ntohs(client->remote_tcp.sin_port));
-	strcat(buf, "\n");
 	if (termprint)
-		fprintf(stderr, "%s", buf);
+		fprintf(stderr, "%s\n", buf);
 	else
 		syslog(LOG_INFO, buf);
 	
@@ -130,16 +126,15 @@ void Log_info_client(client_t *client, const char *logstring, ...)
 void Log_debug(const char *logstring, ...)
 {
 	va_list argp;
-	char buf[STRSIZE + 2];
+	char buf[STRSIZE + 1];
 	int offset = 0;
 	
 	va_start(argp, logstring);
 	offset = sprintf(buf, "DEBUG: ");
 	vsnprintf(&buf[offset], STRSIZE - offset, logstring, argp);
 	va_end(argp);
-	strcat(buf, "\n");
 	if (termprint)
-		fprintf(stderr, "%s", buf);
+		fprintf(stderr, "%s\n", buf);
 	else
 		syslog(LOG_DEBUG, buf);
 }
@@ -148,15 +143,14 @@ void Log_debug(const char *logstring, ...)
 void Log_fatal(const char *logstring, ...)
 {
 	va_list argp;
-	char buf[STRSIZE + 2];
+	char buf[STRSIZE + 1];
 	int offset = 0;
 	va_start(argp, logstring);
 	offset = sprintf(buf, "FATAL: ");
 	vsnprintf(&buf[offset], STRSIZE - offset, logstring, argp);
 	va_end(argp);
-	strcat(buf, "\n");
 	if (termprint)
-		fprintf(stderr, "%s", buf);
+		fprintf(stderr, "%s\n", buf);
 	else
 		syslog(LOG_CRIT, buf);
 	exit(1);
