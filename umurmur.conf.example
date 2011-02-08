@@ -4,8 +4,15 @@ certificate = "/etc/umurmur/cert.crt";
 private_key = "/etc/umurmur/key.key";
 password = "";
 max_users = 10;
-username = "";
-groupname = "";
+
+# username and groupname for privilege dropping.
+# Will attempt to switch user if set. 
+# username = "";
+# If groupname not set the user's default login group will be used
+# groupname = "";
+
+# bindport = 64738;
+# bindaddr = "192.168.1.1";
 
 # Root channel must always be defined first.
 # If a channel has a parent, the parent must be defined before the child channel(s).
