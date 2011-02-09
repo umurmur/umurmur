@@ -1,3 +1,12 @@
+0.2.6:
+Privilege dropping support added. Enable in conf file. (from tilman2)
+PID file fixes  + various other fixes by tilman2.
+Configuration file errors now goes to the log instead of stderr.
+BSD fixes by J Sisson.
+Update Mumble protocol to 1.2.3.
+Add support for UserStats message.
+Add support for recording.
+
 0.2.5:
 Change error handling from fatal + exit to just warn when fail to set
 TOS for UDP socket.
