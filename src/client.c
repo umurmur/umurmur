@@ -211,8 +211,8 @@ void recheckCodecVersions()
 		iCodecBeta = version;
 	
 	sendmsg = Msg_create(CodecVersion);
-	sendmsg->payload.codecVersion->alpha = version;
-	sendmsg->payload.codecVersion->beta = version;
+	sendmsg->payload.codecVersion->alpha = iCodecAlpha;
+	sendmsg->payload.codecVersion->beta = iCodecBeta;
 	sendmsg->payload.codecVersion->prefer_alpha = bPreferAlpha;
 	Client_send_message_except(NULL, sendmsg);
 	
