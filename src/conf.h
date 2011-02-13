@@ -45,6 +45,7 @@ typedef enum param {
 	DEFAULT_CHANNEL,
 	USERNAME,
 	GROUPNAME,
+	LOGFILE,
 } param_t;
 
 typedef struct {

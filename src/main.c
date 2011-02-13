@@ -163,8 +163,8 @@ void signal_handler(int sig)
 {
 	switch(sig) {
 	case SIGHUP:
-		/* XXX - do stuff? */
-		Log_info("HUP signal");
+		Log_info("HUP signal received.");
+		Log_reset();
 		break;
 	case SIGTERM:
 		Log_info("TERM signal. Shutting down.");
@@ -277,28 +277,29 @@ int main(int argc, char **argv)
 			break;
 		}
 	}
-
-	/* Logging to terminal if not daemonizing, otherwise to syslog.
-	 * Need to initialize logging before calling Conf_init()
-	 */
-	if (!nodaemon)
-		Log_init(false);
-	else
-		Log_init(true);
 	
 	/* Initialize the config subsystem early;
-	 * switch_user() will need to read some config variables.
+	 * switch_user() will need to read some config variables as well as logging.
 	 */
 	Conf_init(conffile);
-
+	
+	/* Logging to terminal if not daemonizing, otherwise to syslog or log file.
+	 */
 	if (!nodaemon) {
 		daemonize();
+		Log_init(false);
 		if (pidfile != NULL)
 			lockfile(pidfile);
 
 		switch_user();
-	}
 
+		/* Reopen log file. If user switch results in access denied, we catch
+		 * it early.
+		 */
+		Log_reset(); 
+	}
+	else Log_init(true);
+	
 	signal(SIGCHLD, SIG_IGN); /* ignore child */
 	signal(SIGTSTP, SIG_IGN); /* ignore tty signals */
 	signal(SIGTTOU, SIG_IGN);

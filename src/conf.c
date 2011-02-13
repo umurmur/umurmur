@@ -158,6 +158,17 @@ const char *getStrConf(param_t param)
 			return "";
 		}
 		break;
+	case LOGFILE:
+		setting = config_lookup(&configuration, "logfile");
+		if (!setting)
+			return NULL;
+		else {
+			if ((strsetting = config_setting_get_string(setting)) != NULL)
+				return strsetting;
+			else
+			return NULL;
+		}
+		break;
 	default:
 		doAssert(false);
 		break;

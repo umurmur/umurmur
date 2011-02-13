@@ -56,6 +56,7 @@ void Log_info_client(client_t *client, const char *logstring, ...);
 void Log_fatal(const char *logstring, ...);
 
 void Log_init(bool_t terminal);
+void Log_reset();
 void Log_free();
 
 #endif

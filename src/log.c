@@ -34,26 +34,73 @@
 #include <stdlib.h>
 #include <syslog.h>
 #include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 #include "log.h"
+#include "conf.h"
 
 #define STRSIZE 254
 
-static bool_t termprint;
+static bool_t termprint, init;
+static FILE *logfile;
+
+static void openlogfile(const char *logfilename)
+{
+	int fd, flags;
+	logfile = fopen(logfilename, "a");
+	if (logfile == NULL) {
+		Log_fatal("Failed to open log file '%s' for writing: %s\n", logfilename, strerror(errno));
+	}
+
+	/* XXX - Is it neccessary/appropriate that logging to file is non-blocking?
+	 * If not, there's a risk that execution blocks, meaning that voice blocks
+	 * as well since uMurmur is single threaded by design. OTOH, what could
+	 * cause a block? If the disk causes blocking, it is probably br0ken. but
+	 * the log could be on a nfs or smb share, so let's set it up as
+	 * non-blocking and we'll see what happens.
+	 */
+	fd = fileno(logfile);
+	flags = fcntl(fd, F_GETFL, 0);
+	fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+}
 
 void Log_init(bool_t terminal)
 {
-	termprint = terminal;
-	if (!termprint)
-		openlog("uMurmurd", LOG_PID, LOG_DAEMON);
+	const char *logfilename;
+	
+	termprint = terminal;		
+	if (termprint)
+		return;
+	
+	logfilename = getStrConf(LOGFILE);
+	if (logfilename != NULL) {
+		openlogfile(logfilename);
+	}
+	else openlog("uMurmurd", LOG_PID, LOG_DAEMON);
+	init = true;
 }
 
 void Log_free()
 {
-	if (!termprint)
+	if (termprint)
+		return;
+	else if (logfile)
+		fclose(logfile);
+	else 
 		closelog();
 }
 		
+void Log_reset()
+{
+	const char *logfilename;
+	
+	if (logfile) {
+		logfilename = getStrConf(LOGFILE);
+		fclose(logfile);
+		openlogfile(logfilename);
+	}
+}
 
 void logthis(const char *logstring, ...)
 {
@@ -65,6 +112,8 @@ void logthis(const char *logstring, ...)
 	va_end(argp);
 	if (termprint)
 		fprintf(stderr, "%s\n", buf);
+	else if (logfile)
+		fprintf(logfile, "%s\n", buf);
 	else
 		syslog(LOG_INFO, "%s", buf);
 }
@@ -81,6 +130,8 @@ void Log_warn(const char *logstring, ...)
 	va_end(argp);
 	if (termprint)
 		fprintf(stderr, "%s\n", buf);
+	else if (logfile)
+		fprintf(logfile, "%s\n", buf);
 	else
 		syslog(LOG_WARNING, "%s", buf);
 }
@@ -97,9 +148,14 @@ void Log_info(const char *logstring, ...)
 	va_end(argp);
 	if (termprint)
 		fprintf(stderr, "%s\n", buf);
+	else if (logfile) {
+		fprintf(logfile, "%s\n", buf);
+		fflush(logfile);
+	}
 	else
 		syslog(LOG_INFO, "%s", buf);
 }
+
 void Log_info_client(client_t *client, const char *logstring, ...)
 {
 	va_list argp;
@@ -117,9 +173,10 @@ void Log_info_client(client_t *client, const char *logstring, ...)
 					   ntohs(client->remote_tcp.sin_port));
 	if (termprint)
 		fprintf(stderr, "%s\n", buf);
+	else if (logfile)
+		fprintf(logfile, "%s\n", buf);
 	else
 		syslog(LOG_INFO, "%s", buf);
-	
 }
 
 #ifdef DEBUG
@@ -135,6 +192,8 @@ void Log_debug(const char *logstring, ...)
 	va_end(argp);
 	if (termprint)
 		fprintf(stderr, "%s\n", buf);
+	else if (logfile)
+		fprintf(logfile, "%s\n", buf);
 	else
 		syslog(LOG_DEBUG, "%s", buf);
 }
@@ -151,7 +210,15 @@ void Log_fatal(const char *logstring, ...)
 	va_end(argp);
 	if (termprint)
 		fprintf(stderr, "%s\n", buf);
-	else
+	else if (logfile)
+		fprintf(logfile, "%s\n", buf);
+	else { /* If logging subsystem is not initialized, fall back to syslog logging
+			* for fatal errors. Only config file reading that needs this currently.
+			*/
+		if (!init)
+			openlog("uMurmurd", LOG_PID, LOG_DAEMON);
 		syslog(LOG_CRIT, "%s", buf);
+	}
+	
 	exit(1);
 }
