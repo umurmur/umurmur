@@ -53,10 +53,14 @@ static void openlogfile(const char *logfilename)
 		Log_fatal("Failed to open log file '%s' for writing: %s\n", logfilename, strerror(errno));
 	}
 
+	/* Set the stream as line buffered */
+	if (setvbuf(logfile, NULL, _IOLBF, 0) < 0)
+		Log_fatal("setvbuf() failed: %s\n", strerror(errno));
+	
 	/* XXX - Is it neccessary/appropriate that logging to file is non-blocking?
 	 * If not, there's a risk that execution blocks, meaning that voice blocks
 	 * as well since uMurmur is single threaded by design. OTOH, what could
-	 * cause a block? If the disk causes blocking, it is probably br0ken. but
+	 * cause a block? If the disk causes blocking, it is probably br0ken, but
 	 * the log could be on a nfs or smb share, so let's set it up as
 	 * non-blocking and we'll see what happens.
 	 */
@@ -148,10 +152,8 @@ void Log_info(const char *logstring, ...)
 	va_end(argp);
 	if (termprint)
 		fprintf(stderr, "%s\n", buf);
-	else if (logfile) {
+	else if (logfile)
 		fprintf(logfile, "%s\n", buf);
-		fflush(logfile);
-	}
 	else
 		syslog(LOG_INFO, "%s", buf);
 }
@@ -212,11 +214,13 @@ void Log_fatal(const char *logstring, ...)
 		fprintf(stderr, "%s\n", buf);
 	else if (logfile)
 		fprintf(logfile, "%s\n", buf);
-	else { /* If logging subsystem is not initialized, fall back to syslog logging
-			* for fatal errors. Only config file reading that needs this currently.
+	else { /* If logging subsystem is not initialized, fall back to stderr +
+			* syslog logging for fatal errors. 
 			*/
-		if (!init)
+		if (!init) {
 			openlog("uMurmurd", LOG_PID, LOG_DAEMON);
+			fprintf(stderr, "%s\n", buf);
+		}
 		syslog(LOG_CRIT, "%s", buf);
 	}
 	
