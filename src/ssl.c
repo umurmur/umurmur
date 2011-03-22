@@ -69,7 +69,7 @@ bool_t builtInTestCertificate;
 havege_state hs; /* exported to crypt.c */
 
 /* DH prime */
-char *my_dhm_P =
+const char *my_dhm_P =
 	"9CE85640903BF123906947FEDE767261" \
 	"D9B4A973EB8F7D984A8C656E2BCC161C" \
 	"183D4CA471BA78225F940F16D1D99CA3" \
@@ -77,28 +77,64 @@ char *my_dhm_P =
 	"44FF6AB553EC7073AD0CB608F2A3B480" \
 	"19E6C02BCED40BD30E91BB2469089670" \
 	"DEF409C08E8AC24D1732A6128D2220DC53";
-char *my_dhm_G = "4";
+const char *my_dhm_G = "4";
+
+const char *test_key =
+	"-----BEGIN RSA PRIVATE KEY-----\r\n"
+	"MIICXAIBAAKBgQC/zZ5p/st9JUgoFIuNCwyYJhKhnqKlAk36RJJAXhJ/3FZCThQK\r\n"
+	"J0jxMCjnQb9envZPIKrAfyDtlEGKU8OI2HvDsFL7Y2fNjew0R9DoUyzPRVBInfW9\r\n"
+	"JP03aiOldpooTjXBrzoZV+DGqRYJE/IRJEyXir5NEJu624bMJm0XDVkxiwIDAQAB\r\n"
+	"AoGAPcFJiR01jYSsd+Mtj2sIUhCoHQuDmJdmXfcoE7t2P17FEzIqd55weN+lu9fK\r\n"
+	"cv/BlHaTI8mK45PBinUv1ubE6gzzyLtNgBW7ko8i23YQNMS4+8ApZZoCFsVbN533\r\n"
+	"/mFYcOmWpdgIsAOyi3gAyO5OyGA71a3gkNX+MDYc7PgbTkkCQQDq1NN/j6xVw4qc\r\n"
+	"3qunsMOVJxln7Gkgt0fOrCV0WltJNkKYiARwtpvB/SHIj6nHhun+J/ee/v+QjAL4\r\n"
+	"aUwC8OmnAkEA0RfWWVQ2Yxk9QjRcqcpDddtc+9xxM6Dt+edGDSYKRUB/S2cl/Sdg\r\n"
+	"abFdrFEnFdO03VknCrqUgweegeUJhU1tfQJBAKLFFjxK59cijMejCDRZr5eI3HFO\r\n"
+	"Sqgkoh8871Ew+ClM9OgpD3rY+CmEPZB5E+N7PmGublLEyXv1sHFi+w7m0e0CQDnH\r\n"
+	"eoYIzVapHNJ0ob6Rk/63dYRrsCRyLhDGpgbwIhps7kAp6sd/4BaU2qvJaSGQ9QPN\r\n"
+	"pQpD8NIcguKmJfFeKgkCQBABatS74xI2UAW/IIbRBg8a8z4v5JxEnQwp0EtmON2I\r\n"
+	"+AVBenUVFjpdjaaQ2/2IEgEwnzRfbERQfUlAkjczRaM=\r\n"
+	"-----END RSA PRIVATE KEY-----\r\n";
+
+const char *test_cert =
+	"-----BEGIN CERTIFICATE-----\r\n"
+	"MIICfDCCAeWgAwIBAgIJANEN9Jb9sp0oMA0GCSqGSIb3DQEBBQUAMFcxCzAJBgNV\r\n"
+	"BAYTAlNFMRMwEQYDVQQHDApHb3RoZW5idXJnMRAwDgYDVQQKDAd1TXVybXVyMSEw\r\n"
+	"HwYDVQQDDBh1TXVybXVyIHRlc3QgY2VydGlmaWNhdGUwHhcNMTEwMzIyMjIxMTEy\r\n"
+	"WhcNMjEwMzE5MjIxMTEyWjBXMQswCQYDVQQGEwJTRTETMBEGA1UEBwwKR290aGVu\r\n"
+	"YnVyZzEQMA4GA1UECgwHdU11cm11cjEhMB8GA1UEAwwYdU11cm11ciB0ZXN0IGNl\r\n"
+	"cnRpZmljYXRlMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC/zZ5p/st9JUgo\r\n"
+	"FIuNCwyYJhKhnqKlAk36RJJAXhJ/3FZCThQKJ0jxMCjnQb9envZPIKrAfyDtlEGK\r\n"
+	"U8OI2HvDsFL7Y2fNjew0R9DoUyzPRVBInfW9JP03aiOldpooTjXBrzoZV+DGqRYJ\r\n"
+	"E/IRJEyXir5NEJu624bMJm0XDVkxiwIDAQABo1AwTjAdBgNVHQ4EFgQUyI0/J6gS\r\n"
+	"G7vEZl1nKq9rAYAg/TMwHwYDVR0jBBgwFoAUyI0/J6gSG7vEZl1nKq9rAYAg/TMw\r\n"
+	"DAYDVR0TBAUwAwEB/zANBgkqhkiG9w0BAQUFAAOBgQCGL3T4a7g+MUtcjIq2XLON\r\n"
+	"cN/oPgPpMNcSPj7zQF1NVzjeQagvKIe3mL5sNIYuoIQm1Xm7aH2ueruhH0wkSOf0\r\n"
+	"+7U/g7r70U1CFWzfgwzz3EWRq3hUQmZ9/Xy9V2P/iRrFNyAKE8MneuVv3aAIN6/W\r\n"
+	"rWVxhCquqhFM3yIGe0f6hw==\r\n"
+	"-----END CERTIFICATE-----\r\n";
+
 
 static void initTestCert()
 {
 	int rc;
 	builtInTestCertificate = true;
-	rc = x509parse_crt(&certificate, (unsigned char *)test_srv_crt,
-					   strlen(test_srv_crt));	
+	rc = x509parse_crt(&certificate, (unsigned char *)test_cert,
+					   strlen(test_cert));	
 	if (rc != 0)
 		Log_fatal("Could not parse built-in test certificate");
-	rc = x509parse_crt(&certificate, (unsigned char *)test_ca_crt,
-					   strlen(test_ca_crt));
+	rc = x509parse_crt(&certificate, (unsigned char *)test_cert,
+					   strlen(test_cert));	
 	if (rc != 0)
-		Log_fatal("Could not parse built-in test CA certificate");
+		Log_fatal("Could not parse built-in test certificate");
 }
 
 static void initTestKey()
 {
 	int rc;
 	
-	rc = x509parse_key(&key, (unsigned char *)test_srv_key,
-					   strlen(test_srv_key), NULL, 0);
+	rc = x509parse_key(&key, (unsigned char *)test_key,
+					   strlen(test_key), NULL, 0);
 	if (rc != 0)
 		Log_fatal("Could not parse built-in test RSA key");
 }
