@@ -32,6 +32,10 @@
 #ifndef SSL_H_987698
 #define SSL_H_987698
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #ifdef USE_POLARSSL
 #include <polarssl/ssl.h>
 #else
