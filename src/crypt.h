@@ -31,6 +31,10 @@
 #ifndef CRYPTSTATE_H_34564356
 #define CRYPTSTATE_H_34564356
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #ifdef USE_POLARSSL
 #include <polarssl/havege.h>
 #include <polarssl/aes.h>
