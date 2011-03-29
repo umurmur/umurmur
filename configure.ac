@@ -28,7 +28,7 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # Process this file with autoconf to produce a configure script.
-AC_PREREQ([2.67])
+AC_PREREQ([2.63])
 AC_INIT([umurmur], [0.2.6], [http://code.google.com/p/umurmur/issues/entry], [umurmur], [http://code.google.com/p/umurmur])
 AC_CONFIG_SRCDIR([src/client.h])
 AC_CONFIG_HEADERS([config.h])
