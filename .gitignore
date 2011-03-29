@@ -1,0 +1,9 @@
+configure
+depcomp
+install-sh
+missing
+stamp-h1
+Makefile.in
+aclocal.m4
+config.h.in
+src/Makefile.in
