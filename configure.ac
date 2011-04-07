@@ -49,11 +49,11 @@ AS_IF([test "x$with_openssl" == xno], [
 	AC_CHECK_HEADERS([polarssl/ssl.h])
 	AC_CHECK_LIB([polarssl], [ssl_init])	
 ])
-AS_IF([test "x$with_openssl" != xno], [
-	AC_CHECK_HEADERS([openssl/ssl.h])
-	AC_CHECK_LIB([ssl], [SSL_library_init])
-	AC_CHECK_LIB([crypto], [BN_init])
-])
+
+AC_CHECK_HEADERS([openssl/ssl.h])
+AC_CHECK_LIB([crypto], [BN_init])
+AC_CHECK_LIB([ssl], [SSL_library_init])
+
 
 # Checks for header files.
 AC_FUNC_ALLOCA
