@@ -40,7 +40,6 @@
 
 static config_t configuration;
 
-#define DEFAULT_CONFIG "/etc/umurmur.conf"
 #define DEFAULT_WELCOME "Welcome to uMurmur!"
 #define DEFAULT_MAX_CLIENTS 10
 #define DEFAULT_MAX_BANDWIDTH 48000

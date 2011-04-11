@@ -33,6 +33,8 @@
 
 #include "messages.h"
 
+#define DEFAULT_CONFIG "/etc/umurmur.conf"
+
 typedef enum param {
 	CERTIFICATE,
 	KEY,

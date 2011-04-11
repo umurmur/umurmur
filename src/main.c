@@ -217,16 +217,16 @@ void setscheduler()
 void printhelp()
 {
 	printf("uMurmur version %s. Mumble protocol %d.%d.%d\n", UMURMUR_VERSION, PROTVER_MAJOR, PROTVER_MINOR, PROTVER_PATCH);
-	printf("Usage: umurmurd [-d] [-p <pidfile>] [-c <conf file>] [-h]\n");
-	printf("       -d             - Do not daemonize\n");
-	printf("       -p <pidfile>   - Write PID to this file\n");
-	printf("       -c <conf file> - Specify configuration file\n");
+	printf("Usage: umurmurd [-d] [-r] [-h] [-p <pidfile>] [-c <conf file>] [-a <addr>] [-b <port>]\n");
+	printf("       -d             - Do not daemonize - run in foreground.\n");
 #ifdef _POSIX_PRIORITY_SCHEDULING
 	printf("       -r             - Run with realtime priority\n");
 #endif
+	printf("       -h             - Print this help\n");
+	printf("       -p <pidfile>   - Write PID to this file\n");
+	printf("       -c <conf file> - Specify configuration file (default %s)\n", DEFAULT_CONFIG);
 	printf("       -a <address>   - Bind to IP address\n");
 	printf("       -b <port>      - Bind to port\n");
-	printf("       -h             - Print this help\n");
 	exit(0);
 }
 
