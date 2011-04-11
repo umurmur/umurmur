@@ -690,7 +690,6 @@ int Client_read_udp()
 					memcpy(&itr->remote_udp, &from, sizeof(struct sockaddr_in));
 					break;
 				}
-				else Log_warn("Bad cryptstate from peer");
 			}
 		} /* while */
 	}
