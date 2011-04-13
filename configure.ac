@@ -35,7 +35,7 @@ AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE
 
 # Configure options.
-AC_ARG_WITH([openssl], [AC_HELP_STRING([--with-openssl], [force use of openssl])], [], [with_openssl=no])
+AC_ARG_WITH([ssl], [AC_HELP_STRING([--with-ssl=@<:@LIB@:>@], [SSL library (openssl|polarssl) @<:@default=polarssl@:>@])], [], [with_ssl=polarssl])
 
 # Checks for programs.
 AC_PROG_CC
@@ -45,15 +45,16 @@ AC_CHECK_HEADERS([google/protobuf-c/protobuf-c.h], [], [AC_MSG_ERROR([could not 
 AC_CHECK_LIB([protobuf-c], [protobuf_c_data_buffer_init], [], [AC_MSG_ERROR([could not find protobuf-c library])])
 AC_CHECK_HEADERS([libconfig.h], [], [AC_MSG_ERROR([could not find libconfig.h])])
 AC_CHECK_LIB([config], [config_init], [], [AC_MSG_ERROR([could not find config])])
-AS_IF([test "x$with_openssl" == xno], [
+AS_IF([test "x$with_ssl" == xpolarssl], [
 	AC_CHECK_HEADERS([polarssl/ssl.h])
-	AC_CHECK_LIB([polarssl], [ssl_init])	
+	AC_CHECK_LIB([polarssl], [ssl_init])
+	AC_DEFINE([USE_POLARSSL], [], [Use PolarSSL])
 ])
-
-AC_CHECK_HEADERS([openssl/ssl.h])
-AC_CHECK_LIB([crypto], [BN_init])
-AC_CHECK_LIB([ssl], [SSL_library_init])
-
+AS_IF([test "x$with_ssl" == xopenssl], [
+	AC_CHECK_HEADERS([openssl/ssl.h])
+	AC_CHECK_LIB([crypto], [BN_init])
+	AC_CHECK_LIB([ssl], [SSL_library_init])
+])
 
 # Checks for header files.
 AC_FUNC_ALLOCA
@@ -75,19 +76,6 @@ AC_TYPE_UINT8_T
 AC_FUNC_FORK
 #AC_FUNC_MALLOC
 AC_CHECK_FUNCS([ftruncate gettimeofday inet_ntoa memchr memmove memset socket strdup strerror strrchr uname], [], [AC_MSG_ERROR([missing a required func])])
-
-# Choose PolarSSL as default if present, fallback on OpenSSL if not or if --with-openssl was specified.
-AS_IF([test "x$with_openssl" == xno -a "x$ac_cv_lib_polarssl_ssl_init" == xyes -a "x$ac_cv_header_polarssl_ssl_h" == xyes],
-	[
-		AC_DEFINE([USE_POLARSSL], [], [Use PolarSSL])
-		AC_MSG_NOTICE([Using PolarSSL as SSL library])
-	],
-	[AS_IF([test "x$ac_cv_lib_ssl_SSL_library_init" != xyes -o "x$ac_cv_lib_crypto_BN_init" != xyes -o "x$ac_cv_header_openssl_ssl_h" != xyes],
-		[AS_IF([test "x$with_openssl" != xno],
-			[AC_MSG_ERROR([OpenSSL not found])],
-			[AC_MSG_ERROR([could not find any ssl library])])],
-		[AC_MSG_NOTICE([Using OpenSSL as SSL library])])]
-)
 
 AC_CONFIG_FILES([Makefile src/Makefile])
 AC_OUTPUT
