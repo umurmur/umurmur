@@ -44,16 +44,16 @@ AC_PROG_CC
 AC_CHECK_HEADERS([google/protobuf-c/protobuf-c.h], [], [AC_MSG_ERROR([could not find google/protobuf-c/protobuf-c.h])])
 AC_CHECK_LIB([protobuf-c], [protobuf_c_data_buffer_init], [], [AC_MSG_ERROR([could not find protobuf-c library])])
 AC_CHECK_HEADERS([libconfig.h], [], [AC_MSG_ERROR([could not find libconfig.h])])
-AC_CHECK_LIB([config], [config_init], [], [AC_MSG_ERROR([could not find config])])
+AC_CHECK_LIB([config], [config_init], [], [AC_MSG_ERROR([could not find libconfig])])
 AS_IF([test "x$with_ssl" == xpolarssl], [
-	AC_CHECK_HEADERS([polarssl/ssl.h])
-	AC_CHECK_LIB([polarssl], [ssl_init])
+	AC_CHECK_HEADERS([polarssl/ssl.h], [], [AC_MSG_ERROR([could not find polarssl/ssl.h])])
+	AC_CHECK_LIB([polarssl], [ssl_init], [], [AC_MSG_ERROR([could not find libpolarssl])])
 	AC_DEFINE([USE_POLARSSL], [], [Use PolarSSL])
 ])
 AS_IF([test "x$with_ssl" == xopenssl], [
-	AC_CHECK_HEADERS([openssl/ssl.h])
-	AC_CHECK_LIB([crypto], [BN_init])
-	AC_CHECK_LIB([ssl], [SSL_library_init])
+	AC_CHECK_HEADERS([openssl/ssl.h], [], [AC_MSG_ERROR([could not find openssl/ssl.h])])
+	AC_CHECK_LIB([crypto], [BN_init], [], [AC_MSG_ERROR([could not find libcrypto])])
+	AC_CHECK_LIB([ssl], [SSL_library_init], [], [AC_MSG_ERROR([could not find libssl])])
 ])
 
 # Checks for header files.
