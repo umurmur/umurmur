@@ -1,3 +1,9 @@
+0.2.7:
+Autotools build system implemented by Diaoul
+Add configuration option to log to file.
+Fix codec alpha/beta in message to client.
+Some random cleanup.
+
 0.2.6:
 Privilege dropping support added. Enable in conf file. (from tilman2)
 PID file fixes  + various other fixes by tilman2.
