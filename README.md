@@ -27,10 +27,10 @@ A startup script can easily be created if you want to. Just copy an existing scr
 
 Contributors
 ------------
-[Antoine Bertin](https://github.com/Diaoul)
-[tilman2](http://code.google.com/u/@UhZTSlBWAxNMWgU%3D/)
-[J Sisson](mailto:sisson.j ( AT ) gmail DOT com)
-[pierre.h](http://code.google.com/u/@VBRUQ1ZTAhNEXwJ9/)
+* [Antoine Bertin](https://github.com/Diaoul)
+* [tilman2](http://code.google.com/u/@UhZTSlBWAxNMWgU%3D/)
+* [J Sisson](mailto:sisson.j ( AT ) gmail DOT com)
+* [pierre.h](http://code.google.com/u/@VBRUQ1ZTAhNEXwJ9/)
 
 Hope I didn't forget anyone... Please just send me a mail if you feel this is the case.
 
