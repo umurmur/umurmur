@@ -354,10 +354,10 @@ int Client_read_fd(int fd)
 			break;
 		}
 	}
-	if (client == NULL)
-		Log_fatal("No client found for fd %d", fd);
-	
-	return Client_read(client);
+	if (client != NULL)
+		return Client_read(client);
+	else
+		return -1;
 }
 
 int Client_read(client_t *client)
@@ -457,10 +457,10 @@ int Client_write_fd(int fd)
 			break;
 		}
 	}
-	if (client == NULL)
-		Log_fatal("No client found for fd %d", fd);
-	Client_write(client);
-	return 0;
+	if (client != NULL)
+		return Client_write(client);
+	else
+		return -1;
 }
 
 int Client_write(client_t *client)
