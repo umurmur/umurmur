@@ -214,7 +214,7 @@ SSL_handle_t *SSLi_newconnection(int *fd, bool_t *SSLready)
     ssl_set_dbg(ssl, pssl_debug, NULL);
     ssl_set_bio(ssl, net_recv, fd, net_send, fd);
 
-    ssl_set_ciphers(ssl, ciphers);
+    ssl_set_ciphersuites(ssl, ciphers);
     ssl_set_session(ssl, 0, 0, ssn);
 
     ssl_set_ca_chain(ssl, certificate.next, NULL, NULL);
@@ -230,7 +230,7 @@ int SSLi_nonblockaccept(SSL_handle_t *ssl, bool_t *SSLready)
 	
 	rc = ssl_handshake(ssl);
 	if (rc != 0) {
-		if (rc == POLARSSL_ERR_NET_TRY_AGAIN) {
+		if (rc == POLARSSL_ERR_NET_WANT_READ || rc == POLARSSL_ERR_NET_WANT_WRITE) {
 			return 0;
 		} else {
 			Log_warn("SSL handshake failed: %d", rc);
@@ -245,7 +245,7 @@ int SSLi_read(SSL_handle_t *ssl, uint8_t *buf, int len)
 {
 	int rc;
 	rc = ssl_read(ssl, buf, len);
-	if (rc == POLARSSL_ERR_NET_TRY_AGAIN)
+	if (rc == POLARSSL_ERR_NET_WANT_READ)
 		return SSLI_ERROR_WANT_READ;
 	return rc;
 }
@@ -254,7 +254,7 @@ int SSLi_write(SSL_handle_t *ssl, uint8_t *buf, int len)
 {
 	int rc;
 	rc = ssl_write(ssl, buf, len);
-	if (rc == POLARSSL_ERR_NET_TRY_AGAIN)
+	if (rc == POLARSSL_ERR_NET_WANT_WRITE)
 		return SSLI_ERROR_WANT_WRITE;
 	return rc;
 }
