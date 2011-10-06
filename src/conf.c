@@ -58,6 +58,18 @@ void Conf_init(const char *conffile)
 	}
 }
 
+void Conf_test(const char *conffile)
+{
+	config_init(&configuration);
+	if (conffile == NULL)
+		conffile = defaultconfig;
+	if (config_read_file(&configuration, conffile) != CONFIG_TRUE) {
+		fprintf(stderr, "Error in config file %s line %d: %s", conffile,
+		        config_error_line(&configuration), config_error_text(&configuration));
+		exit(1);
+	}
+}
+
 void Conf_deinit()
 {
 	config_destroy(&configuration);
@@ -233,6 +245,13 @@ int Conf_getNextChannel(conf_channel_t *chdesc, int index)
 		chdesc->description = NULL;
 	else
 		chdesc->description = config_setting_get_string(setting);
+	
+	ret = snprintf(configstr, maxconfig, "channels.[%d].password", index);
+	setting = config_lookup(&configuration, configstr);
+	if (ret >= maxconfig || ret < 0 || setting == NULL) /* Optional */
+		chdesc->password = NULL;
+	else
+		chdesc->password = config_setting_get_string(setting);
 	
 	ret = snprintf(configstr, maxconfig, "channels.[%d].noenter", index);
 	setting = config_lookup(&configuration, configstr);

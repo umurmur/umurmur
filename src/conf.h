@@ -54,6 +54,7 @@ typedef struct {
 	const char *parent;
 	const char *name;
 	const char *description;
+	const char *password;
 	bool_t noenter;
 } conf_channel_t;
 
@@ -64,6 +65,7 @@ typedef struct {
 
 void Conf_init(const char *conffile);
 void Conf_deinit();
+void Conf_test(const char *conffile);
 
 const char *getStrConf(param_t param);
 int getIntConf(param_t param);
