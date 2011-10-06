@@ -217,16 +217,17 @@ void setscheduler()
 void printhelp()
 {
 	printf("uMurmur version %s. Mumble protocol %d.%d.%d\n", UMURMUR_VERSION, PROTVER_MAJOR, PROTVER_MINOR, PROTVER_PATCH);
-	printf("Usage: umurmurd [-d] [-r] [-h] [-p <pidfile>] [-c <conf file>] [-a <addr>] [-b <port>]\n");
+	printf("Usage: umurmurd [-d] [-r] [-h] [-p <pidfile>] [-t] [-c <conf file>] [-a <addr>] [-b <port>]\n");
 	printf("       -d             - Do not daemonize - run in foreground.\n");
 #ifdef _POSIX_PRIORITY_SCHEDULING
 	printf("       -r             - Run with realtime priority\n");
 #endif
-	printf("       -h             - Print this help\n");
 	printf("       -p <pidfile>   - Write PID to this file\n");
 	printf("       -c <conf file> - Specify configuration file (default %s)\n", DEFAULT_CONFIG);
+	printf("       -t             - Test config. Error message to stderr + non-zero exit code on error\n");
 	printf("       -a <address>   - Bind to IP address\n");
 	printf("       -b <port>      - Bind to port\n");
+	printf("       -h             - Print this help\n");
 	exit(0);
 }
 
@@ -234,7 +235,7 @@ int main(int argc, char **argv)
 {
 	bool_t nodaemon = false;
 #ifdef _POSIX_PRIORITY_SCHEDULING
-	bool_t realtime = false;
+	bool_t realtime = false, testconfig = false;
 #endif
 	char *conffile = NULL, *pidfile = NULL;
 	int c;
@@ -242,9 +243,9 @@ int main(int argc, char **argv)
 	
 	/* Arguments */
 #ifdef _POSIX_PRIORITY_SCHEDULING
-	while ((c = getopt(argc, argv, "drp:c:a:b:h")) != EOF) {
+	while ((c = getopt(argc, argv, "drp:c:a:b:ht")) != EOF) {
 #else
-	while ((c = getopt(argc, argv, "dp:c:a:b:h")) != EOF) {
+	while ((c = getopt(argc, argv, "dp:c:a:b:ht")) != EOF) {
 #endif
 		switch(c) {
 		case 'c':
@@ -265,6 +266,9 @@ int main(int argc, char **argv)
 		case 'h':
 			printhelp();
 			break;
+		case 't':
+			testconfig = true;
+			break;
 #ifdef _POSIX_PRIORITY_SCHEDULING
 		case 'r':
 			realtime = true;
@@ -276,7 +280,14 @@ int main(int argc, char **argv)
 			break;
 		}
 	}
-	
+
+	if (testconfig) {
+		if (!Conf_ok(conffile))
+			exit(1);
+		else
+			exit(0);
+	}
+		
 	/* Initialize the config subsystem early;
 	 * switch_user() will need to read some config variables as well as logging.
 	 */

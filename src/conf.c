@@ -58,16 +58,19 @@ void Conf_init(const char *conffile)
 	}
 }
 
-void Conf_test(const char *conffile)
+bool_t Conf_ok(const char *conffile)
 {
+	bool_t rc = true;
 	config_init(&configuration);
 	if (conffile == NULL)
 		conffile = defaultconfig;
 	if (config_read_file(&configuration, conffile) != CONFIG_TRUE) {
-		fprintf(stderr, "Error in config file %s line %d: %s", conffile,
+		fprintf(stderr, "Error in config file %s line %d: %s\n", conffile,
 		        config_error_line(&configuration), config_error_text(&configuration));
-		exit(1);
+		rc = false;
 	}
+	config_destroy(&configuration);
+	return rc;
 }
 
 void Conf_deinit()

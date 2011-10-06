@@ -65,7 +65,7 @@ typedef struct {
 
 void Conf_init(const char *conffile);
 void Conf_deinit();
-void Conf_test(const char *conffile);
+bool_t Conf_ok(const char *conffile);
 
 const char *getStrConf(param_t param);
 int getIntConf(param_t param);
