@@ -45,8 +45,7 @@
 #include <polarssl/x509.h>
 #include <polarssl/ssl.h>
 #include <polarssl/net.h>
-
-#define CA_CRT_FILENAME "ca.crt"
+#include <polarssl/version.h>
 
 int ciphers[] =
 {
@@ -87,10 +86,6 @@ static void initTestCert()
 					   strlen(test_srv_crt));	
 	if (rc != 0)
 		Log_fatal("Could not parse built-in test certificate");
-	rc = x509parse_crt(&certificate, (unsigned char *)test_ca_crt,
-					   strlen(test_ca_crt));
-	if (rc != 0)
-		Log_fatal("Could not parse built-in test CA certificate");
 }
 
 static void initTestKey()
@@ -104,6 +99,7 @@ static void initTestKey()
 }
 
 /*
+ * How to generate a self-signed cert with openssl:
  * openssl genrsa 1024 > host.key
  * openssl req -new -x509 -nodes -sha1 -days 365 -key host.key > host.cert
  */
@@ -111,7 +107,6 @@ static void initCert()
 {
 	int rc;
 	char *crtfile = (char *)getStrConf(CERTIFICATE);
-	char *ca_file, *p;
 	
 	if (crtfile == NULL) {
 		Log_warn("No certificate file specified");
@@ -124,31 +119,6 @@ static void initCert()
 		initTestCert();
 		return;
 	}
-	
-	/* Look for CA certificate file in same dir */
-	ca_file = malloc(strlen(crtfile) + strlen(CA_CRT_FILENAME) + 1);
-	strcpy(ca_file, crtfile);
-	p = strrchr(ca_file, '/');
-	if (p != NULL)
-		strcpy(p + 1, CA_CRT_FILENAME);
-	else
-		strcpy(ca_file, CA_CRT_FILENAME);
-	
-	rc = x509parse_crtfile(&certificate, ca_file);
-	if (rc != 0) { /* No CA certifiacte found. Assume self-signed. */
-		Log_info("CA certificate file %s not found. Assuming self-signed certificate.", ca_file);
-	}
-	
-	/*
-	 * PolarSSL 0.11 - 0.12,1 has a bug; it ignores the last certificate in the chain.
-	 * Read the certificate again so that it gets last in chain. Later releases like 0.14.0 works
-	 * fine with the extra certificate, so I don't see any harm in doing so.
-	 */
-	rc = x509parse_crtfile(&certificate, crtfile);
-	if (rc != 0)
-		Log_fatal("Could not read certificate file %s", crtfile);
-	
-	free(ca_file);
 }
 
 static void initKey()
@@ -208,18 +178,17 @@ SSL_handle_t *SSLi_newconnection(int *fd, bool_t *SSLready)
 		Log_fatal("Failed to initalize: %d", rc);
 	
 	ssl_set_endpoint(ssl, SSL_IS_SERVER);	
-    ssl_set_authmode(ssl, SSL_VERIFY_OPTIONAL);
+	ssl_set_authmode(ssl, SSL_VERIFY_NONE);
 
-    ssl_set_rng(ssl, havege_rand, &hs);
-    ssl_set_dbg(ssl, pssl_debug, NULL);
-    ssl_set_bio(ssl, net_recv, fd, net_send, fd);
+	ssl_set_rng(ssl, havege_rand, &hs);
+	ssl_set_dbg(ssl, pssl_debug, NULL);
+	ssl_set_bio(ssl, net_recv, fd, net_send, fd);
 
-    ssl_set_ciphers(ssl, ciphers);
-    ssl_set_session(ssl, 0, 0, ssn);
+	ssl_set_ciphers(ssl, ciphers);
+	ssl_set_session(ssl, 0, 0, ssn);
 
-    ssl_set_ca_chain(ssl, certificate.next, NULL, NULL);
-    ssl_set_own_cert(ssl, &certificate, &key);
-    ssl_set_dh_param(ssl, my_dhm_P, my_dhm_G);
+	ssl_set_own_cert(ssl, &certificate, &key);
+	ssl_set_dh_param(ssl, my_dhm_P, my_dhm_G);
 
 	return ssl;
 }
