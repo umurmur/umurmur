@@ -38,7 +38,19 @@
 
 #ifdef USE_POLARSSL
 #include <polarssl/ssl.h>
+#include <polarssl/version.h>
+
+#ifndef POLARSSL_VERSION_MAJOR
+	#define POLARSSL_API_V0
 #else
+#if (POLARSSL_VERSION_MAJOR == 0)
+	#define POLARSSL_API_V0
+#else
+	#define POLARSSL_API_V1
+#endif
+#endif
+
+#else /* OpenSSL */
 #include <openssl/x509v3.h>
 #include <openssl/ssl.h>
 #endif
@@ -47,9 +59,14 @@
 #include <inttypes.h>
 
 #ifdef USE_POLARSSL
-#define SSLI_ERROR_WANT_READ -0x0F300 /* PolarSSL uses -0x0f00 -> --0x0f90 */
+#define SSLI_ERROR_WANT_READ -0x0F300 /* PolarSSL v0.x.x uses -0x0f00 -> --0x0f90, v1.x.x uses -0x7080 -> -0x7e80 */
 #define SSLI_ERROR_WANT_WRITE -0x0F310
+
+#ifdef POLARSSL_API_V1
+#define SSLI_ERROR_ZERO_RETURN 0
+#else
 #define SSLI_ERROR_ZERO_RETURN POLARSSL_ERR_NET_CONN_RESET
+#endif
 #define SSLI_ERROR_CONNRESET POLARSSL_ERR_NET_CONN_RESET
 #define SSLI_ERROR_SYSCALL POLARSSL_ERR_NET_RECV_FAILED
 
