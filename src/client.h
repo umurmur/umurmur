@@ -53,6 +53,8 @@
 #define UDP_BUFSIZE 512
 #define INACTICITY_TIMEOUT 15 /* Seconds */
 #define MAX_CODECS 10
+#define MAX_TOKENSIZE 64
+#define MAX_TOKENS 32
 
 #define IS_AUTH(_a_) ((_a_)->authenticated)
 
@@ -85,6 +87,8 @@ typedef struct {
 	char *context;
 	struct dlist chan_node;
 	struct dlist voicetargets;
+	struct dlist tokens;
+	int tokencount;
 	float UDPPingAvg, UDPPingVar, TCPPingAvg, TCPPingVar;
 	uint32_t UDPPackets, TCPPackets;
 } client_t;
@@ -93,6 +97,11 @@ typedef struct {
 	int codec, count;
 	struct dlist node;
 } codec_t;
+
+typedef struct {
+	char *token;
+	struct dlist node;
+} token_t;
 
 void Client_init();
 int Client_getfds(struct pollfd *pollfds);

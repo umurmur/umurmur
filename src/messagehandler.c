@@ -68,6 +68,27 @@ static void sendPermissionDenied(client_t *client, const char *reason)
 	Client_send_message(client, msg);
 }
 
+static void addTokens(client_t *client, message_t *msg)
+{
+	int i;
+	if (client->tokencount + msg->payload.authenticate->n_tokens < MAX_TOKENS) {
+		/* Check lengths first */
+		for (i = 0; i < msg->payload.authenticate->n_tokens; i++) {
+			if (strlen(msg->payload.authenticate->tokens[i]) > MAX_TOKENSIZE - 1) {
+				sendPermissionDenied(client, "Too long token");
+				return;
+			}
+		}
+		
+		for (i = 0; i < msg->payload.authenticate->n_tokens; i++) {
+			Log_debug("Adding token '%s' to client '%s'", msg->payload.authenticate->tokens[i], client->username);
+			Client_token_add(client, msg->payload.authenticate->tokens[i]);
+		}
+	}
+	else
+		sendPermissionDenied(client, "Too many tokens");
+}
+
 void Mh_handle_message(client_t *client, message_t *msg)
 {
 	message_t *sendmsg = NULL;
@@ -96,9 +117,12 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		Log_debug("Authenticate message received");
 		
 		if (IS_AUTH(client) || !msg->payload.authenticate->username) {
-			/* Authenticate message might be sent when a token is set by the user.*/
+			/* Authenticate message might be sent when a tokens are changed by the user.*/
+			Client_token_free(client); /* Clear the token list */
 			if (msg->payload.authenticate->n_tokens > 0) {
-				Log_debug("Tokens in auth message from %s", client->username);
+				Log_debug("Tokens in auth message from '%s'. n_tokens = %d", client->username,
+				          msg->payload.authenticate->n_tokens);
+				addTokens(client, msg);
 			}
 			break;
 		}
@@ -145,8 +169,13 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			goto disconnect;
 		}
 		
-		/* Name & password */
+		/* Name */
 		client->username = strdup(msg->payload.authenticate->username);				
+
+		/* Tokens */
+		if (msg->payload.authenticate->n_tokens > 0)
+			addTokens(client, msg);
+
 		
 		/* Setup UDP encryption */
 		CryptState_init(&client->cryptState);
@@ -404,8 +433,15 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		}
 		if (msg->payload.userState->has_channel_id) {
 			int leave_id;
-			if (!Chan_userJoin_id_test(msg->payload.userState->channel_id))
+			channelJoinResult_t chjoin_rc = Chan_userJoin_id_test(msg->payload.userState->channel_id, client);
+			
+			if (chjoin_rc != CHJOIN_OK) {
+				if (chjoin_rc == CHJOIN_WRONGPW) {
+					sendPermissionDenied(client, "Wrong channel password");
+				}
 				break;
+			}
+			
 			leave_id = Chan_userJoin_id(msg->payload.userState->channel_id, client);
 			if (leave_id > 0) {
 				Log_debug("Removing channel ID %d", leave_id);

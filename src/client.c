@@ -146,6 +146,52 @@ codec_t *Client_codec_iterate(client_t *client, codec_t **codec_itr)
 	return cd;
 }
 
+void Client_token_add(client_t *client, char *token_string)
+{
+	token_t *token;
+
+	if (client->tokencount >= MAX_TOKENS)
+		return;
+	token = malloc(sizeof(token_t));
+	if (token == NULL)
+		Log_fatal("Out of memory");
+	init_list_entry(&token->node);
+	token->token = strdup(token_string);
+	if (token->token == NULL)
+		Log_fatal("Out of memory");
+	list_add_tail(&token->node, &client->tokens);
+	client->tokencount++;
+}
+
+bool_t Client_token_match(client_t *client, char *str)
+{
+	token_t *token;
+	struct dlist *itr;
+	
+	if (list_empty(&client->tokens))
+		return false;
+	list_iterate(itr, &client->tokens) {
+		token = list_get_entry(itr, token_t, node);
+		if (strncasecmp(token->token, str, MAX_TOKENSIZE) == 0)
+			return true;
+	}
+	return false;
+}
+
+void Client_token_free(client_t *client)
+{
+	struct dlist *itr, *save;
+	token_t *token;
+	
+	list_iterate_safe(itr, save, &client->tokens) {
+		token = list_get_entry(itr, token_t, node);
+		list_del(&token->node);
+		free(token->token);
+		free(token);
+	}
+	client->tokencount = 0;
+}
+
 void recheckCodecVersions()
 {
 	client_t *client_itr = NULL;
@@ -270,6 +316,7 @@ int Client_add(int fd, struct sockaddr_in *remote)
 	init_list_entry(&newclient->node);
 	init_list_entry(&newclient->voicetargets);
 	init_list_entry(&newclient->codecs);
+	init_list_entry(&newclient->tokens);
 	
 	list_add_tail(&newclient->node, &clients);
 	clientcount++;
@@ -309,6 +356,7 @@ void Client_free(client_t *client)
 	}
 	Client_codec_free(client);
 	Voicetarget_free_all(client);
+	Client_token_free(client);
 	
 	list_del(&client->node);
 	if (client->ssl)

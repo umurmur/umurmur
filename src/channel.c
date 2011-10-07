@@ -161,7 +161,8 @@ void Chan_init()
 			channel_t *ch, *ch_itr = NULL;
 			ch = Chan_createChannel(chdesc.name, chdesc.description);
 			ch->noenter = chdesc.noenter;
-			
+			if (chdesc.password)
+				ch->password = strdup(chdesc.password);
 			if (strcmp(defaultChannelName, chdesc.name) == 0) {
 				Log_info("Setting default channel %s", ch->name); 
 				defaultChan = ch;
@@ -184,6 +185,8 @@ void Chan_init()
 	
 	if (defaultChan->noenter)
 		Log_fatal("Error in channel configuration: default channel is marked as noenter");
+	if (defaultChan->password)
+		Log_fatal("Error in channel configuration: default channel has a password");
 
 	/* Channel links */
 	for (i = 0; ; i++) {
@@ -230,6 +233,8 @@ void Chan_free()
 		free(ch->name);
 		if (ch->desc)
 			free(ch->desc);
+		if (ch->password)
+			free(ch->password);
 		free(ch);
 	}
 }
@@ -303,7 +308,7 @@ int Chan_userJoin_id(int channelid, client_t *client)
 		return Chan_userJoin(ch_itr, client);	
 }
 
-bool_t Chan_userJoin_id_test(int channelid)
+channelJoinResult_t Chan_userJoin_id_test(int channelid, client_t *client)
 {
 	channel_t *ch_itr = NULL;
 	do {
@@ -311,12 +316,13 @@ bool_t Chan_userJoin_id_test(int channelid)
 	} while (ch_itr != NULL && ch_itr->id != channelid);
 	if (ch_itr == NULL) {
 		Log_warn("Channel id %d not found - ignoring.", channelid);
-		return false;
+		return CHJOIN_NOTFOUND;
 	}
-	if (ch_itr->noenter)
-		return false;
-	else
-		return true;
+	else if (ch_itr->noenter)
+		return CHJOIN_NOENTER;
+	else if (ch_itr->password && !Client_token_match(client, ch_itr->password))
+		return CHJOIN_WRONGPW;
+	else return CHJOIN_OK;
 }
 
 #if 0
