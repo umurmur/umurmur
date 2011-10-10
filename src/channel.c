@@ -161,10 +161,12 @@ void Chan_init()
 			channel_t *ch, *ch_itr = NULL;
 			ch = Chan_createChannel(chdesc.name, chdesc.description);
 			ch->noenter = chdesc.noenter;
-			if (chdesc.password)
+			if (chdesc.password) {
+				Log_info("Setting password on channel '%s'", ch->name); 
 				ch->password = strdup(chdesc.password);
+			}
 			if (strcmp(defaultChannelName, chdesc.name) == 0) {
-				Log_info("Setting default channel %s", ch->name); 
+				Log_info("Setting default channel '%s'", ch->name); 
 				defaultChan = ch;
 			}
 			
@@ -173,7 +175,7 @@ void Chan_init()
 			} while (ch_itr != NULL && strcmp(ch_itr->name, chdesc.parent) != 0);
 			
 			if (ch_itr == NULL)
-				Log_fatal("Error in channel configuration: parent not found");
+				Log_fatal("Error in channel configuration: parent '%s' not found", chdesc.parent);
 			else {
 				Chan_addChannel(ch_itr, ch);
 				Log_info("Adding channel '%s' parent '%s'", ch->name, chdesc.parent);
