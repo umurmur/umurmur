@@ -1,3 +1,11 @@
+0.2.8:
+Add channel passwords support. 'password = "<password>";' in channel configuration.
+Remove pointless CA cert handling with PolarSSL. Did not work anyway...
+Add support for PolarSSL v1.x.x. v0.x.x is still supported.
+Fix portability issues in configure script. Add poll.h to header checks.
+Fix unneccesary fatal exit when client is disconnected due to SSL error.
+Add configuration test flag to umurmurd (-t).
+
 0.2.7:
 Autotools build system implemented by Diaoul
 Add configuration option to log to file.
