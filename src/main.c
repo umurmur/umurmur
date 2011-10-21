@@ -235,8 +235,9 @@ int main(int argc, char **argv)
 {
 	bool_t nodaemon = false;
 #ifdef _POSIX_PRIORITY_SCHEDULING
-	bool_t realtime = false, testconfig = false;
+	bool_t realtime = false;
 #endif
+	bool_t testconfig = false;
 	char *conffile = NULL, *pidfile = NULL;
 	int c;
 	struct utsname utsbuf;
