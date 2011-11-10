@@ -42,7 +42,10 @@
 #include <string.h>
 #include <stdlib.h>
 #ifdef _POSIX_PRIORITY_SCHEDULING
+#if (_POSIX_PRIORITY_SCHEDULING > 0)
+#define POSIX_PRIORITY_SCHEDULING
 #include <sched.h>
+#endif
 #endif
 #include "server.h"
 #include "ssl.h"
@@ -200,7 +203,7 @@ void daemonize()
 		
 }
 
-#ifdef _POSIX_PRIORITY_SCHEDULING
+#ifdef POSIX_PRIORITY_SCHEDULING
 void setscheduler()
 {
 	int rc;
@@ -219,7 +222,7 @@ void printhelp()
 	printf("uMurmur version %s. Mumble protocol %d.%d.%d\n", UMURMUR_VERSION, PROTVER_MAJOR, PROTVER_MINOR, PROTVER_PATCH);
 	printf("Usage: umurmurd [-d] [-r] [-h] [-p <pidfile>] [-t] [-c <conf file>] [-a <addr>] [-b <port>]\n");
 	printf("       -d             - Do not daemonize - run in foreground.\n");
-#ifdef _POSIX_PRIORITY_SCHEDULING
+#ifdef POSIX_PRIORITY_SCHEDULING
 	printf("       -r             - Run with realtime priority\n");
 #endif
 	printf("       -p <pidfile>   - Write PID to this file\n");
@@ -234,7 +237,7 @@ void printhelp()
 int main(int argc, char **argv)
 {
 	bool_t nodaemon = false;
-#ifdef _POSIX_PRIORITY_SCHEDULING
+#ifdef POSIX_PRIORITY_SCHEDULING
 	bool_t realtime = false;
 #endif
 	bool_t testconfig = false;
@@ -243,7 +246,7 @@ int main(int argc, char **argv)
 	struct utsname utsbuf;
 	
 	/* Arguments */
-#ifdef _POSIX_PRIORITY_SCHEDULING
+#ifdef POSIX_PRIORITY_SCHEDULING
 	while ((c = getopt(argc, argv, "drp:c:a:b:ht")) != EOF) {
 #else
 	while ((c = getopt(argc, argv, "dp:c:a:b:ht")) != EOF) {
@@ -270,7 +273,7 @@ int main(int argc, char **argv)
 		case 't':
 			testconfig = true;
 			break;
-#ifdef _POSIX_PRIORITY_SCHEDULING
+#ifdef POSIX_PRIORITY_SCHEDULING
 		case 'r':
 			realtime = true;
 			break;
@@ -334,7 +337,7 @@ int main(int argc, char **argv)
 	Chan_init();
 	Client_init();
 
-#ifdef _POSIX_PRIORITY_SCHEDULING
+#ifdef POSIX_PRIORITY_SCHEDULING
 	if (realtime)
 		setscheduler();
 #endif
