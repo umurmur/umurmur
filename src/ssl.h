@@ -46,7 +46,10 @@
 #if (POLARSSL_VERSION_MAJOR == 0)
 	#define POLARSSL_API_V0
 #else
-	#define POLARSSL_API_V1
+#define POLARSSL_API_V1
+#if (POLARSSL_VERSION_MINOR == 0)
+	#define POLARSSL_API_V1_0
+#endif
 #endif
 #endif
 

@@ -38,6 +38,19 @@
 #ifdef USE_POLARSSL
 #include <polarssl/havege.h>
 #include <polarssl/aes.h>
+#include <polarssl/version.h>
+#ifndef POLARSSL_VERSION_MAJOR
+	#define POLARSSL_API_V0
+#else
+#if (POLARSSL_VERSION_MAJOR == 0)
+	#define POLARSSL_API_V0
+#else
+#define POLARSSL_API_V1
+#if (POLARSSL_VERSION_MINOR == 0)
+	#define POLARSSL_API_V1_0
+#endif
+#endif
+#endif
 #define AES_BLOCK_SIZE 16
 #else
 #include <openssl/rand.h>
