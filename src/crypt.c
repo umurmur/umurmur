@@ -44,12 +44,16 @@
 
 #ifdef USE_POLARSSL
 #include <polarssl/havege.h>
+#if defined POLARSSL_API_V1 && !defined(POLARSSL_API_V1_0)
+#define RAND_bytes(_dst_, _size_) havege_random(&hs, _dst_, _size_)
+#else
 #define RAND_bytes(_dst_, _size_) do { \
 	int i; \
 	for (i = 0; i < _size_; i++) { \
 	_dst_[i] = havege_rand(&hs); \
 	} \
  } while (0);
+#endif
 
 extern havege_state hs;
 #endif
