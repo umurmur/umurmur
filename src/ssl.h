@@ -45,8 +45,29 @@
 #else
 #if (POLARSSL_VERSION_MAJOR == 0)
 	#define POLARSSL_API_V0
+    #define HAVEGE_RAND (havege_rand)
+    #define RAND_bytes(_dst_, _size_) do { \
+	    int i; \
+	    for (i = 0; i < _size_; i++) { \
+	        _dst_[i] = havege_rand(&hs); \
+	    } \
+    } while (0)
 #else
 	#define POLARSSL_API_V1
+    #if (POLARSSL_VERSION_MINOR >= 1)
+        #define HAVEGE_RAND (havege_random)
+        #define RAND_bytes(_dst_, _size_) do { \
+	        havege_random(&hs, _dst_, _size_); \
+		} while (0)
+    #else
+        #define HAVEGE_RAND (havege_rand)
+        #define RAND_bytes(_dst_, _size_) do { \
+	         int i; \
+	         for (i = 0; i < _size_; i++) { \
+	             _dst_[i] = havege_rand(&hs); \
+	         } \
+        } while (0)
+    #endif
 #endif
 #endif
 

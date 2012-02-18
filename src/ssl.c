@@ -187,7 +187,7 @@ SSL_handle_t *SSLi_newconnection(int *fd, bool_t *SSLready)
 	ssl_set_endpoint(ssl, SSL_IS_SERVER);	
 	ssl_set_authmode(ssl, SSL_VERIFY_NONE);
 
-	ssl_set_rng(ssl, havege_rand, &hs);
+	ssl_set_rng(ssl, HAVEGE_RAND, &hs);
 	ssl_set_dbg(ssl, pssl_debug, NULL);
 	ssl_set_bio(ssl, net_recv, fd, net_send, fd);
 
