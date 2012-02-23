@@ -136,7 +136,7 @@ static void initKey()
 static void pssl_debug(void *ctx, int level, const char *str)
 {
     if (level <= DEBUG_LEVEL)
-		Log_debug("PolarSSL [level %d]: %s", level, str);
+		Log_info("PolarSSL [level %d]: %s", level, str);
 }
 
 void SSLi_init(void)
@@ -167,6 +167,17 @@ void SSLi_deinit(void)
 	rsa_free(&key);
 }
 
+/* Create SHA1 of last certificate in the peer's chain. */
+void SSLi_getSHA1Hash(SSL_handle_t *ssl, uint8_t *hash)
+{
+	x509_cert *cert = ssl->peer_cert;
+	if (!ssl->peer_cert) {
+		/* XXX what to do? */
+		return;
+	}	
+	sha1(cert->raw.p, cert->raw.len, hash);
+}
+	
 SSL_handle_t *SSLi_newconnection(int *fd, bool_t *SSLready)
 {
 	ssl_context *ssl;
@@ -185,7 +196,7 @@ SSL_handle_t *SSLi_newconnection(int *fd, bool_t *SSLready)
 		Log_fatal("Failed to initalize: %d", rc);
 	
 	ssl_set_endpoint(ssl, SSL_IS_SERVER);	
-	ssl_set_authmode(ssl, SSL_VERIFY_NONE);
+	ssl_set_authmode(ssl, SSL_VERIFY_OPTIONAL);
 
 	ssl_set_rng(ssl, HAVEGE_RAND, &hs);
 	ssl_set_dbg(ssl, pssl_debug, NULL);
@@ -197,7 +208,8 @@ SSL_handle_t *SSLi_newconnection(int *fd, bool_t *SSLready)
 	ssl_set_ciphers(ssl, ciphers);
 #endif
     ssl_set_session(ssl, 0, 0, ssn);
-
+    
+    ssl_set_ca_chain(ssl, &certificate, NULL, NULL);
 	ssl_set_own_cert(ssl, &certificate, &key);
 	ssl_set_dh_param(ssl, my_dhm_P, my_dhm_G);
 
@@ -216,6 +228,8 @@ int SSLi_nonblockaccept(SSL_handle_t *ssl, bool_t *SSLready)
 		if (rc == POLARSSL_ERR_NET_TRY_AGAIN) {
 #endif
 			return 0;
+		} else if (POLARSSL_ERR_X509_CERT_VERIFY_FAILED) { /* Allow this (selfsigned etc) */
+			return 0;			
 		} else {
 			Log_warn("SSL handshake failed: %d", rc);
 			return -1;
@@ -289,6 +303,8 @@ static X509 *x509;
 static RSA *rsa;
 static SSL_CTX *context;
 static EVP_PKEY *pkey;
+ 
+static int verify_callback(int preverify_ok, X509_STORE_CTX *ctx);
 
 static int SSL_add_ext(X509 * crt, int nid, char *value) {
 	X509_EXTENSION *ex;
@@ -543,7 +559,9 @@ void SSLi_init(void)
 	
 	if (SSL_CTX_set_cipher_list(context, cipherstring) == 0)
 		Log_fatal("Failed to set cipher list!");
-		
+	
+	SSL_CTX_set_verify(context, SSL_VERIFY_PEER|SSL_VERIFY_CLIENT_ONCE,
+	                   verify_callback);		
 	
 	SSL_free(ssl);
 	Log_info("OpenSSL library initialized");
@@ -588,6 +606,31 @@ SSL_handle_t *SSLi_newconnection(int *fd, bool_t *SSLready)
 	return ssl;
 }
 
+/* Create SHA1 of last certificate in the peer's chain. */
+void SSLi_getSHA1Hash(SSL_handle_t *ssl, uint8_t *hash)
+{
+	X509 *x509;
+	uint8_t *buf, *p;
+	int len;
+	
+	x509 = SSL_get_peer_certificate(ssl);
+	if (x509) {
+		/* XXX what to do? */
+		return;
+	}	
+	
+	len = i2d_X509(x509, NULL);
+	buf = malloc(len);
+	if (buf == NULL) {
+		Log_fatal("malloc");
+	}
+	
+	i2d_X509(x509, &p);
+	
+	SHA1(p, len, hash);
+	free(buf);
+}
+ 
 void SSLi_closeconnection(SSL_handle_t *ssl)
 {
 	SSL_free(ssl);
@@ -623,4 +666,39 @@ void SSLi_free(SSL_handle_t *ssl)
 	SSL_free(ssl);
 }
 
+static int verify_callback(int preverify_ok, X509_STORE_CTX *ctx)
+{
+	char    buf[256];
+	X509   *err_cert;
+	int     err, depth;
+	SSL    *ssl;
+    
+    err_cert = X509_STORE_CTX_get_current_cert(ctx);
+    err = X509_STORE_CTX_get_error(ctx);
+    depth = X509_STORE_CTX_get_error_depth(ctx);
+    
+    ssl = X509_STORE_CTX_get_ex_data(ctx, SSL_get_ex_data_X509_STORE_CTX_idx());
+    X509_NAME_oneline(X509_get_subject_name(err_cert), buf, 256);
+        
+    if (depth > 5) {
+        preverify_ok = 0;
+        err = X509_V_ERR_CERT_CHAIN_TOO_LONG;
+        X509_STORE_CTX_set_error(ctx, err);
+    }
+    if (!preverify_ok) {
+	    Log_warn("verify error:num=%d:%s:depth=%d:%s\n", err,
+	             X509_verify_cert_error_string(err), depth, buf);
+    }
+    /*
+     * At this point, err contains the last verification error. We can use
+     * it for something special
+     */
+    if (!preverify_ok && (err == X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT))
+	    {
+	    X509_NAME_oneline(X509_get_issuer_name(ctx->current_cert), buf, 256);
+      Log_warn("issuer= %s", buf);
+    }
+    return 1;
+}
+ 
 #endif
