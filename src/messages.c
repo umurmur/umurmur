@@ -749,6 +749,15 @@ message_t *Msg_networkToMessage(uint8_t *data, int size)
 			goto err_out;
 		break;
 	}
+	case UserRemove:
+	{
+		msg = Msg_create_nopayload(UserRemove);
+		msg->unpacked = true;
+		msg->payload.userRemove = mumble_proto__user_remove__unpack(NULL, msgLen, msgData);
+		if (msg->payload.userRemove == NULL)
+			goto err_out;
+		break;
+	}
 
 	default:
 		Log_warn("Unsupported message %d", messageType);
