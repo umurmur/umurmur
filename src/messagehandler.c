@@ -93,7 +93,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 {
 	message_t *sendmsg = NULL;
 	channel_t *ch_itr = NULL;
-	client_t *client_itr;
+	client_t *client_itr, *target;
 
 	if (!client->authenticated && !(msg->messageType == Authenticate ||
 									msg->messageType == Version)) {
@@ -123,11 +123,19 @@ void Mh_handle_message(client_t *client, message_t *msg)
 				Log_debug("Tokens in auth message from '%s'. n_tokens = %d", client->username,
 				          msg->payload.authenticate->n_tokens);
 				addTokens(client, msg);
+				
+				/* Check if admin PW among tokens */
+				if (strlen(getStrConf(ADMIN_PASSPHRASE)) > 0 &&
+				    Client_token_match(client, getStrConf(ADMIN_PASSPHRASE))) {
+					client->isAdmin = true;
+					Log_info("User is admin");
+				}				
 			}
 			break;
 		}
 		
 		client->authenticated = true;
+		SSLi_getSHA1Hash(client->ssl, client->hash);
 		
 		client_itr = NULL;
 		while (Client_iterate(&client_itr) != NULL) {
@@ -175,7 +183,13 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		/* Tokens */
 		if (msg->payload.authenticate->n_tokens > 0)
 			addTokens(client, msg);
-
+		
+		/* Check if admin PW among tokens */
+		if (strlen(getStrConf(ADMIN_PASSPHRASE)) > 0 &&
+		    Client_token_match(client, getStrConf(ADMIN_PASSPHRASE))) {
+			client->isAdmin = true;
+			Log_info("User is admin");
+		}
 		
 		/* Setup UDP encryption */
 		CryptState_init(&client->cryptState);
@@ -377,25 +391,49 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		}
 		break;
 	case UserState:
-		/* Only allow state changes for for the self user */
+		target = NULL;
+		/* Only allow state changes for for the self user unless an admin is issuing */
 		if (msg->payload.userState->has_session &&
-			msg->payload.userState->session != client->sessionId) {
+		    msg->payload.userState->session != client->sessionId && !client->isAdmin) {
 			sendPermissionDenied(client, "Permission denied");
 			break;
 		}
-		if (msg->payload.userState->has_user_id || msg->payload.userState->has_mute ||
-			msg->payload.userState->has_deaf || msg->payload.userState->has_suppress ||
+		if (msg->payload.userState->has_session && msg->payload.userState->session != client->sessionId) {
+			while (Client_iterate(&target) != NULL) {
+				if (target->sessionId == msg->payload.userState->session)
+					break;
+			}
+			if (target == NULL) {
+				Log_warn("Client with sessionID %d not found", msg->payload.userState->session);
+				break;
+			}
+		}
+
+		if (msg->payload.userState->has_user_id || msg->payload.userState->has_suppress ||
 			msg->payload.userState->has_texture) {
-			
 			sendPermissionDenied(client, "Not supported by uMurmur");
 			break;
 		}
+
+		if (target == NULL)
+			target = client;
 		
 		msg->payload.userState->has_session = true;
-		msg->payload.userState->session = client->sessionId;
+		msg->payload.userState->session = target->sessionId;
 		msg->payload.userState->has_actor = true;
 		msg->payload.userState->actor = client->sessionId;
 
+		if (msg->payload.userState->has_deaf) {
+			target->deaf = msg->payload.userState->deaf;
+		}
+		if (msg->payload.userState->has_mute) {
+			target->mute = msg->payload.userState->mute;
+			if (!target->mute) {
+				msg->payload.userState->has_deaf = true;
+				msg->payload.userState->deaf = false;
+				client->deaf = false;
+			}
+		}
 		if (msg->payload.userState->has_self_deaf) {
 			client->deaf = msg->payload.userState->self_deaf;
 		}
@@ -576,7 +614,10 @@ void Mh_handle_message(client_t *client, message_t *msg)
 	case PermissionQuery:
 		Msg_inc_ref(msg); /* Re-use message */
 		msg->payload.permissionQuery->has_permissions = true;
-		msg->payload.permissionQuery->permissions = PERM_DEFAULT;
+		if (client->isAdmin)
+			msg->payload.permissionQuery->permissions = PERM_ADMIN;
+		else
+			msg->payload.permissionQuery->permissions = PERM_DEFAULT;
 		
 		Client_send_message(client, msg);
 		break;
@@ -765,6 +806,38 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		Client_send_message(client, sendmsg);
 	}
 	break;
+	case UserRemove:
+		target = NULL;
+		/* Only admin can issue this */
+		if (!client->isAdmin) {
+			sendPermissionDenied(client, "Permission denied");
+			break;
+		}
+		while (Client_iterate(&target) != NULL) {
+			if (target->sessionId == msg->payload.userRemove->session)
+				break;
+		}
+		if (target == NULL) {
+			Log_warn("Client with sessionId %d not found", msg->payload.userRemove->session);
+			break;
+		}
+		msg->payload.userRemove->session = target->sessionId;
+		msg->payload.userRemove->has_actor = true;
+		msg->payload.userRemove->actor = client->sessionId;
+
+		if (msg->payload.userRemove->has_ban && msg->payload.userRemove->ban) {
+			Log_info("User banned for %d seconds", getIntConf(BAN_LENGTH));
+			/* Put reason, IP, hash, name etc in a list   --->  msg->payload.userRemove->reason */
+		} else {
+			Log_info("User kicked");
+		}
+		/* Re-use message */
+		Msg_inc_ref(msg);
+				
+		Client_send_message_except(NULL, msg);
+		Client_close(target);
+		break;
+		
 		/* Permission denied for all these messages. Not implemented. */
 	case ChannelRemove:
 	case ContextAction:
