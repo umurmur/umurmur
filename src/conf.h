@@ -48,6 +48,8 @@ typedef enum param {
 	USERNAME,
 	GROUPNAME,
 	LOGFILE,
+	ADMIN_PASSPHRASE,
+	BAN_LENGTH,
 } param_t;
 
 typedef struct {

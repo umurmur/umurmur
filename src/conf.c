@@ -44,6 +44,7 @@ static config_t configuration;
 #define DEFAULT_MAX_CLIENTS 10
 #define DEFAULT_MAX_BANDWIDTH 48000
 #define DEFAULT_BINDPORT 64738
+#define DEFAULT_BAN_LENGTH (60*60)
 
 const char defaultconfig[] = DEFAULT_CONFIG;
 
@@ -108,6 +109,17 @@ const char *getStrConf(param_t param)
 		break;
 	case PASSPHRASE:
 		setting = config_lookup(&configuration, "password");
+		if (!setting)
+			return "";
+		else {
+			if ((strsetting = config_setting_get_string(setting)) != NULL)
+				return strsetting;
+			else
+				return "";
+		}
+		break;
+	case ADMIN_PASSPHRASE:
+		setting = config_lookup(&configuration, "admin_password");
 		if (!setting)
 			return "";
 		else {
@@ -199,6 +211,14 @@ int getIntConf(param_t param)
 		setting = config_lookup(&configuration, "bindport");
 		if (!setting)
 			return DEFAULT_BINDPORT;
+		else {
+			return config_setting_get_int(setting);
+		}
+		break;
+	case BAN_LENGTH:
+		setting = config_lookup(&configuration, "ban_length");
+		if (!setting)
+			return DEFAULT_BAN_LENGTH;
 		else {
 			return config_setting_get_int(setting);
 		}
