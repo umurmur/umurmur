@@ -172,7 +172,6 @@ bool_t SSLi_getSHA1Hash(SSL_handle_t *ssl, uint8_t *hash)
 {
 	x509_cert *cert = ssl->peer_cert;
 	if (!ssl->peer_cert) {
-		/* XXX what to do? */
 		return false;
 	}	
 	sha1(cert->raw.p, cert->raw.len, hash);
@@ -615,7 +614,7 @@ bool_t SSLi_getSHA1Hash(SSL_handle_t *ssl, uint8_t *hash)
 	int len;
 	
 	x509 = SSL_get_peer_certificate(ssl);
-	if (x509) {
+	if (!x509) {
 		return false;
 	}	
 	
@@ -624,10 +623,11 @@ bool_t SSLi_getSHA1Hash(SSL_handle_t *ssl, uint8_t *hash)
 	if (buf == NULL) {
 		Log_fatal("malloc");
 	}
+
+	p = buf;
+	i2d_X509(x509, &p);	
 	
-	i2d_X509(x509, &p);
-	
-	SHA1(p, len, hash);
+	SHA1(buf, len, hash);
 	free(buf);
 	return true;
 }
