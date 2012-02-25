@@ -187,7 +187,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		if (strlen(getStrConf(ADMIN_PASSPHRASE)) > 0 &&
 		    Client_token_match(client, getStrConf(ADMIN_PASSPHRASE))) {
 			client->isAdmin = true;
-			Log_info("User is admin");
+			Log_info_client(client, "User provided admin password");
 		}
 		
 		/* Setup UDP encryption */
@@ -837,7 +837,8 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		if (msg->payload.userRemove->has_ban && msg->payload.userRemove->ban) {
 			Ban_UserBan(target, msg->payload.userRemove->reason);
 		} else {
-			Log_info("User kicked");
+			Log_info_client(target, "User kicked. Reason: '%s'",
+			                strlen(msg->payload.userRemove->reason) == 0 ? "N/A" : msg->payload.userRemove->reason);
 		}
 		/* Re-use message */
 		Msg_inc_ref(msg);

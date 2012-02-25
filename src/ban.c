@@ -53,9 +53,9 @@ void Ban_UserBan(client_t *client, char *reason)
 	list_add_tail(&ban->node, &banlist);
 	
 	SSLi_hash2hex(ban->hash, hexhash);
-	Log_info("User %s kickbanned. Reason: '%s' Hash: %s IP: %s Banned for: %d seconds",
-	         ban->name, ban->reason, hexhash, inet_ntoa(*((struct in_addr *)&ban->address)),
-	         getIntConf(BAN_LENGTH));
+	Log_info_client(client, "User kickbanned. Reason: '%s' Hash: %s IP: %s Banned for: %d seconds",
+	                ban->name, ban->reason, hexhash, inet_ntoa(*((struct in_addr *)&ban->address)),
+	                getIntConf(BAN_LENGTH));
 }
 
 
