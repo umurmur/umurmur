@@ -27,5 +27,5 @@
 #  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 bin_PROGRAMS=umurmurd
-umurmurd_SOURCES=client.c main.c messages.c pds.c server.c ssl.c log.c conf.c crypt.c timer.c messagehandler.c channel.c Mumble.pb-c.c voicetarget.c
+umurmurd_SOURCES=client.c main.c messages.c pds.c server.c ssl.c log.c conf.c crypt.c timer.c messagehandler.c channel.c Mumble.pb-c.c voicetarget.c ban.c
 
