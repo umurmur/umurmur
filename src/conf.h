@@ -50,6 +50,7 @@ typedef enum param {
 	LOGFILE,
 	ADMIN_PASSPHRASE,
 	BAN_LENGTH,
+	ALLOW_TEXTMESSAGE,
 } param_t;
 
 typedef struct {
@@ -71,6 +72,7 @@ bool_t Conf_ok(const char *conffile);
 
 const char *getStrConf(param_t param);
 int getIntConf(param_t param);
+bool_t getBoolConf(param_t param);
 int Conf_getNextChannel(conf_channel_t *chdesc, int index);
 int Conf_getNextChannelLink(conf_channel_link_t *chlink, int index);
 

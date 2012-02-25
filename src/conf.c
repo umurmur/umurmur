@@ -244,6 +244,23 @@ int getIntConf(param_t param)
 	}
 }
 
+bool_t getBoolConf(param_t param)
+{
+	config_setting_t *setting = NULL;
+	
+	switch (param) {
+	case ALLOW_TEXTMESSAGE:
+		setting = config_lookup(&configuration, "allow_textmessage");
+		if (!setting)
+			return true;
+		else
+			return config_setting_get_bool(setting);
+		break;
+	default:
+		doAssert(false);
+	}
+}
+
 int Conf_getNextChannel(conf_channel_t *chdesc, int index)
 {
 	config_setting_t *setting = NULL;

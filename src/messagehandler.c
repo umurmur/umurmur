@@ -512,6 +512,8 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		break;
 		
 	case TextMessage:
+		if (!getBoolConf(ALLOW_TEXTMESSAGE))
+			break;
 		msg->payload.textMessage->has_actor = true;
 		msg->payload.textMessage->actor = client->sessionId;
 
@@ -617,10 +619,14 @@ void Mh_handle_message(client_t *client, message_t *msg)
 	case PermissionQuery:
 		Msg_inc_ref(msg); /* Re-use message */
 		msg->payload.permissionQuery->has_permissions = true;
+		
 		if (client->isAdmin)
 			msg->payload.permissionQuery->permissions = PERM_ADMIN;
 		else
 			msg->payload.permissionQuery->permissions = PERM_DEFAULT;
+		
+		if (!getBoolConf(ALLOW_TEXTMESSAGE))
+			msg->payload.permissionQuery->permissions &= ~PERM_TEXTMESSAGE;
 		
 		Client_send_message(client, msg);
 		break;
