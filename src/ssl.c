@@ -168,14 +168,15 @@ void SSLi_deinit(void)
 }
 
 /* Create SHA1 of last certificate in the peer's chain. */
-void SSLi_getSHA1Hash(SSL_handle_t *ssl, uint8_t *hash)
+bool_t SSLi_getSHA1Hash(SSL_handle_t *ssl, uint8_t *hash)
 {
 	x509_cert *cert = ssl->peer_cert;
 	if (!ssl->peer_cert) {
 		/* XXX what to do? */
-		return;
+		return false;
 	}	
 	sha1(cert->raw.p, cert->raw.len, hash);
+	return true;
 }
 	
 SSL_handle_t *SSLi_newconnection(int *fd, bool_t *SSLready)
@@ -607,7 +608,7 @@ SSL_handle_t *SSLi_newconnection(int *fd, bool_t *SSLready)
 }
 
 /* Create SHA1 of last certificate in the peer's chain. */
-void SSLi_getSHA1Hash(SSL_handle_t *ssl, uint8_t *hash)
+bool_t SSLi_getSHA1Hash(SSL_handle_t *ssl, uint8_t *hash)
 {
 	X509 *x509;
 	uint8_t *buf, *p;
@@ -615,8 +616,7 @@ void SSLi_getSHA1Hash(SSL_handle_t *ssl, uint8_t *hash)
 	
 	x509 = SSL_get_peer_certificate(ssl);
 	if (x509) {
-		/* XXX what to do? */
-		return;
+		return false;
 	}	
 	
 	len = i2d_X509(x509, NULL);
@@ -629,6 +629,7 @@ void SSLi_getSHA1Hash(SSL_handle_t *ssl, uint8_t *hash)
 	
 	SHA1(p, len, hash);
 	free(buf);
+	return true;
 }
  
 void SSLi_closeconnection(SSL_handle_t *ssl)
