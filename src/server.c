@@ -173,7 +173,8 @@ void Server_run()
 			setsockopt(tcpfd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
 			Log_debug("Connection from %s port %d\n", inet_ntoa(remote.sin_addr),
 					  ntohs(remote.sin_port));
-			Client_add(tcpfd, &remote);
+			if (Client_add(tcpfd, &remote) < 0)
+				close(tcpfd);
 		}
 
 		if (pollfds[UDP_SOCK].revents) {
