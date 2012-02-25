@@ -127,9 +127,12 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			break;
 		}
 		
-		SSLi_getSHA1Hash(client->ssl, client->hash);
-		if (Ban_isBanned(client))
+		if (SSLi_getSHA1Hash(client->ssl, client->hash) && Ban_isBanned(client)) {
+			char hexhash[41];
+			SSLi_hash2hex(client->hash, hexhash);
+			Log_info("Client with hash '%s' is banned. Disconnecting", hexhash);
 			goto disconnect;
+		}
 		
 		client->authenticated = true;
 		
@@ -406,7 +409,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		}
 
 		if (msg->payload.userState->has_user_id || msg->payload.userState->has_suppress ||
-			msg->payload.userState->has_texture) {
+		    msg->payload.userState->has_priority_speaker || msg->payload.userState->has_texture) {
 			sendPermissionDenied(client, "Not supported by uMurmur");
 			break;
 		}
@@ -421,6 +424,10 @@ void Mh_handle_message(client_t *client, message_t *msg)
 
 		if (msg->payload.userState->has_deaf) {
 			target->deaf = msg->payload.userState->deaf;
+			if (target->deaf) {
+				msg->payload.userState->has_mute = true;
+				msg->payload.userState->mute = true;
+			}
 		}
 		if (msg->payload.userState->has_mute) {
 			target->mute = msg->payload.userState->mute;
