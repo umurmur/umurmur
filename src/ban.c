@@ -72,18 +72,18 @@ void Ban_pruneBanned()
 	
 	list_iterate(itr, &banlist) {
 		ban = list_get_entry(itr, ban_t, node);
+#ifdef DEBUG
+		SSLi_hash2hex(ban->hash, hexhash);
+		Log_debug("BL: User %s Reason: '%s' Hash: %s IP: %s Time left: %d",
+		          ban->name, ban->reason, hexhash, inet_ntoa(*((struct in_addr *)&ban->address)),
+		          bantime / 1000000LL - Timer_elapsed(&ban->startTime) / 1000000LL);
+#endif
 		if (Timer_isElapsed(&ban->startTime, bantime)) {
-			
 			free(ban->name);
 			free(ban->reason);
 			list_del(&ban->node);
 			free(ban);
 		}
-#ifdef DEBUG
-		SSLi_hash2hex(ban->hash, hexhash);
-		Log_debug("BL: User %s Reason: '%s' Hash: %s IP: %s",
-		          ban->name, ban->reason, hexhash, inet_ntoa(*((struct in_addr *)&ban->address)));
-#endif
 	}
 }
 

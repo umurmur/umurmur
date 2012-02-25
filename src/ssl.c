@@ -687,17 +687,16 @@ static int verify_callback(int preverify_ok, X509_STORE_CTX *ctx)
         X509_STORE_CTX_set_error(ctx, err);
     }
     if (!preverify_ok) {
-	    Log_warn("verify error:num=%d:%s:depth=%d:%s\n", err,
+	    Log_warn("SSL: verify error:num=%d:%s:depth=%d:%s\n", err,
 	             X509_verify_cert_error_string(err), depth, buf);
     }
     /*
      * At this point, err contains the last verification error. We can use
      * it for something special
      */
-    if (!preverify_ok && (err == X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT))
-	    {
+    if (!preverify_ok && (err == X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT)) {
 	    X509_NAME_oneline(X509_get_issuer_name(ctx->current_cert), buf, 256);
-      Log_warn("issuer= %s", buf);
+	    Log_warn("issuer= %s", buf);
     }
     return 1;
 }
