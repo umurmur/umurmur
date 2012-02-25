@@ -45,6 +45,7 @@
 #include "channel.h"
 #include "version.h"
 #include "voicetarget.h"
+#include "ban.h"
 
 extern char system_string[], version_string[];
 
@@ -106,6 +107,7 @@ void Client_janitor()
 			Client_free(c);
 		}
 	}
+	Ban_pruneBanned();
 }
 
 void Client_codec_add(client_t *client, int codec)
@@ -288,7 +290,11 @@ int Client_add(int fd, struct sockaddr_in *remote)
 {
 	client_t *newclient;
 	message_t *sendmsg;
-	
+
+	if (Ban_isBannedAddr((in_addr_t *)&remote->sin_addr)) {
+		Log_info("Address %s banned. Disconnecting", inet_ntoa(remote->sin_addr));
+		return -1;
+	}
 	newclient = malloc(sizeof(client_t));
 	if (newclient == NULL)
 		Log_fatal("Out of memory");

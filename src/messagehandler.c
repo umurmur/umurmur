@@ -122,20 +122,16 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			if (msg->payload.authenticate->n_tokens > 0) {
 				Log_debug("Tokens in auth message from '%s'. n_tokens = %d", client->username,
 				          msg->payload.authenticate->n_tokens);
-				addTokens(client, msg);
-				
-				/* Check if admin PW among tokens */
-				if (strlen(getStrConf(ADMIN_PASSPHRASE)) > 0 &&
-				    Client_token_match(client, getStrConf(ADMIN_PASSPHRASE))) {
-					client->isAdmin = true;
-					Log_info("User is admin");
-				}				
+				addTokens(client, msg);				
 			}
 			break;
 		}
 		
-		client->authenticated = true;
 		SSLi_getSHA1Hash(client->ssl, client->hash);
+		if (Ban_isBanned(client))
+			goto disconnect;
+		
+		client->authenticated = true;
 		
 		client_itr = NULL;
 		while (Client_iterate(&client_itr) != NULL) {
@@ -826,8 +822,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		msg->payload.userRemove->actor = client->sessionId;
 
 		if (msg->payload.userRemove->has_ban && msg->payload.userRemove->ban) {
-			Log_info("User banned for %d seconds", getIntConf(BAN_LENGTH));
-			/* Put reason, IP, hash, name etc in a list   --->  msg->payload.userRemove->reason */
+			Ban_UserBan(target, msg->payload.userRemove->reason);
 		} else {
 			Log_info("User kicked");
 		}

@@ -89,6 +89,8 @@ typedef struct {
 	struct dlist voicetargets;
 	struct dlist tokens;
 	int tokencount;
+	uint8_t hash[20];
+	bool_t isAdmin;
 	float UDPPingAvg, UDPPingVar, TCPPingAvg, TCPPingVar;
 	uint32_t UDPPackets, TCPPackets;
 } client_t;
