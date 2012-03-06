@@ -124,4 +124,17 @@ static inline void SSLi_hash2hex(uint8_t *hash, char *out)
 	for (i = 0; i < 20; i++)
 		offset += sprintf(out + offset, "%02x", hash[i]);
 }
+static inline void SSLi_hex2hash(char *in, uint8_t *hash)
+{
+	int i, offset = 0;
+	char byte[3];
+	int scanned;
+	
+	byte[2] = '\0';
+	for (i = 0; i < 20; i++) {
+		memcpy(byte, &in[i * 2], 2);
+		sscanf(byte, "%02x", &scanned);
+		hash[i] = scanned;
+	}
+}
 #endif
