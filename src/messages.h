@@ -32,6 +32,7 @@
 #define MESSAGES_H_89768
 
 #include <stdint.h>
+#include <arpa/inet.h>
 #include "Mumble.pb-c.h"
 #include "list.h"
 #include "types.h"
@@ -111,8 +112,7 @@ typedef union payload {
 	struct  _MumbleProto__ChannelState *channelState;
 	struct  _MumbleProto__UserRemove *userRemove;
 	struct  _MumbleProto__UserState *userState;
-	/* BanEntry not supported */
-	/* BanList not supported */
+	struct  _MumbleProto__BanList *banList;	
 	struct  _MumbleProto__TextMessage *textMessage;
 	struct  _MumbleProto__PermissionDenied *permissionDenied;
 	/* ChanACL not supported */
@@ -147,5 +147,11 @@ void Msg_inc_ref(message_t *msg);
 
 message_t *Msg_CreateVoiceMsg(uint8_t *data, int size);
 message_t *Msg_create(messageType_t messageType);
+void Msg_banList_addEntry(message_t *msg, int index, uint8_t *address, uint32_t mask,
+                          char *name, char *hash, char *reason, char *start, uint32_t duration);
+void Msg_banList_getEntry(message_t *msg, int index, uint8_t **address, uint32_t *mask,
+                          char **name, char **hash, char **reason, char **start, uint32_t *duration);
+message_t *Msg_banList_create(int n_bans);
+
 
 #endif

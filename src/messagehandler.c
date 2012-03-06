@@ -40,6 +40,7 @@
 #include "channel.h"
 #include "conf.h"
 #include "voicetarget.h"
+#include "ban.h"
 
 #define MAX_TEXT 512
 #define MAX_USERNAME 128
@@ -627,6 +628,8 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		
 		if (!getBoolConf(ALLOW_TEXTMESSAGE))
 			msg->payload.permissionQuery->permissions &= ~PERM_TEXTMESSAGE;
+		if (!getBoolConf(ENABLE_BAN))
+			msg->payload.permissionQuery->permissions &= ~PERM_BAN;
 		
 		Client_send_message(client, msg);
 		break;
@@ -800,6 +803,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			memset(sendmsg->payload.userStats->address.data, 0, 16);
 			/* ipv4 representation as ipv6 address. Supposedly correct. */
 			memcpy(&sendmsg->payload.userStats->address.data[12], &target->remote_tcp.sin_addr, 4);
+			memset(&sendmsg->payload.userStats->address.data[10], 0xff, 2); /* IPv4 */
 			sendmsg->payload.userStats->address.len = 16;
 		}
 		/* BW */
@@ -835,7 +839,10 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		msg->payload.userRemove->actor = client->sessionId;
 
 		if (msg->payload.userRemove->has_ban && msg->payload.userRemove->ban) {
-			Ban_UserBan(target, msg->payload.userRemove->reason);
+			if (!getBoolConf(ENABLE_BAN))
+				sendPermissionDenied(client, "Permission denied");
+			else
+				Ban_UserBan(target, msg->payload.userRemove->reason);
 		} else {
 			Log_info_client(target, "User kicked. Reason: '%s'",
 			                strlen(msg->payload.userRemove->reason) == 0 ? "N/A" : msg->payload.userRemove->reason);
@@ -846,13 +853,32 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		Client_send_message_except(NULL, msg);
 		Client_close(target);
 		break;
+	case BanList:
+		/* Only admin can issue this */
+		if (!client->isAdmin) {
+			sendPermissionDenied(client, "Permission denied");
+			break;
+		}
+		if (!getBoolConf(ENABLE_BAN)) {
+			sendPermissionDenied(client, "Permission denied");
+			break;
+		}
+		if (msg->payload.banList->has_query && msg->payload.banList->query) {
+			/* Create banlist message and add banentrys */
+			sendmsg = Ban_getBanList();
+			Client_send_message(client, sendmsg);
+		} else {
+			/* Clear banlist and set the new one */
+			Ban_clearBanList();
+			Ban_putBanList(msg, msg->payload.banList->n_bans);
+		}
+		break;
 		
 		/* Permission denied for all these messages. Not implemented. */
 	case ChannelRemove:
 	case ContextAction:
 	case ContextActionAdd:
 	case ACL:
-	case BanList:
 	case UserList:
 	case QueryUsers:
 		sendPermissionDenied(client, "Not supported by uMurmur");

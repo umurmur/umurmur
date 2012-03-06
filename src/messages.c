@@ -247,6 +247,16 @@ int Msg_messageToNetwork(message_t *msg, uint8_t *buffer)
 		mumble_proto__server_config__pack(msg->payload.serverConfig, bufptr);
 		break;
 
+	case BanList:
+		len = mumble_proto__ban_list__get_packed_size(msg->payload.banList);
+		if (len > MAX_MSGSIZE) {
+			Log_warn("Too big tx message. Discarding");
+			break;
+			}
+		Msg_addPreamble(buffer, msg->messageType, len);
+		Log_debug("Msg_MessageToNetwork: BanList size %d", len);
+		mumble_proto__ban_list__pack(msg->payload.banList, bufptr);
+		break;
 	default:
 		Log_warn("Msg_MessageToNetwork: Unsupported message %d", msg->messageType);
 		return 0;
@@ -270,6 +280,7 @@ static message_t *Msg_create_nopayload(messageType_t messageType)
 message_t *Msg_create(messageType_t messageType)
 {
 	message_t *msg = Msg_create_nopayload(messageType);
+	int i;
 	
 	switch (messageType) {
 	case Version:
@@ -370,6 +381,73 @@ message_t *Msg_create(messageType_t messageType)
 	return msg;
 }
 
+message_t *Msg_banList_create(int n_bans)
+{
+	message_t *msg = Msg_create_nopayload(BanList);
+	int i;
+	
+	msg->payload.banList = malloc(sizeof(MumbleProto__BanList));
+	if (msg->payload.banList == NULL)
+		Log_fatal("Out of memory");
+	memset(msg->payload.banList, 0, sizeof(MumbleProto__BanList));
+	mumble_proto__ban_list__init(msg->payload.banList);
+	msg->payload.banList->n_bans = n_bans;
+	msg->payload.banList->bans = malloc(sizeof(MumbleProto__BanList__BanEntry *) * n_bans);
+	if (msg->payload.banList->bans == NULL)
+		Log_fatal("Out of memory");
+	for (i = 0; i < n_bans; i++) {
+		msg->payload.banList->bans[i] = malloc(sizeof(MumbleProto__BanList__BanEntry));
+		if (msg->payload.banList->bans[i] == NULL)
+			Log_fatal("Out of memory");
+		memset(msg->payload.banList->bans[i], 0, sizeof(MumbleProto__BanList__BanEntry));
+		mumble_proto__ban_list__ban_entry__init(msg->payload.banList->bans[i]);
+	}
+	return msg;
+}
+
+void Msg_banList_addEntry(message_t *msg, int index, uint8_t *address, uint32_t mask,
+                          char *name, char *hash, char *reason, char *start, uint32_t duration)
+{
+	MumbleProto__BanList__BanEntry *entry = msg->payload.banList->bans[index];
+	
+	entry->address.data = malloc(16);
+	if (!entry->address.data)
+		Log_fatal("Out of memory");	
+	memcpy(entry->address.data, address, 16);
+	entry->address.len = 16;
+	entry->mask = mask;
+	entry->name = strdup(name);
+	entry->hash = strdup(hash);
+	entry->reason = strdup(reason);
+	entry->start = strdup(start);
+	if (!entry->name || !entry->hash || !entry->reason || !entry->start)
+		Log_fatal("Out of memory");	
+		
+	if (duration > 0) {
+		entry->duration = duration;
+		entry->has_duration = true;
+	}
+	Log_debug("Msg_banList_addEntry: %s %s %s %s %s", entry->name, entry->hash, entry->address.data, entry->reason, entry->start);
+}
+
+void Msg_banList_getEntry(message_t *msg, int index, uint8_t **address, uint32_t *mask,
+                          char **name, char **hash, char **reason, char **start, uint32_t *duration)
+{
+	MumbleProto__BanList__BanEntry *entry = msg->payload.banList->bans[index];
+
+	*address =  entry->address.data;
+	*mask = entry->mask;
+	*name = entry->name;
+	*hash = entry->hash;
+	*reason = entry->reason;
+	*start = entry->start;
+	if (entry->has_duration)
+		*duration = entry->duration;
+	else
+		*duration = 0;
+}
+
+
 void Msg_inc_ref(message_t *msg)
 {
 	msg->refcount++;
@@ -377,6 +455,8 @@ void Msg_inc_ref(message_t *msg)
 
 void Msg_free(message_t *msg)
 {
+	int i;
+	
 	if (msg->refcount) msg->refcount--;
 	if (msg->refcount > 0)
 		return;
@@ -561,6 +641,22 @@ void Msg_free(message_t *msg)
 			mumble_proto__server_config__free_unpacked(msg->payload.serverConfig, NULL);
 		else {
 			free(msg->payload.serverConfig);
+		}
+		break;
+	case BanList:
+		if (msg->unpacked)
+			mumble_proto__ban_list__free_unpacked(msg->payload.banList, NULL);
+		else {
+			for (i = 0; i < msg->payload.banList->n_bans; i++) {
+				free(msg->payload.banList->bans[i]->address.data);
+				free(msg->payload.banList->bans[i]->name);
+				free(msg->payload.banList->bans[i]->hash);
+				free(msg->payload.banList->bans[i]->reason);
+				free(msg->payload.banList->bans[i]->start);
+				free(msg->payload.banList->bans[i]);
+			}
+			free(msg->payload.banList->bans);
+			free(msg->payload.banList);
 		}
 		break;
 
@@ -758,9 +854,18 @@ message_t *Msg_networkToMessage(uint8_t *data, int size)
 			goto err_out;
 		break;
 	}
+	case BanList:
+	{
+		msg = Msg_create_nopayload(BanList);
+		msg->unpacked = true;
+		msg->payload.banList = mumble_proto__ban_list__unpack(NULL, msgLen, msgData);
+		if (msg->payload.banList == NULL)
+			goto err_out;
+		break;
+	}
 
 	default:
-		Log_warn("Unsupported message %d", messageType);
+		Log_warn("Msg_networkToMessage: Unsupported message %d", messageType);
 		break;
 	}
 	return msg;
