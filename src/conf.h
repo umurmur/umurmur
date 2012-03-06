@@ -51,6 +51,7 @@ typedef enum param {
 	ADMIN_PASSPHRASE,
 	BAN_LENGTH,
 	ALLOW_TEXTMESSAGE,
+	ENABLE_BAN,
 } param_t;
 
 typedef struct {
