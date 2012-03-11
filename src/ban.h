@@ -55,6 +55,7 @@ bool_t Ban_isBannedAddr(in_addr_t *addr);
 int Ban_getBanCount(void);
 message_t *Ban_getBanList(void);
 void Ban_putBanList(message_t *msg, int n_bans);
+void Ban_clearBanList(void);
 void Ban_init(void);
 void Ban_deinit(void);
 

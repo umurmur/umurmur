@@ -52,6 +52,8 @@ typedef enum param {
 	BAN_LENGTH,
 	ALLOW_TEXTMESSAGE,
 	ENABLE_BAN,
+	BANFILE,
+	SYNC_BANFILE,
 } param_t;
 
 typedef struct {

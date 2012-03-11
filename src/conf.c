@@ -195,6 +195,17 @@ const char *getStrConf(param_t param)
 			return NULL;
 		}
 		break;
+	case BANFILE:
+		setting = config_lookup(&configuration, "banfile");
+		if (!setting)
+			return NULL;
+		else {
+			if ((strsetting = config_setting_get_string(setting)) != NULL)
+				return strsetting;
+			else
+			return NULL;
+		}
+		break;
 	default:
 		doAssert(false);
 		break;
@@ -258,6 +269,13 @@ bool_t getBoolConf(param_t param)
 		break;
 	case ENABLE_BAN:
 		setting = config_lookup(&configuration, "enable_ban");
+		if (!setting)
+			return false;
+		else
+			return config_setting_get_bool(setting);
+		break;
+	case SYNC_BANFILE:
+		setting = config_lookup(&configuration, "sync_banfile");
 		if (!setting)
 			return false;
 		else

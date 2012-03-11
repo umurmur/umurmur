@@ -37,20 +37,32 @@
 #include "conf.h"
 #include "ssl.h"
 
+static void Ban_saveBanFile(void);
+static void Ban_readBanFile(void);
+
+
 declare_list(banlist);
 static int bancount; /* = 0 */
 static int ban_duration;
+static bool_t banlist_changed;
 
 void Ban_init(void)
 {
 	ban_duration = getIntConf(BAN_LENGTH);
 	/* Read ban file here */
+	if (getStrConf(BANFILE) != NULL)
+		Ban_readBanFile();
 }
 
 void Ban_deinit(void)
 {
-	/* Save banlist */
+	/* Save banlist */	
+	if (getStrConf(BANFILE) != NULL)
+		Ban_saveBanFile();
+	
+	Ban_clearBanList();
 }
+
 void Ban_UserBan(client_t *client, char *reason)
 {
 	ban_t *ban;
@@ -71,6 +83,9 @@ void Ban_UserBan(client_t *client, char *reason)
 	Timer_init(&ban->startTime);
 	list_add_tail(&ban->node, &banlist);
 	bancount++;
+	banlist_changed = true;
+	if(getBoolConf(SYNC_BANFILE))
+		Ban_saveBanFile();
 	
 	SSLi_hash2hex(ban->hash, hexhash);
 	Log_info_client(client, "User kickbanned. Reason: '%s' Hash: %s IP: %s Banned for: %d seconds",
@@ -102,6 +117,9 @@ void Ban_pruneBanned()
 			list_del(&ban->node);
 			free(ban);
 			bancount--;
+			banlist_changed = true;
+			if(getBoolConf(SYNC_BANFILE))
+				Ban_saveBanFile();
 		}
 	}
 }
@@ -173,7 +191,7 @@ message_t *Ban_getBanList(void)
 	return msg;
 }
 
-void Ban_clearBanList()
+void Ban_clearBanList(void)
 {
 	ban_t *ban;
 	struct dlist *itr, *save;
@@ -214,4 +232,86 @@ void Ban_putBanList(message_t *msg, int n_bans)
 		list_add_tail(&ban->node, &banlist);
 		bancount++;
 	}
+	banlist_changed = true;
+	if(getBoolConf(SYNC_BANFILE))
+		Ban_saveBanFile();
+}
+
+static void Ban_saveBanFile(void)
+{
+	struct dlist *itr;
+	ban_t *ban;
+	char hexhash[41];
+	FILE *file;
+
+	if (!banlist_changed)
+		return;
+	file = fopen(getStrConf(BANFILE), "w");
+	if (file == NULL) {
+		Log_warn("Could not save banlist to file %s: %s", getStrConf(BANFILE), strerror(errno));
+		return;
+	}
+	list_iterate(itr, &banlist) {
+		ban = list_get_entry(itr, ban_t, node);
+		SSLi_hash2hex(ban->hash, hexhash);
+		fprintf(file, "%s,%s,%d,%d,%d,%s,%s\n", hexhash, inet_ntoa(*((struct in_addr *)&ban->address)),
+		        ban->mask, ban->time, ban->duration, ban->name, ban->reason);
+	}
+	fclose(file);
+}
+
+static void Ban_readBanFile(void)
+{
+	struct dlist *itr;
+	ban_t *ban;
+	char line[512], *hexhash, *address, *name, *reason;
+	uint32_t mask, duration;
+	time_t time;
+	char *p;
+	FILE *file;
+
+	file = fopen(getStrConf(BANFILE), "r");
+	if (file == NULL) {
+		Log_warn("Could not read banlist file %s: %s", getStrConf(BANFILE), strerror(errno));
+		return;
+	}
+	while (fgets(line, 512, file) != NULL) {
+		p = strtok(line, ",");
+		hexhash = p;
+		p = strtok(NULL, ",");
+		if (p == NULL) break;
+		address = p;
+		p = strtok(NULL, ",");
+		if (p == NULL) break;
+		mask = strtoul(p, NULL, 0);
+		p = strtok(NULL, ",");
+		if (p == NULL) break;
+		time = strtoul(p, NULL, 0);
+		p = strtok(NULL, ",");
+		if (p == NULL) break;
+		duration = strtoul(p, NULL, 0);
+		p = strtok(NULL, ",");
+		if (p == NULL) break;
+		name = p;
+		p = strtok(NULL, "\n");
+		if (p == NULL) break;
+		reason = p;
+		
+		ban = malloc(sizeof(ban_t));
+		if (ban == NULL)
+			Log_fatal("Out of memory");
+		memset(ban, 0, sizeof(ban_t));
+		SSLi_hex2hash(hexhash, ban->hash);
+		inet_aton(address, (struct in_addr *)&ban->address);
+		ban->name = strdup(name);
+		ban->reason = strdup(reason);
+		ban->time = time;
+		ban->duration = duration;
+		ban->mask = mask;
+		Timer_init(&ban->startTime);
+		list_add_tail(&ban->node, &banlist);
+		bancount++;
+		Log_debug("Banfile: H = '%s' A = '%s' M = %d U = '%s' R = '%s'", hexhash, address, ban->mask, ban->name, ban->reason);
+	}
+	fclose(file);
 }
