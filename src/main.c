@@ -336,6 +336,7 @@ int main(int argc, char **argv)
 	SSLi_init();
 	Chan_init();
 	Client_init();
+	Ban_init();
 
 #ifdef POSIX_PRIORITY_SCHEDULING
 	if (realtime)
@@ -344,6 +345,7 @@ int main(int argc, char **argv)
 	
 	Server_run();
 	
+	Ban_deinit();
 	SSLi_deinit();
 	Chan_free();
 	Log_free();
