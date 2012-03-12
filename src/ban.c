@@ -59,7 +59,7 @@ void Ban_deinit(void)
 	/* Save banlist */	
 	if (getStrConf(BANFILE) != NULL)
 		Ban_saveBanFile();
-	
+		
 	Ban_clearBanList();
 }
 
@@ -89,8 +89,7 @@ void Ban_UserBan(client_t *client, char *reason)
 	
 	SSLi_hash2hex(ban->hash, hexhash);
 	Log_info_client(client, "User kickbanned. Reason: '%s' Hash: %s IP: %s Banned for: %d seconds",
-	                ban->name, ban->reason, hexhash, inet_ntoa(*((struct in_addr *)&ban->address)),
-	                ban->duration);
+	                ban->reason, hexhash, inet_ntoa(*((struct in_addr *)&ban->address)), ban->duration);
 }
 
 
@@ -227,7 +226,7 @@ void Ban_putBanList(message_t *msg, int n_bans)
 		ban->name = strdup(name);
 		strptime(start, "%Y-%m-%dT%H:%M:%S", &timespec);
 		ban->time = mktime(&timespec);
-		Timer_init(&ban->startTime);
+		ban->startTime = ban->time * 1000000LL;
 		ban->duration = duration;
 		list_add_tail(&ban->node, &banlist);
 		bancount++;
@@ -258,13 +257,15 @@ static void Ban_saveBanFile(void)
 		        ban->mask, ban->time, ban->duration, ban->name, ban->reason);
 	}
 	fclose(file);
+	banlist_changed = false;
+	Log_info("Banlist file '%s': %d entries written", getStrConf(BANFILE), bancount);
 }
 
 static void Ban_readBanFile(void)
 {
 	struct dlist *itr;
 	ban_t *ban;
-	char line[512], *hexhash, *address, *name, *reason;
+	char line[1024], *hexhash, *address, *name, *reason;
 	uint32_t mask, duration;
 	time_t time;
 	char *p;
@@ -275,7 +276,7 @@ static void Ban_readBanFile(void)
 		Log_warn("Could not read banlist file %s: %s", getStrConf(BANFILE), strerror(errno));
 		return;
 	}
-	while (fgets(line, 512, file) != NULL) {
+	while (fgets(line, 1024, file) != NULL) {
 		p = strtok(line, ",");
 		hexhash = p;
 		p = strtok(NULL, ",");
@@ -305,13 +306,16 @@ static void Ban_readBanFile(void)
 		inet_aton(address, (struct in_addr *)&ban->address);
 		ban->name = strdup(name);
 		ban->reason = strdup(reason);
+		if (ban->name == NULL || ban->reason == NULL)
+			Log_fatal("Out of memory");
 		ban->time = time;
 		ban->duration = duration;
 		ban->mask = mask;
-		Timer_init(&ban->startTime);
+		ban->startTime = ban->time * 1000000LL;
 		list_add_tail(&ban->node, &banlist);
 		bancount++;
 		Log_debug("Banfile: H = '%s' A = '%s' M = %d U = '%s' R = '%s'", hexhash, address, ban->mask, ban->name, ban->reason);
 	}
 	fclose(file);
+	Log_info("Banlist file '%s': %d entries read", getStrConf(BANFILE), bancount);
 }
