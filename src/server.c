@@ -132,8 +132,8 @@ void Server_run()
 	
 	Timer_init(&janitorTimer);
 	
-	Log_info("uMurmur version %s protocol version %d.%d.%d",
-			 UMURMUR_VERSION, PROTVER_MAJOR, PROTVER_MINOR, PROTVER_PATCH);
+	Log_info("uMurmur version %s ('%s') protocol version %d.%d.%d",
+	         UMURMUR_VERSION, UMURMUR_CODENAME, PROTVER_MAJOR, PROTVER_MINOR, PROTVER_PATCH);
 	Log_info("Visit http://code.google.com/p/umurmur/");
 	
 	/* Main server loop */
