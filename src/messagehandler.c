@@ -298,14 +298,21 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			sendmsg->payload.userState->has_channel_id = true;
 			sendmsg->payload.userState->channel_id = ((channel_t *)client_itr->channel)->id;
 
-			/* Only self_mute/deaf supported */
-			if (client_itr->deaf) {
+			if (client_itr->self_deaf) {
 				sendmsg->payload.userState->has_self_deaf = true;
 				sendmsg->payload.userState->self_deaf = true;
 			}
-			if (client_itr->mute) {
+			if (client_itr->self_mute) {
 				sendmsg->payload.userState->has_self_mute = true;
 				sendmsg->payload.userState->self_mute = true;
+			}
+			if (client_itr->deaf) {
+				sendmsg->payload.userState->has_deaf = true;
+				sendmsg->payload.userState->deaf = true;
+			}
+			if (client_itr->mute) {
+				sendmsg->payload.userState->has_mute = true;
+				sendmsg->payload.userState->mute = true;
 			}
 			if (client_itr->recording) {
 				sendmsg->payload.userState->has_recording = true;
@@ -435,18 +442,18 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			if (!target->mute) {
 				msg->payload.userState->has_deaf = true;
 				msg->payload.userState->deaf = false;
-				client->deaf = false;
+				target->deaf = false;
 			}
 		}
 		if (msg->payload.userState->has_self_deaf) {
-			client->deaf = msg->payload.userState->self_deaf;
+			client->self_deaf = msg->payload.userState->self_deaf;
 		}
 		if (msg->payload.userState->has_self_mute) {
-			client->mute = msg->payload.userState->self_mute;
-			if (!client->mute) {
+			client->self_mute = msg->payload.userState->self_mute;
+			if (!client->self_mute) {
 				msg->payload.userState->has_self_deaf = true;
 				msg->payload.userState->self_deaf = false;
-				client->deaf = false;
+				client->self_deaf = false;
 			}
 		}
 		if (msg->payload.userState->has_recording &&
@@ -475,16 +482,22 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		}
 		if (msg->payload.userState->has_channel_id) {
 			int leave_id;
-			channelJoinResult_t chjoin_rc = Chan_userJoin_id_test(msg->payload.userState->channel_id, client);
+			channelJoinResult_t chjoin_rc = Chan_userJoin_id_test(msg->payload.userState->channel_id, target);
 			
 			if (chjoin_rc != CHJOIN_OK) {
-				if (chjoin_rc == CHJOIN_WRONGPW) {
+				if (chjoin_rc == CHJOIN_WRONGPW && target == client && !client->isAdmin) {
 					sendPermissionDenied(client, "Wrong channel password");
+					break;
 				}
-				break;
+				/* Tricky one: if user hasn't the password, but is moved to the channel by admin then let
+				 * the user in. Also let admin user in regardless of pchannel password.
+				 * Take no action on other errors.
+				 */
+				else if (!(chjoin_rc == CHJOIN_WRONGPW && (target != client || client->isAdmin)))
+					break;
 			}
 			
-			leave_id = Chan_userJoin_id(msg->payload.userState->channel_id, client);
+			leave_id = Chan_userJoin_id(msg->payload.userState->channel_id, target);
 			if (leave_id > 0) {
 				Log_debug("Removing channel ID %d", leave_id);
 				sendmsg = Msg_create(ChannelRemove);

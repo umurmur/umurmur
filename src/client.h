@@ -73,7 +73,7 @@ typedef struct {
 	int sessionId;
 	uint64_t key;
 	char *username;
-	bool_t bUDP, authenticated, deaf, mute, recording;
+	bool_t bUDP, authenticated, deaf, mute, self_deaf, self_mute, recording;
 	char *os, *release, *os_version;
 	uint32_t version;
 	int codec_count;

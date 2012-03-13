@@ -775,7 +775,7 @@ out:
 
 static inline void Client_send_voice(client_t *src, client_t *dst, uint8_t *data, int len, int poslen)
 {
-	if (IS_AUTH(dst) && dst != src && !dst->deaf) {
+	if (IS_AUTH(dst) && dst != src && (!dst->deaf || !dst->self_deaf)) {
 		if (poslen > 0 && /* Has positional data */
 			src->context != NULL && dst->context != NULL && /* ...both source and destination has context */
 			strcmp(src->context, dst->context) == 0) /* ...and the contexts match */
