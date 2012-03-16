@@ -447,6 +447,10 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		}
 		if (msg->payload.userState->has_self_deaf) {
 			client->self_deaf = msg->payload.userState->self_deaf;
+			if (client->self_deaf) {
+				msg->payload.userState->has_self_mute = true;
+				msg->payload.userState->self_mute = true;
+			}
 		}
 		if (msg->payload.userState->has_self_mute) {
 			client->self_mute = msg->payload.userState->self_mute;
@@ -485,16 +489,19 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			channelJoinResult_t chjoin_rc = Chan_userJoin_id_test(msg->payload.userState->channel_id, target);
 			
 			if (chjoin_rc != CHJOIN_OK) {
-				if (chjoin_rc == CHJOIN_WRONGPW && target == client && !client->isAdmin) {
-					sendPermissionDenied(client, "Wrong channel password");
-					break;
+				if (chjoin_rc == CHJOIN_WRONGPW) {
+					if (target == client && !client->isAdmin) {
+						sendPermissionDenied(client, "Wrong channel password");
+						break;
+					}
+					/* Tricky one: if user hasn't the password, but is moved to the channel by admin then let
+					 * the user in. Also let admin user in regardless of channel password.
+					 * Take no action on other errors.
+					 */
+					else if (!client->isAdmin)
+						break;
 				}
-				/* Tricky one: if user hasn't the password, but is moved to the channel by admin then let
-				 * the user in. Also let admin user in regardless of pchannel password.
-				 * Take no action on other errors.
-				 */
-				else if (!(chjoin_rc == CHJOIN_WRONGPW && (target != client || client->isAdmin)))
-					break;
+				else break;
 			}
 			
 			leave_id = Chan_userJoin_id(msg->payload.userState->channel_id, target);
@@ -550,7 +557,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 					list_iterate(itr, &ch_itr->clients) {
 						client_t *c;
 						c = list_get_entry(itr, client_t, chan_node);
-						if (c != client && !c->deaf) {
+						if (c != client && !c->deaf && !c->self_deaf) {
 							Msg_inc_ref(msg);
 							Client_send_message(c, msg);
 							Log_debug("Text message to session ID %d", c->sessionId);
@@ -568,7 +575,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 					if (!IS_AUTH(itr))
 						continue;
 					if (itr->sessionId == msg->payload.textMessage->session[i]) {
-						if (!itr->deaf) {
+						if (!itr->deaf && !itr->self_deaf) {
 							Msg_inc_ref(msg);
 							Client_send_message(itr, msg);
 							Log_debug("Text message to session ID %d", itr->sessionId);
