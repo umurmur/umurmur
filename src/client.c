@@ -486,7 +486,10 @@ int Client_read(client_t *client)
 			}
 			else {
 				if (SSLi_get_error(client->ssl, rc) == SSLI_ERROR_SYSCALL) {
-					Log_info_client(client, "Connection closed by peer");
+					Log_info_client(client,"Error: %s  - Closing connection", strerror(errno));
+				}
+				else if (SSLi_get_error(client->ssl, rc) == SSLI_ERROR_CONNRESET) {
+					Log_info_client(client, "Connection reset by peer");
 				}
 				else {
 					Log_info_client(client, "SSL error: %d - Closing connection", SSLi_get_error(client->ssl, rc));
@@ -541,10 +544,15 @@ int Client_write(client_t *client)
 			return 0;
 		}
 		else {
-			if (SSLi_get_error(client->ssl, rc) == SSLI_ERROR_SYSCALL)
-				Log_warn("Client_write: Error: %s  - Closing connection", strerror(errno));
-			else
-				Log_warn("Client_write: SSL error: %d - Closing connection.", SSLi_get_error(client->ssl, rc));
+			if (SSLi_get_error(client->ssl, rc) == SSLI_ERROR_SYSCALL) {
+				Log_info_client(client, "Error: %s  - Closing connection", strerror(errno));
+			}
+			else if (SSLi_get_error(client->ssl, rc) == SSLI_ERROR_CONNRESET) {
+				Log_info_client(client, "Connection reset by peer");
+			}
+			else {
+				Log_info_client(client, "SSL error: %d - Closing connection.", SSLi_get_error(client->ssl, rc));
+			}
 			Client_free(client);
 			return -1;
 		}
