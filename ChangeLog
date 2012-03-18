@@ -1,3 +1,16 @@
+0.2.9:
+Fix compile on *BSD (J Sisson).
+Fix building on OS X.
+Support for PolarSSL 1.1.x.
+Admin user via token password.
+Mute/deafen/kick and optionally ban for admin user.
+Optionally save banlist to file.
+Bans via IP and user certificate.
+Banlist editing in Mumble.
+Option added to disallow text messages.
+Release codename added.
+Some other random fixes e.g. 'self deaf' also 'self mutes'.
+
 0.2.8:
 Add channel passwords support. 'password = "<password>";' in channel configuration.
 Remove pointless CA cert handling with PolarSSL. Did not work anyway...
