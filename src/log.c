@@ -163,6 +163,9 @@ void Log_info_client(client_t *client, const char *logstring, ...)
 	va_list argp;
 	char buf[STRSIZE + 1];
 	int offset = 0;
+	char inet_str[INET_ADDRSTRLEN];
+
+	inet_ntop(AF_INET6, &(client->remote_tcp.sin6_addr), inet_str, INET6_ADDRSTRLEN);
 	
 	va_start(argp, logstring);
 	offset = sprintf(buf, "INFO: ");
@@ -171,8 +174,8 @@ void Log_info_client(client_t *client, const char *logstring, ...)
 	offset += snprintf(&buf[offset], STRSIZE - offset, " - [%d] %s@%s:%d",
 					   client->sessionId,
 					   client->username == NULL ? "" : client->username,
-					   inet_ntoa(client->remote_tcp.sin_addr),
-					   ntohs(client->remote_tcp.sin_port));
+					   inet_str,
+					   ntohs(client->remote_tcp.sin6_port));
 	if (termprint)
 		fprintf(stderr, "%s\n", buf);
 	else if (logfile)

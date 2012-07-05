@@ -74,7 +74,7 @@ void Ban_UserBan(client_t *client, char *reason)
 	memset(ban, 0, sizeof(ban_t));
 	
 	memcpy(ban->hash, client->hash, 20);
-	memcpy(&ban->address, &client->remote_tcp.sin_addr, sizeof(in_addr_t));
+	memcpy(&ban->address, &client->remote_tcp.sin6_addr, sizeof(in_addr_t));
 	ban->mask = 128;
 	ban->reason = strdup(reason);
 	ban->name = strdup(client->username);

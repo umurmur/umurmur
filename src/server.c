@@ -61,12 +61,13 @@ void Server_run()
 {
 	int timeout = 1000, rc;
 	struct pollfd *pollfds;
-	int tcpsock, sockopt = 1;
-	struct sockaddr_in sin;
+	int tcpsock, sockopt6 = 1;
+	struct sockaddr_in6 sin;
 	int val, clientcount;
 	etimer_t janitorTimer;
 	unsigned short port;
 	in_addr_t inet_address;
+	struct in6_addr inet6_address[sizeof(struct in6_addr)];
 	
 	/* max clients + listen sock + udp sock + client connecting that will be disconnected */
 	pollfds = malloc((getIntConf(MAX_CLIENTS) + 3) * sizeof(struct pollfd));
@@ -79,42 +80,45 @@ void Server_run()
 	else
 		port = htons(getIntConf(BINDPORT));
 	
-	if (bindaddr != NULL && inet_addr(bindaddr) != -1)
-		inet_address = inet_addr(bindaddr);
+	if (bindaddr != NULL && inet_pton(AF_INET6, bindaddr, inet6_address) != -1)
+		inet_pton(AF_INET6, bindaddr, inet6_address);
 	else if (inet_addr(getStrConf(BINDADDR)) !=  -1)
-		inet_address = inet_addr(getStrConf(BINDADDR));
+		inet_pton(AF_INET6, getStrConf(BINDADDR), inet6_address);
 	else
-		inet_address = inet_addr("0.0.0.0");
-	Log_info("Bind to %s:%hu", inet_address == 0 ? "*" : inet_ntoa(*((struct in_addr *)&inet_address)), ntohs(port));
+		*inet6_address = in6addr_any;
+	char boundaddr6[INET6_ADDRSTRLEN];
+	inet_ntop(AF_INET6, inet6_address, boundaddr6, INET6_ADDRSTRLEN);
+	Log_info("Bind to [%s]:%hu", inet6_address == 0 ? "*" : boundaddr6, ntohs(port));
 	
-	/* Prepare TCP socket */
+	/* Prepare TCP6 socket */
 	memset(&sin, 0, sizeof(sin));
-	tcpsock = socket(PF_INET, SOCK_STREAM, 0);
+	tcpsock = socket(PF_INET6, SOCK_STREAM, 0);
 	if (tcpsock < 0)
 		Log_fatal("socket");
-	if (setsockopt(tcpsock, SOL_SOCKET, SO_REUSEADDR, &sockopt, sizeof(int)) != 0)
+	int on = 1;
+	if (setsockopt(tcpsock, SOL_SOCKET, SO_REUSEADDR, &sockopt6, sizeof(int)) != 0)
 		Log_fatal("setsockopt: %s", strerror(errno));
-	sin.sin_family = AF_INET;
-	sin.sin_port = port;	
-	sin.sin_addr.s_addr = inet_address;
-	
-	rc = bind(tcpsock, (struct sockaddr *) &sin, sizeof (struct sockaddr_in));
-	if (rc < 0) Log_fatal("bind: %s", strerror(errno));
+	sin.sin6_family = AF_INET6;
+	sin.sin6_port = port;
+	sin.sin6_scope_id = 0;
+	sin.sin6_addr = *inet6_address;
+	rc = bind(tcpsock, (struct sockaddr6 *) &sin, sizeof (struct sockaddr_in6));
+	if (rc < 0) Log_fatal("bind6: %s", strerror(errno));
 	rc = listen(tcpsock, 3);
 	if (rc < 0) Log_fatal("listen");
 	fcntl(tcpsock, F_SETFL, O_NONBLOCK);
-	
+
 	pollfds[LISTEN_SOCK].fd = tcpsock;
 	pollfds[LISTEN_SOCK].events = POLLIN;
 
 	/* Prepare UDP socket */
 	memset(&sin, 0, sizeof(sin));
-	udpsock = socket(PF_INET, SOCK_DGRAM, 0);
-	sin.sin_family = AF_INET;
-	sin.sin_port = port;
-	sin.sin_addr.s_addr = inet_address;
+	udpsock = socket(PF_INET6, SOCK_DGRAM, 0);
+	sin.sin6_family = AF_INET6;
+	sin.sin6_port = port;
+	sin.sin6_addr = *inet6_address;
 	
-	rc = bind(udpsock, (struct sockaddr *) &sin, sizeof (struct sockaddr_in));
+	rc = bind(udpsock, (struct sockaddr *) &sin, sizeof (struct sockaddr_in6));
 	if (rc < 0)
 		Log_fatal("bind %d %s: %s", getIntConf(BINDPORT), getStrConf(BINDADDR), strerror(errno));
 	val = 0xe0;
@@ -138,7 +142,7 @@ void Server_run()
 	
 	/* Main server loop */
 	while (!shutdown_server) {
-		struct sockaddr_in remote;
+		struct sockaddr_in6 remote;
 		int i;
 		
 		pollfds[UDP_SOCK].revents = 0;
@@ -167,7 +171,7 @@ void Server_run()
 		if (pollfds[LISTEN_SOCK].revents) { /* New tcp connection */
 			int tcpfd, flag = 1;
 			uint32_t addrlen;
-			addrlen = sizeof(struct sockaddr_in);
+			addrlen = sizeof(struct sockaddr_in6);
 			tcpfd = accept(pollfds[LISTEN_SOCK].fd, (struct sockaddr*)&remote, &addrlen);
 			fcntl(tcpfd, F_SETFL, O_NONBLOCK);
 			setsockopt(tcpfd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));

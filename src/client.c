@@ -286,13 +286,16 @@ static int findFreeSessionId()
 	return -1;
 }
 
-int Client_add(int fd, struct sockaddr_in *remote)
+int Client_add(int fd, struct sockaddr_in6 *remote)
 {
 	client_t *newclient;
 	message_t *sendmsg;
+	char inet_str[INET_ADDRSTRLEN];
 
-	if (Ban_isBannedAddr((in_addr_t *)&remote->sin_addr)) {
-		Log_info("Address %s banned. Disconnecting", inet_ntoa(remote->sin_addr));
+	inet_ntop(AF_INET6, &(remote->sin6_addr), inet_str, INET6_ADDRSTRLEN);
+
+	if (Ban_isBannedAddr((in_addr_t *)&remote->sin6_addr)) {
+		Log_info("Address %s banned. Disconnecting", inet_str);
 		return -1;
 	}
 	newclient = malloc(sizeof(client_t));
@@ -301,11 +304,10 @@ int Client_add(int fd, struct sockaddr_in *remote)
 	memset(newclient, 0, sizeof(client_t));
 
 	newclient->tcpfd = fd;
-	memcpy(&newclient->remote_tcp, remote, sizeof(struct sockaddr_in));
+	memcpy(&newclient->remote_tcp, remote, sizeof(struct sockaddr_in6));
 	newclient->ssl = SSLi_newconnection(&newclient->tcpfd, &newclient->SSLready);
 	if (newclient->ssl == NULL) {
-		Log_warn("SSL negotiation failed with %s:%d", inet_ntoa(remote->sin_addr),
-				 ntohs(remote->sin_port));
+		Log_warn("SSL negotiation failed with %s:%d", inet_str, ntohs(remote->sin6_port));
 		free(newclient);
 		return -1;
 	}
@@ -417,6 +419,9 @@ int Client_read_fd(int fd)
 int Client_read(client_t *client)
 {
 	int rc;
+	char inet_str[INET_ADDRSTRLEN];
+
+	inet_ntop(AF_INET6, &(client->remote_tcp.sin6_addr), inet_str, INET6_ADDRSTRLEN);
 
 	Timer_restart(&client->lastActivity);
 	
@@ -459,7 +464,7 @@ int Client_read(client_t *client)
 				 * 2. An invalid size = protocol error, e.g. connecting with a 1.1.x client
 				 */
 				Log_warn("Too big message received (%d bytes). Playing safe and disconnecting client %s:%d",
-						 client->msgsize, inet_ntoa(client->remote_tcp.sin_addr), ntohs(client->remote_tcp.sin_port));
+						 client->msgsize, inet_str, ntohs(client->remote_tcp.sin6_port));
 				Client_free(client);
 				return -1;
 				/* client->rxcount = client->msgsize = 0; */
@@ -694,8 +699,8 @@ static bool_t checkDecrypt(client_t *client, const uint8_t *encrypted, uint8_t *
 int Client_read_udp()
 {
 	int len;
-	struct sockaddr_in from;
-	socklen_t fromlen = sizeof(struct sockaddr_in);
+	struct sockaddr_in6 from;
+	socklen_t fromlen = sizeof(struct sockaddr_in6);
 	uint64_t key;
 	client_t *itr;
 	UDPMessageType_t msgType;
@@ -733,7 +738,7 @@ int Client_read_udp()
 		return 0;
 	}
 	
-	key = (((uint64_t)from.sin_addr.s_addr) << 16) ^ from.sin_port;
+	key = (((uint64_t)from.sin6_addr.s6_addr) << 16) ^ from.sin6_port;
 	itr = NULL;
 	
 	while (Client_iterate(&itr) != NULL) {
@@ -745,11 +750,11 @@ int Client_read_udp()
 	}	
 	if (itr == NULL) { /* Unknown peer */
 		while (Client_iterate(&itr) != NULL) {
-			if (itr->remote_tcp.sin_addr.s_addr == from.sin_addr.s_addr) {
+			if (itr->remote_tcp.sin6_addr.s6_addr == from.sin6_addr.s6_addr) {
 				if (checkDecrypt(itr, encrypted, buffer, len)) {
 					itr->key = key;
-					Log_info_client(itr, "New UDP connection port %d", ntohs(from.sin_port));
-					memcpy(&itr->remote_udp, &from, sizeof(struct sockaddr_in));
+					Log_info_client(itr, "New UDP connection port %d", ntohs(from.sin6_port));
+					memcpy(&itr->remote_udp, &from, sizeof(struct sockaddr_in6));
 					break;
 				}
 			}
@@ -773,7 +778,7 @@ int Client_read_udp()
 		Client_send_udp(itr, buffer, len);
 		break;
 	default:
-		Log_debug("Unknown UDP message type from %s port %d", inet_ntoa(from.sin_addr), ntohs(from.sin_port));
+		Log_debug("Unknown UDP message type from %s port %d", inet_ntoa(from.sin6_addr), ntohs(from.sin6_port));
 		break;
 	}
 	
@@ -916,7 +921,7 @@ static int Client_send_udp(client_t *client, uint8_t *data, int len)
 {
 	uint8_t *buf, *mbuf;
 
-	if (client->remote_udp.sin_port != 0 && CryptState_isValid(&client->cryptState) &&
+	if (client->remote_udp.sin6_port != 0 && CryptState_isValid(&client->cryptState) &&
 		client->bUDP) {
 #if defined(__LP64__)
 		buf = mbuf = malloc(len + 4 + 16);
@@ -929,7 +934,7 @@ static int Client_send_udp(client_t *client, uint8_t *data, int len)
 		
 		CryptState_encrypt(&client->cryptState, data, buf, len);
 		
-		sendto(udpsock, buf, len + 4, 0, (struct sockaddr *)&client->remote_udp, sizeof(struct sockaddr_in));
+		sendto(udpsock, buf, len + 4, 0, (struct sockaddr *)&client->remote_udp, sizeof(struct sockaddr_in6));
 		
 		free(mbuf);
 	} else {
