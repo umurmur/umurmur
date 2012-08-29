@@ -508,10 +508,10 @@ void SSLi_init(void)
 {
 	const SSL_METHOD *method;
 	SSL *ssl;
-	int i, offset = 0;
+	int i, offset = 0, cipherstringlen = 0;
 	STACK_OF(SSL_CIPHER) *cipherlist = NULL, *cipherlist_new = NULL;
 	SSL_CIPHER *cipher;
-	char cipherstring[1024];
+	char *cipherstring, tempstring[128];
 		
 	SSL_library_init();
     OpenSSL_add_all_algorithms();		/* load & register all cryptos, etc. */
@@ -544,11 +544,16 @@ void SSLi_init(void)
 	}
 	Log_debug("List of ciphers:");
 	if (cipherlist_new) {
-		for ( i = 0; (cipher = sk_SSL_CIPHER_value(cipherlist_new, i)) != NULL; i++) {
+		for (i = 0; (cipher = sk_SSL_CIPHER_value(cipherlist_new, i)) != NULL; i++) {
 			Log_debug("%s", SSL_CIPHER_get_name(cipher));
-			offset += snprintf(cipherstring + offset, 1024 - offset, "%s:", SSL_CIPHER_get_name(cipher));
+			cipherstringlen += strlen(SSL_CIPHER_get_name(cipher)) + 1;
 		}
-		cipherstring[offset - 1] = '\0';
+		cipherstring = malloc(cipherstringlen + 1);
+		if (cipherstring == NULL)
+			Log_fatal("Out of memory");
+		for (i = 0; (cipher = sk_SSL_CIPHER_value(cipherlist_new, i)) != NULL; i++) {
+			offset += sprintf(cipherstring + offset, "%s:", SSL_CIPHER_get_name(cipher));
+		}
 	}
 	
 	if (cipherlist_new)
@@ -559,6 +564,8 @@ void SSLi_init(void)
 	
 	if (SSL_CTX_set_cipher_list(context, cipherstring) == 0)
 		Log_fatal("Failed to set cipher list!");
+
+	free(cipherstring);
 	
 	SSL_CTX_set_verify(context, SSL_VERIFY_PEER|SSL_VERIFY_CLIENT_ONCE,
 	                   verify_callback);		
