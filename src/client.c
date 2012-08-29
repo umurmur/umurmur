@@ -91,9 +91,9 @@ int Client_getfds(struct pollfd *pollfds)
 
 void Client_janitor()
 {
-	struct dlist *itr;
+	struct dlist *itr, *save;
 	int bwTop = maxBandwidth + maxBandwidth / 4;
-	list_iterate(itr, &clients) {
+	list_iterate_safe(itr, save, &clients) {
 		client_t *c;
 		c = list_get_entry(itr, client_t, node);
 		Log_debug("Client %s BW available %d", c->username, c->availableBandwidth);
