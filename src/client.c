@@ -101,7 +101,7 @@ void Client_janitor()
 		if (c->availableBandwidth > bwTop)
 			c->availableBandwidth = bwTop;
 		
-		if (Timer_isElapsed(&c->lastActivity, 1000000LL * INACTICITY_TIMEOUT)) {
+		if (Timer_isElapsed(&c->lastActivity, 1000000LL * INACTIVITY_TIMEOUT)) {
 			/* No activity from client - assume it is lost and close. */
 			Log_info_client(c, "Timeout, closing.");
 			Client_free(c);
@@ -817,6 +817,7 @@ int Client_voiceMsg(client_t *client, uint8_t *data, int len)
 	client->availableBandwidth -= packetsize;
 	
 	Timer_restart(&client->idleTime);
+	Timer_restart(&client->lastActivity);
 	
 	counter = Pds_get_numval(pdi); /* step past session id */
 	do {

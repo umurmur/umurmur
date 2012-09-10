@@ -51,7 +51,7 @@
 
 #define BUFSIZE 8192
 #define UDP_BUFSIZE 512
-#define INACTICITY_TIMEOUT 15 /* Seconds */
+#define INACTIVITY_TIMEOUT 15 /* Seconds */
 #define MAX_CODECS 10
 #define MAX_TOKENSIZE 64
 #define MAX_TOKENS 32
