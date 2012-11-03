@@ -755,47 +755,47 @@ void   mumble_proto__crypt_setup__free_unpacked
   PROTOBUF_C_ASSERT (message->base.descriptor == &mumble_proto__crypt_setup__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
-void   mumble_proto__context_action_add__init
-                     (MumbleProto__ContextActionAdd         *message)
+void   mumble_proto__context_action_modify__init
+                     (MumbleProto__ContextActionModify         *message)
 {
-  static MumbleProto__ContextActionAdd init_value = MUMBLE_PROTO__CONTEXT_ACTION_ADD__INIT;
+  static MumbleProto__ContextActionModify init_value = MUMBLE_PROTO__CONTEXT_ACTION_MODIFY__INIT;
   *message = init_value;
 }
-size_t mumble_proto__context_action_add__get_packed_size
-                     (const MumbleProto__ContextActionAdd *message)
+size_t mumble_proto__context_action_modify__get_packed_size
+                     (const MumbleProto__ContextActionModify *message)
 {
-  PROTOBUF_C_ASSERT (message->base.descriptor == &mumble_proto__context_action_add__descriptor);
+  PROTOBUF_C_ASSERT (message->base.descriptor == &mumble_proto__context_action_modify__descriptor);
   return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
 }
-size_t mumble_proto__context_action_add__pack
-                     (const MumbleProto__ContextActionAdd *message,
+size_t mumble_proto__context_action_modify__pack
+                     (const MumbleProto__ContextActionModify *message,
                       uint8_t       *out)
 {
-  PROTOBUF_C_ASSERT (message->base.descriptor == &mumble_proto__context_action_add__descriptor);
+  PROTOBUF_C_ASSERT (message->base.descriptor == &mumble_proto__context_action_modify__descriptor);
   return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
 }
-size_t mumble_proto__context_action_add__pack_to_buffer
-                     (const MumbleProto__ContextActionAdd *message,
+size_t mumble_proto__context_action_modify__pack_to_buffer
+                     (const MumbleProto__ContextActionModify *message,
                       ProtobufCBuffer *buffer)
 {
-  PROTOBUF_C_ASSERT (message->base.descriptor == &mumble_proto__context_action_add__descriptor);
+  PROTOBUF_C_ASSERT (message->base.descriptor == &mumble_proto__context_action_modify__descriptor);
   return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
 }
-MumbleProto__ContextActionAdd *
-       mumble_proto__context_action_add__unpack
+MumbleProto__ContextActionModify *
+       mumble_proto__context_action_modify__unpack
                      (ProtobufCAllocator  *allocator,
                       size_t               len,
                       const uint8_t       *data)
 {
-  return (MumbleProto__ContextActionAdd *)
-     protobuf_c_message_unpack (&mumble_proto__context_action_add__descriptor,
+  return (MumbleProto__ContextActionModify *)
+     protobuf_c_message_unpack (&mumble_proto__context_action_modify__descriptor,
                                 allocator, len, data);
 }
-void   mumble_proto__context_action_add__free_unpacked
-                     (MumbleProto__ContextActionAdd *message,
+void   mumble_proto__context_action_modify__free_unpacked
+                     (MumbleProto__ContextActionModify *message,
                       ProtobufCAllocator *allocator)
 {
-  PROTOBUF_C_ASSERT (message->base.descriptor == &mumble_proto__context_action_add__descriptor);
+  PROTOBUF_C_ASSERT (message->base.descriptor == &mumble_proto__context_action_modify__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
 void   mumble_proto__context_action__init
@@ -1074,6 +1074,49 @@ void   mumble_proto__user_stats__free_unpacked
   PROTOBUF_C_ASSERT (message->base.descriptor == &mumble_proto__user_stats__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
+void   mumble_proto__suggest_config__init
+                     (MumbleProto__SuggestConfig         *message)
+{
+  static MumbleProto__SuggestConfig init_value = MUMBLE_PROTO__SUGGEST_CONFIG__INIT;
+  *message = init_value;
+}
+size_t mumble_proto__suggest_config__get_packed_size
+                     (const MumbleProto__SuggestConfig *message)
+{
+  PROTOBUF_C_ASSERT (message->base.descriptor == &mumble_proto__suggest_config__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t mumble_proto__suggest_config__pack
+                     (const MumbleProto__SuggestConfig *message,
+                      uint8_t       *out)
+{
+  PROTOBUF_C_ASSERT (message->base.descriptor == &mumble_proto__suggest_config__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t mumble_proto__suggest_config__pack_to_buffer
+                     (const MumbleProto__SuggestConfig *message,
+                      ProtobufCBuffer *buffer)
+{
+  PROTOBUF_C_ASSERT (message->base.descriptor == &mumble_proto__suggest_config__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+MumbleProto__SuggestConfig *
+       mumble_proto__suggest_config__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (MumbleProto__SuggestConfig *)
+     protobuf_c_message_unpack (&mumble_proto__suggest_config__descriptor,
+                                allocator, len, data);
+}
+void   mumble_proto__suggest_config__free_unpacked
+                     (MumbleProto__SuggestConfig *message,
+                      ProtobufCAllocator *allocator)
+{
+  PROTOBUF_C_ASSERT (message->base.descriptor == &mumble_proto__suggest_config__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
 void   mumble_proto__request_blob__init
                      (MumbleProto__RequestBlob         *message)
 {
@@ -1232,7 +1275,8 @@ const ProtobufCMessageDescriptor mumble_proto__udptunnel__descriptor =
   (ProtobufCMessageInit) mumble_proto__udptunnel__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor mumble_proto__authenticate__field_descriptors[4] =
+static const protobuf_c_boolean mumble_proto__authenticate__opus__default_value = 0;
+static const ProtobufCFieldDescriptor mumble_proto__authenticate__field_descriptors[5] =
 {
   {
     "username",
@@ -1282,9 +1326,22 @@ static const ProtobufCFieldDescriptor mumble_proto__authenticate__field_descript
     0,            /* packed */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
+  {
+    "opus",
+    5,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_BOOL,
+    PROTOBUF_C_OFFSETOF(MumbleProto__Authenticate, has_opus),
+    PROTOBUF_C_OFFSETOF(MumbleProto__Authenticate, opus),
+    NULL,
+    &mumble_proto__authenticate__opus__default_value,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
 };
 static const unsigned mumble_proto__authenticate__field_indices_by_name[] = {
   3,   /* field[3] = celt_versions */
+  4,   /* field[4] = opus */
   1,   /* field[1] = password */
   2,   /* field[2] = tokens */
   0,   /* field[0] = username */
@@ -1292,7 +1349,7 @@ static const unsigned mumble_proto__authenticate__field_indices_by_name[] = {
 static const ProtobufCIntRange mumble_proto__authenticate__number_ranges[1 + 1] =
 {
   { 1, 0 },
-  { 0, 4 }
+  { 0, 5 }
 };
 const ProtobufCMessageDescriptor mumble_proto__authenticate__descriptor =
 {
@@ -1302,7 +1359,7 @@ const ProtobufCMessageDescriptor mumble_proto__authenticate__descriptor =
   "MumbleProto__Authenticate",
   "MumbleProto",
   sizeof(MumbleProto__Authenticate),
-  4,
+  5,
   mumble_proto__authenticate__field_descriptors,
   mumble_proto__authenticate__field_indices_by_name,
   1,  mumble_proto__authenticate__number_ranges,
@@ -2537,7 +2594,7 @@ const ProtobufCMessageDescriptor mumble_proto__text_message__descriptor =
   (ProtobufCMessageInit) mumble_proto__text_message__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-const ProtobufCEnumValue mumble_proto__permission_denied__deny_type__enum_values_by_number[10] =
+const ProtobufCEnumValue mumble_proto__permission_denied__deny_type__enum_values_by_number[11] =
 {
   { "Text", "MUMBLE_PROTO__PERMISSION_DENIED__DENY_TYPE__TEXT", 0 },
   { "Permission", "MUMBLE_PROTO__PERMISSION_DENIED__DENY_TYPE__PERMISSION", 1 },
@@ -2549,16 +2606,18 @@ const ProtobufCEnumValue mumble_proto__permission_denied__deny_type__enum_values
   { "MissingCertificate", "MUMBLE_PROTO__PERMISSION_DENIED__DENY_TYPE__MISSINGCERTIFICATE", 7 },
   { "UserName", "MUMBLE_PROTO__PERMISSION_DENIED__DENY_TYPE__USERNAME", 8 },
   { "ChannelFull", "MUMBLE_PROTO__PERMISSION_DENIED__DENY_TYPE__CHANNELFULL", 9 },
+  { "NestingLimit", "MUMBLE_PROTO__PERMISSION_DENIED__DENY_TYPE__NESTINGLIMIT", 10 },
 };
 static const ProtobufCIntRange mumble_proto__permission_denied__deny_type__value_ranges[] = {
-{0, 0},{0, 10}
+{0, 0},{0, 11}
 };
-const ProtobufCEnumValueIndex mumble_proto__permission_denied__deny_type__enum_values_by_name[10] =
+const ProtobufCEnumValueIndex mumble_proto__permission_denied__deny_type__enum_values_by_name[11] =
 {
   { "ChannelFull", 9 },
   { "ChannelName", 3 },
   { "H9K", 5 },
   { "MissingCertificate", 7 },
+  { "NestingLimit", 10 },
   { "Permission", 1 },
   { "SuperUser", 2 },
   { "TemporaryChannel", 6 },
@@ -2573,9 +2632,9 @@ const ProtobufCEnumDescriptor mumble_proto__permission_denied__deny_type__descri
   "DenyType",
   "MumbleProto__PermissionDenied__DenyType",
   "MumbleProto",
-  10,
+  11,
   mumble_proto__permission_denied__deny_type__enum_values_by_number,
-  10,
+  11,
   mumble_proto__permission_denied__deny_type__enum_values_by_name,
   1,
   mumble_proto__permission_denied__deny_type__value_ranges,
@@ -3129,37 +3188,65 @@ const ProtobufCMessageDescriptor mumble_proto__crypt_setup__descriptor =
   (ProtobufCMessageInit) mumble_proto__crypt_setup__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-const ProtobufCEnumValue mumble_proto__context_action_add__context__enum_values_by_number[3] =
+const ProtobufCEnumValue mumble_proto__context_action_modify__context__enum_values_by_number[3] =
 {
-  { "Server", "MUMBLE_PROTO__CONTEXT_ACTION_ADD__CONTEXT__SERVER", 1 },
-  { "Channel", "MUMBLE_PROTO__CONTEXT_ACTION_ADD__CONTEXT__CHANNEL", 2 },
-  { "User", "MUMBLE_PROTO__CONTEXT_ACTION_ADD__CONTEXT__USER", 4 },
+  { "Server", "MUMBLE_PROTO__CONTEXT_ACTION_MODIFY__CONTEXT__SERVER", 1 },
+  { "Channel", "MUMBLE_PROTO__CONTEXT_ACTION_MODIFY__CONTEXT__CHANNEL", 2 },
+  { "User", "MUMBLE_PROTO__CONTEXT_ACTION_MODIFY__CONTEXT__USER", 4 },
 };
-static const ProtobufCIntRange mumble_proto__context_action_add__context__value_ranges[] = {
+static const ProtobufCIntRange mumble_proto__context_action_modify__context__value_ranges[] = {
 {1, 0},{4, 2},{0, 3}
 };
-const ProtobufCEnumValueIndex mumble_proto__context_action_add__context__enum_values_by_name[3] =
+const ProtobufCEnumValueIndex mumble_proto__context_action_modify__context__enum_values_by_name[3] =
 {
   { "Channel", 1 },
   { "Server", 0 },
   { "User", 2 },
 };
-const ProtobufCEnumDescriptor mumble_proto__context_action_add__context__descriptor =
+const ProtobufCEnumDescriptor mumble_proto__context_action_modify__context__descriptor =
 {
   PROTOBUF_C_ENUM_DESCRIPTOR_MAGIC,
-  "MumbleProto.ContextActionAdd.Context",
+  "MumbleProto.ContextActionModify.Context",
   "Context",
-  "MumbleProto__ContextActionAdd__Context",
+  "MumbleProto__ContextActionModify__Context",
   "MumbleProto",
   3,
-  mumble_proto__context_action_add__context__enum_values_by_number,
+  mumble_proto__context_action_modify__context__enum_values_by_number,
   3,
-  mumble_proto__context_action_add__context__enum_values_by_name,
+  mumble_proto__context_action_modify__context__enum_values_by_name,
   2,
-  mumble_proto__context_action_add__context__value_ranges,
+  mumble_proto__context_action_modify__context__value_ranges,
   NULL,NULL,NULL,NULL   /* reserved[1234] */
 };
-static const ProtobufCFieldDescriptor mumble_proto__context_action_add__field_descriptors[3] =
+const ProtobufCEnumValue mumble_proto__context_action_modify__operation__enum_values_by_number[2] =
+{
+  { "Add", "MUMBLE_PROTO__CONTEXT_ACTION_MODIFY__OPERATION__ADD", 0 },
+  { "Remove", "MUMBLE_PROTO__CONTEXT_ACTION_MODIFY__OPERATION__REMOVE", 1 },
+};
+static const ProtobufCIntRange mumble_proto__context_action_modify__operation__value_ranges[] = {
+{0, 0},{0, 2}
+};
+const ProtobufCEnumValueIndex mumble_proto__context_action_modify__operation__enum_values_by_name[2] =
+{
+  { "Add", 0 },
+  { "Remove", 1 },
+};
+const ProtobufCEnumDescriptor mumble_proto__context_action_modify__operation__descriptor =
+{
+  PROTOBUF_C_ENUM_DESCRIPTOR_MAGIC,
+  "MumbleProto.ContextActionModify.Operation",
+  "Operation",
+  "MumbleProto__ContextActionModify__Operation",
+  "MumbleProto",
+  2,
+  mumble_proto__context_action_modify__operation__enum_values_by_number,
+  2,
+  mumble_proto__context_action_modify__operation__enum_values_by_name,
+  1,
+  mumble_proto__context_action_modify__operation__value_ranges,
+  NULL,NULL,NULL,NULL   /* reserved[1234] */
+};
+static const ProtobufCFieldDescriptor mumble_proto__context_action_modify__field_descriptors[4] =
 {
   {
     "action",
@@ -3167,7 +3254,7 @@ static const ProtobufCFieldDescriptor mumble_proto__context_action_add__field_de
     PROTOBUF_C_LABEL_REQUIRED,
     PROTOBUF_C_TYPE_STRING,
     0,   /* quantifier_offset */
-    PROTOBUF_C_OFFSETOF(MumbleProto__ContextActionAdd, action),
+    PROTOBUF_C_OFFSETOF(MumbleProto__ContextActionModify, action),
     NULL,
     NULL,
     0,            /* packed */
@@ -3176,10 +3263,10 @@ static const ProtobufCFieldDescriptor mumble_proto__context_action_add__field_de
   {
     "text",
     2,
-    PROTOBUF_C_LABEL_REQUIRED,
+    PROTOBUF_C_LABEL_OPTIONAL,
     PROTOBUF_C_TYPE_STRING,
     0,   /* quantifier_offset */
-    PROTOBUF_C_OFFSETOF(MumbleProto__ContextActionAdd, text),
+    PROTOBUF_C_OFFSETOF(MumbleProto__ContextActionModify, text),
     NULL,
     NULL,
     0,            /* packed */
@@ -3190,37 +3277,50 @@ static const ProtobufCFieldDescriptor mumble_proto__context_action_add__field_de
     3,
     PROTOBUF_C_LABEL_OPTIONAL,
     PROTOBUF_C_TYPE_UINT32,
-    PROTOBUF_C_OFFSETOF(MumbleProto__ContextActionAdd, has_context),
-    PROTOBUF_C_OFFSETOF(MumbleProto__ContextActionAdd, context),
+    PROTOBUF_C_OFFSETOF(MumbleProto__ContextActionModify, has_context),
+    PROTOBUF_C_OFFSETOF(MumbleProto__ContextActionModify, context),
     NULL,
     NULL,
     0,            /* packed */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
+  {
+    "operation",
+    4,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_ENUM,
+    PROTOBUF_C_OFFSETOF(MumbleProto__ContextActionModify, has_operation),
+    PROTOBUF_C_OFFSETOF(MumbleProto__ContextActionModify, operation),
+    &mumble_proto__context_action_modify__operation__descriptor,
+    NULL,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
 };
-static const unsigned mumble_proto__context_action_add__field_indices_by_name[] = {
+static const unsigned mumble_proto__context_action_modify__field_indices_by_name[] = {
   0,   /* field[0] = action */
   2,   /* field[2] = context */
+  3,   /* field[3] = operation */
   1,   /* field[1] = text */
 };
-static const ProtobufCIntRange mumble_proto__context_action_add__number_ranges[1 + 1] =
+static const ProtobufCIntRange mumble_proto__context_action_modify__number_ranges[1 + 1] =
 {
   { 1, 0 },
-  { 0, 3 }
+  { 0, 4 }
 };
-const ProtobufCMessageDescriptor mumble_proto__context_action_add__descriptor =
+const ProtobufCMessageDescriptor mumble_proto__context_action_modify__descriptor =
 {
   PROTOBUF_C_MESSAGE_DESCRIPTOR_MAGIC,
-  "MumbleProto.ContextActionAdd",
-  "ContextActionAdd",
-  "MumbleProto__ContextActionAdd",
+  "MumbleProto.ContextActionModify",
+  "ContextActionModify",
+  "MumbleProto__ContextActionModify",
   "MumbleProto",
-  sizeof(MumbleProto__ContextActionAdd),
-  3,
-  mumble_proto__context_action_add__field_descriptors,
-  mumble_proto__context_action_add__field_indices_by_name,
-  1,  mumble_proto__context_action_add__number_ranges,
-  (ProtobufCMessageInit) mumble_proto__context_action_add__init,
+  sizeof(MumbleProto__ContextActionModify),
+  4,
+  mumble_proto__context_action_modify__field_descriptors,
+  mumble_proto__context_action_modify__field_indices_by_name,
+  1,  mumble_proto__context_action_modify__number_ranges,
+  (ProtobufCMessageInit) mumble_proto__context_action_modify__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
 static const ProtobufCFieldDescriptor mumble_proto__context_action__field_descriptors[3] =
@@ -3585,7 +3685,8 @@ const ProtobufCMessageDescriptor mumble_proto__permission_query__descriptor =
   NULL,NULL,NULL    /* reserved[123] */
 };
 static const protobuf_c_boolean mumble_proto__codec_version__prefer_alpha__default_value = 1;
-static const ProtobufCFieldDescriptor mumble_proto__codec_version__field_descriptors[3] =
+static const protobuf_c_boolean mumble_proto__codec_version__opus__default_value = 0;
+static const ProtobufCFieldDescriptor mumble_proto__codec_version__field_descriptors[4] =
 {
   {
     "alpha",
@@ -3623,16 +3724,29 @@ static const ProtobufCFieldDescriptor mumble_proto__codec_version__field_descrip
     0,            /* packed */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
+  {
+    "opus",
+    4,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_BOOL,
+    PROTOBUF_C_OFFSETOF(MumbleProto__CodecVersion, has_opus),
+    PROTOBUF_C_OFFSETOF(MumbleProto__CodecVersion, opus),
+    NULL,
+    &mumble_proto__codec_version__opus__default_value,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
 };
 static const unsigned mumble_proto__codec_version__field_indices_by_name[] = {
   0,   /* field[0] = alpha */
   1,   /* field[1] = beta */
+  3,   /* field[3] = opus */
   2,   /* field[2] = prefer_alpha */
 };
 static const ProtobufCIntRange mumble_proto__codec_version__number_ranges[1 + 1] =
 {
   { 1, 0 },
-  { 0, 3 }
+  { 0, 4 }
 };
 const ProtobufCMessageDescriptor mumble_proto__codec_version__descriptor =
 {
@@ -3642,7 +3756,7 @@ const ProtobufCMessageDescriptor mumble_proto__codec_version__descriptor =
   "MumbleProto__CodecVersion",
   "MumbleProto",
   sizeof(MumbleProto__CodecVersion),
-  3,
+  4,
   mumble_proto__codec_version__field_descriptors,
   mumble_proto__codec_version__field_indices_by_name,
   1,  mumble_proto__codec_version__number_ranges,
@@ -3728,7 +3842,8 @@ const ProtobufCMessageDescriptor mumble_proto__user_stats__stats__descriptor =
 };
 static const protobuf_c_boolean mumble_proto__user_stats__stats_only__default_value = 0;
 static const protobuf_c_boolean mumble_proto__user_stats__strong_certificate__default_value = 0;
-static const ProtobufCFieldDescriptor mumble_proto__user_stats__field_descriptors[18] =
+static const protobuf_c_boolean mumble_proto__user_stats__opus__default_value = 0;
+static const ProtobufCFieldDescriptor mumble_proto__user_stats__field_descriptors[19] =
 {
   {
     "session",
@@ -3946,6 +4061,18 @@ static const ProtobufCFieldDescriptor mumble_proto__user_stats__field_descriptor
     0,            /* packed */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
+  {
+    "opus",
+    19,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_BOOL,
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats, has_opus),
+    PROTOBUF_C_OFFSETOF(MumbleProto__UserStats, opus),
+    NULL,
+    &mumble_proto__user_stats__opus__default_value,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
 };
 static const unsigned mumble_proto__user_stats__field_indices_by_name[] = {
   13,   /* field[13] = address */
@@ -3956,6 +4083,7 @@ static const unsigned mumble_proto__user_stats__field_indices_by_name[] = {
   4,   /* field[4] = from_server */
   16,   /* field[16] = idlesecs */
   15,   /* field[15] = onlinesecs */
+  18,   /* field[18] = opus */
   0,   /* field[0] = session */
   1,   /* field[1] = stats_only */
   17,   /* field[17] = strong_certificate */
@@ -3970,7 +4098,7 @@ static const unsigned mumble_proto__user_stats__field_indices_by_name[] = {
 static const ProtobufCIntRange mumble_proto__user_stats__number_ranges[1 + 1] =
 {
   { 1, 0 },
-  { 0, 18 }
+  { 0, 19 }
 };
 const ProtobufCMessageDescriptor mumble_proto__user_stats__descriptor =
 {
@@ -3980,11 +4108,75 @@ const ProtobufCMessageDescriptor mumble_proto__user_stats__descriptor =
   "MumbleProto__UserStats",
   "MumbleProto",
   sizeof(MumbleProto__UserStats),
-  18,
+  19,
   mumble_proto__user_stats__field_descriptors,
   mumble_proto__user_stats__field_indices_by_name,
   1,  mumble_proto__user_stats__number_ranges,
   (ProtobufCMessageInit) mumble_proto__user_stats__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
+static const ProtobufCFieldDescriptor mumble_proto__suggest_config__field_descriptors[3] =
+{
+  {
+    "version",
+    1,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_UINT32,
+    PROTOBUF_C_OFFSETOF(MumbleProto__SuggestConfig, has_version),
+    PROTOBUF_C_OFFSETOF(MumbleProto__SuggestConfig, version),
+    NULL,
+    NULL,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "positional",
+    2,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_BOOL,
+    PROTOBUF_C_OFFSETOF(MumbleProto__SuggestConfig, has_positional),
+    PROTOBUF_C_OFFSETOF(MumbleProto__SuggestConfig, positional),
+    NULL,
+    NULL,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "push_to_talk",
+    3,
+    PROTOBUF_C_LABEL_OPTIONAL,
+    PROTOBUF_C_TYPE_BOOL,
+    PROTOBUF_C_OFFSETOF(MumbleProto__SuggestConfig, has_push_to_talk),
+    PROTOBUF_C_OFFSETOF(MumbleProto__SuggestConfig, push_to_talk),
+    NULL,
+    NULL,
+    0,            /* packed */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+};
+static const unsigned mumble_proto__suggest_config__field_indices_by_name[] = {
+  1,   /* field[1] = positional */
+  2,   /* field[2] = push_to_talk */
+  0,   /* field[0] = version */
+};
+static const ProtobufCIntRange mumble_proto__suggest_config__number_ranges[1 + 1] =
+{
+  { 1, 0 },
+  { 0, 3 }
+};
+const ProtobufCMessageDescriptor mumble_proto__suggest_config__descriptor =
+{
+  PROTOBUF_C_MESSAGE_DESCRIPTOR_MAGIC,
+  "MumbleProto.SuggestConfig",
+  "SuggestConfig",
+  "MumbleProto__SuggestConfig",
+  "MumbleProto",
+  sizeof(MumbleProto__SuggestConfig),
+  3,
+  mumble_proto__suggest_config__field_descriptors,
+  mumble_proto__suggest_config__field_indices_by_name,
+  1,  mumble_proto__suggest_config__number_ranges,
+  (ProtobufCMessageInit) mumble_proto__suggest_config__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
 static const ProtobufCFieldDescriptor mumble_proto__request_blob__field_descriptors[3] =

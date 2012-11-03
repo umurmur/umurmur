@@ -28,7 +28,7 @@ typedef struct _MumbleProto__ACL__ChanGroup MumbleProto__ACL__ChanGroup;
 typedef struct _MumbleProto__ACL__ChanACL MumbleProto__ACL__ChanACL;
 typedef struct _MumbleProto__QueryUsers MumbleProto__QueryUsers;
 typedef struct _MumbleProto__CryptSetup MumbleProto__CryptSetup;
-typedef struct _MumbleProto__ContextActionAdd MumbleProto__ContextActionAdd;
+typedef struct _MumbleProto__ContextActionModify MumbleProto__ContextActionModify;
 typedef struct _MumbleProto__ContextAction MumbleProto__ContextAction;
 typedef struct _MumbleProto__UserList MumbleProto__UserList;
 typedef struct _MumbleProto__UserList__User MumbleProto__UserList__User;
@@ -38,6 +38,7 @@ typedef struct _MumbleProto__PermissionQuery MumbleProto__PermissionQuery;
 typedef struct _MumbleProto__CodecVersion MumbleProto__CodecVersion;
 typedef struct _MumbleProto__UserStats MumbleProto__UserStats;
 typedef struct _MumbleProto__UserStats__Stats MumbleProto__UserStats__Stats;
+typedef struct _MumbleProto__SuggestConfig MumbleProto__SuggestConfig;
 typedef struct _MumbleProto__RequestBlob MumbleProto__RequestBlob;
 
 
@@ -63,13 +64,18 @@ typedef enum _MumbleProto__PermissionDenied__DenyType {
   MUMBLE_PROTO__PERMISSION_DENIED__DENY_TYPE__TemporaryChannel = 6,
   MUMBLE_PROTO__PERMISSION_DENIED__DENY_TYPE__MissingCertificate = 7,
   MUMBLE_PROTO__PERMISSION_DENIED__DENY_TYPE__UserName = 8,
-  MUMBLE_PROTO__PERMISSION_DENIED__DENY_TYPE__ChannelFull = 9
+  MUMBLE_PROTO__PERMISSION_DENIED__DENY_TYPE__ChannelFull = 9,
+  MUMBLE_PROTO__PERMISSION_DENIED__DENY_TYPE__NestingLimit = 10
 } MumbleProto__PermissionDenied__DenyType;
-typedef enum _MumbleProto__ContextActionAdd__Context {
-  MUMBLE_PROTO__CONTEXT_ACTION_ADD__CONTEXT__Server = 1,
-  MUMBLE_PROTO__CONTEXT_ACTION_ADD__CONTEXT__Channel = 2,
-  MUMBLE_PROTO__CONTEXT_ACTION_ADD__CONTEXT__User = 4
-} MumbleProto__ContextActionAdd__Context;
+typedef enum _MumbleProto__ContextActionModify__Context {
+  MUMBLE_PROTO__CONTEXT_ACTION_MODIFY__CONTEXT__Server = 1,
+  MUMBLE_PROTO__CONTEXT_ACTION_MODIFY__CONTEXT__Channel = 2,
+  MUMBLE_PROTO__CONTEXT_ACTION_MODIFY__CONTEXT__User = 4
+} MumbleProto__ContextActionModify__Context;
+typedef enum _MumbleProto__ContextActionModify__Operation {
+  MUMBLE_PROTO__CONTEXT_ACTION_MODIFY__OPERATION__Add = 0,
+  MUMBLE_PROTO__CONTEXT_ACTION_MODIFY__OPERATION__Remove = 1
+} MumbleProto__ContextActionModify__Operation;
 
 /* --- messages --- */
 
@@ -106,10 +112,12 @@ struct  _MumbleProto__Authenticate
   char **tokens;
   size_t n_celt_versions;
   int32_t *celt_versions;
+  protobuf_c_boolean has_opus;
+  protobuf_c_boolean opus;
 };
 #define MUMBLE_PROTO__AUTHENTICATE__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&mumble_proto__authenticate__descriptor) \
-    , NULL, NULL, 0,NULL, 0,NULL }
+    , NULL, NULL, 0,NULL, 0,NULL, 0,0 }
 
 
 struct  _MumbleProto__Ping
@@ -441,17 +449,19 @@ struct  _MumbleProto__CryptSetup
     , 0,{0,NULL}, 0,{0,NULL}, 0,{0,NULL} }
 
 
-struct  _MumbleProto__ContextActionAdd
+struct  _MumbleProto__ContextActionModify
 {
   ProtobufCMessage base;
   char *action;
   char *text;
   protobuf_c_boolean has_context;
   uint32_t context;
+  protobuf_c_boolean has_operation;
+  MumbleProto__ContextActionModify__Operation operation;
 };
-#define MUMBLE_PROTO__CONTEXT_ACTION_ADD__INIT \
- { PROTOBUF_C_MESSAGE_INIT (&mumble_proto__context_action_add__descriptor) \
-    , NULL, NULL, 0,0 }
+#define MUMBLE_PROTO__CONTEXT_ACTION_MODIFY__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&mumble_proto__context_action_modify__descriptor) \
+    , NULL, NULL, 0,0, 0,0 }
 
 
 struct  _MumbleProto__ContextAction
@@ -542,10 +552,12 @@ struct  _MumbleProto__CodecVersion
   int32_t alpha;
   int32_t beta;
   protobuf_c_boolean prefer_alpha;
+  protobuf_c_boolean has_opus;
+  protobuf_c_boolean opus;
 };
 #define MUMBLE_PROTO__CODEC_VERSION__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&mumble_proto__codec_version__descriptor) \
-    , 0, 0, 1 }
+    , 0, 0, 1, 0,0 }
 
 
 struct  _MumbleProto__UserStats__Stats
@@ -601,10 +613,27 @@ struct  _MumbleProto__UserStats
   uint32_t idlesecs;
   protobuf_c_boolean has_strong_certificate;
   protobuf_c_boolean strong_certificate;
+  protobuf_c_boolean has_opus;
+  protobuf_c_boolean opus;
 };
 #define MUMBLE_PROTO__USER_STATS__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&mumble_proto__user_stats__descriptor) \
-    , 0,0, 0,0, 0,NULL, NULL, NULL, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, NULL, 0,NULL, 0,{0,NULL}, 0,0, 0,0, 0,0, 0,0 }
+    , 0,0, 0,0, 0,NULL, NULL, NULL, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, NULL, 0,NULL, 0,{0,NULL}, 0,0, 0,0, 0,0, 0,0, 0,0 }
+
+
+struct  _MumbleProto__SuggestConfig
+{
+  ProtobufCMessage base;
+  protobuf_c_boolean has_version;
+  uint32_t version;
+  protobuf_c_boolean has_positional;
+  protobuf_c_boolean positional;
+  protobuf_c_boolean has_push_to_talk;
+  protobuf_c_boolean push_to_talk;
+};
+#define MUMBLE_PROTO__SUGGEST_CONFIG__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&mumble_proto__suggest_config__descriptor) \
+    , 0,0, 0,0, 0,0 }
 
 
 struct  _MumbleProto__RequestBlob
@@ -954,24 +983,24 @@ MumbleProto__CryptSetup *
 void   mumble_proto__crypt_setup__free_unpacked
                      (MumbleProto__CryptSetup *message,
                       ProtobufCAllocator *allocator);
-/* MumbleProto__ContextActionAdd methods */
-void   mumble_proto__context_action_add__init
-                     (MumbleProto__ContextActionAdd         *message);
-size_t mumble_proto__context_action_add__get_packed_size
-                     (const MumbleProto__ContextActionAdd   *message);
-size_t mumble_proto__context_action_add__pack
-                     (const MumbleProto__ContextActionAdd   *message,
+/* MumbleProto__ContextActionModify methods */
+void   mumble_proto__context_action_modify__init
+                     (MumbleProto__ContextActionModify         *message);
+size_t mumble_proto__context_action_modify__get_packed_size
+                     (const MumbleProto__ContextActionModify   *message);
+size_t mumble_proto__context_action_modify__pack
+                     (const MumbleProto__ContextActionModify   *message,
                       uint8_t             *out);
-size_t mumble_proto__context_action_add__pack_to_buffer
-                     (const MumbleProto__ContextActionAdd   *message,
+size_t mumble_proto__context_action_modify__pack_to_buffer
+                     (const MumbleProto__ContextActionModify   *message,
                       ProtobufCBuffer     *buffer);
-MumbleProto__ContextActionAdd *
-       mumble_proto__context_action_add__unpack
+MumbleProto__ContextActionModify *
+       mumble_proto__context_action_modify__unpack
                      (ProtobufCAllocator  *allocator,
                       size_t               len,
                       const uint8_t       *data);
-void   mumble_proto__context_action_add__free_unpacked
-                     (MumbleProto__ContextActionAdd *message,
+void   mumble_proto__context_action_modify__free_unpacked
+                     (MumbleProto__ContextActionModify *message,
                       ProtobufCAllocator *allocator);
 /* MumbleProto__ContextAction methods */
 void   mumble_proto__context_action__init
@@ -1096,6 +1125,25 @@ MumbleProto__UserStats *
 void   mumble_proto__user_stats__free_unpacked
                      (MumbleProto__UserStats *message,
                       ProtobufCAllocator *allocator);
+/* MumbleProto__SuggestConfig methods */
+void   mumble_proto__suggest_config__init
+                     (MumbleProto__SuggestConfig         *message);
+size_t mumble_proto__suggest_config__get_packed_size
+                     (const MumbleProto__SuggestConfig   *message);
+size_t mumble_proto__suggest_config__pack
+                     (const MumbleProto__SuggestConfig   *message,
+                      uint8_t             *out);
+size_t mumble_proto__suggest_config__pack_to_buffer
+                     (const MumbleProto__SuggestConfig   *message,
+                      ProtobufCBuffer     *buffer);
+MumbleProto__SuggestConfig *
+       mumble_proto__suggest_config__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   mumble_proto__suggest_config__free_unpacked
+                     (MumbleProto__SuggestConfig *message,
+                      ProtobufCAllocator *allocator);
 /* MumbleProto__RequestBlob methods */
 void   mumble_proto__request_blob__init
                      (MumbleProto__RequestBlob         *message);
@@ -1177,8 +1225,8 @@ typedef void (*MumbleProto__QueryUsers_Closure)
 typedef void (*MumbleProto__CryptSetup_Closure)
                  (const MumbleProto__CryptSetup *message,
                   void *closure_data);
-typedef void (*MumbleProto__ContextActionAdd_Closure)
-                 (const MumbleProto__ContextActionAdd *message,
+typedef void (*MumbleProto__ContextActionModify_Closure)
+                 (const MumbleProto__ContextActionModify *message,
                   void *closure_data);
 typedef void (*MumbleProto__ContextAction_Closure)
                  (const MumbleProto__ContextAction *message,
@@ -1206,6 +1254,9 @@ typedef void (*MumbleProto__UserStats__Stats_Closure)
                   void *closure_data);
 typedef void (*MumbleProto__UserStats_Closure)
                  (const MumbleProto__UserStats *message,
+                  void *closure_data);
+typedef void (*MumbleProto__SuggestConfig_Closure)
+                 (const MumbleProto__SuggestConfig *message,
                   void *closure_data);
 typedef void (*MumbleProto__RequestBlob_Closure)
                  (const MumbleProto__RequestBlob *message,
@@ -1238,8 +1289,9 @@ extern const ProtobufCMessageDescriptor mumble_proto__acl__chan_group__descripto
 extern const ProtobufCMessageDescriptor mumble_proto__acl__chan_acl__descriptor;
 extern const ProtobufCMessageDescriptor mumble_proto__query_users__descriptor;
 extern const ProtobufCMessageDescriptor mumble_proto__crypt_setup__descriptor;
-extern const ProtobufCMessageDescriptor mumble_proto__context_action_add__descriptor;
-extern const ProtobufCEnumDescriptor    mumble_proto__context_action_add__context__descriptor;
+extern const ProtobufCMessageDescriptor mumble_proto__context_action_modify__descriptor;
+extern const ProtobufCEnumDescriptor    mumble_proto__context_action_modify__context__descriptor;
+extern const ProtobufCEnumDescriptor    mumble_proto__context_action_modify__operation__descriptor;
 extern const ProtobufCMessageDescriptor mumble_proto__context_action__descriptor;
 extern const ProtobufCMessageDescriptor mumble_proto__user_list__descriptor;
 extern const ProtobufCMessageDescriptor mumble_proto__user_list__user__descriptor;
@@ -1249,6 +1301,7 @@ extern const ProtobufCMessageDescriptor mumble_proto__permission_query__descript
 extern const ProtobufCMessageDescriptor mumble_proto__codec_version__descriptor;
 extern const ProtobufCMessageDescriptor mumble_proto__user_stats__descriptor;
 extern const ProtobufCMessageDescriptor mumble_proto__user_stats__stats__descriptor;
+extern const ProtobufCMessageDescriptor mumble_proto__suggest_config__descriptor;
 extern const ProtobufCMessageDescriptor mumble_proto__request_blob__descriptor;
 
 PROTOBUF_C_END_DECLS
