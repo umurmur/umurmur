@@ -33,6 +33,7 @@
 #include <sys/poll.h>
 #include <netinet/tcp.h>
 #include <sys/socket.h>
+#include <netdb.h>
 #include <errno.h>
 #include <string.h>
 #include <limits.h>
@@ -52,22 +53,21 @@
 #define UDP_SOCK 1
 
 /* globals */
-int udpsock; 
+int udpsock;
 bool_t shutdown_server;
 extern char *bindaddr;
-extern int bindport;
+extern char *bindport;
 
 void Server_run()
 {
 	int timeout = 1000, rc;
 	struct pollfd *pollfds;
 	int tcpsock, sockopt6 = 1;
-	struct sockaddr_in6 sin;
+	struct sockaddr_storage sin;
 	int val, clientcount;
 	etimer_t janitorTimer;
-	unsigned short port;
-	in_addr_t inet_address;
-	struct in6_addr inet6_address[sizeof(struct in6_addr)];
+	char *port;
+	char *addr;
 	
 	/* max clients + listen sock + udp sock + client connecting that will be disconnected */
 	pollfds = malloc((getIntConf(MAX_CLIENTS) + 3) * sizeof(struct pollfd));
@@ -76,51 +76,71 @@ void Server_run()
 
 	/* Figure out bind address and port */
 	if (bindport != 0)
-		port = htons(bindport);
+		port = bindport;
 	else
-		port = htons(getIntConf(BINDPORT));
-	
-	if (bindaddr != NULL && inet_pton(AF_INET6, bindaddr, inet6_address) != -1)
-		inet_pton(AF_INET6, bindaddr, inet6_address);
-	else if (inet_addr(getStrConf(BINDADDR)) !=  -1)
-		inet_pton(AF_INET6, getStrConf(BINDADDR), inet6_address);
+		port = getStrConf(BINDPORT);
+
+	if (bindaddr != 0)
+		addr = bindaddr;
 	else
-		*inet6_address = in6addr_any;
-	char boundaddr6[INET6_ADDRSTRLEN];
-	inet_ntop(AF_INET6, inet6_address, boundaddr6, INET6_ADDRSTRLEN);
-	Log_info("Bind to [%s]:%hu", inet6_address == 0 ? "*" : boundaddr6, ntohs(port));
-	
-	/* Prepare TCP6 socket */
-	memset(&sin, 0, sizeof(sin));
-	tcpsock = socket(PF_INET6, SOCK_STREAM, 0);
-	if (tcpsock < 0)
-		Log_fatal("socket");
+		addr = getStrConf(BINDADDR);
+
+	Log_info(" bindaddr = %s", bindaddr);
+	Log_info(" addr = %s", addr);
+	Log_info(" getstrconf = %s", getStrConf(BINDADDR));
+
+	struct addrinfo hints, *res;
+
+	/* Prepare TCP socket */
+
+	memset(&hints, 0, sizeof hints);
+	hints.ai_family = AF_INET6; //UNSPEC;  // use IPv4 or IPv6, whichever
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_PASSIVE | AI_V4MAPPED;     // fill in my IP for me
+	hints.ai_protocol = 0;
+
+	rc = getaddrinfo(addr, port, &hints, &res);
+	if (rc != 0)
+		fprintf(stderr, "error in getaddrinfo: %s\n", gai_strerror(rc));
+
+	Log_info("Bind to [%s]:%s", addr ? addr : "::" , port);
+
+	// make a tcp socket, bind it, and listen on it:
+
+	tcpsock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+	if (tcpsock < 0) Log_fatal("socket");
 	int on = 1;
 	if (setsockopt(tcpsock, SOL_SOCKET, SO_REUSEADDR, &sockopt6, sizeof(int)) != 0)
-		Log_fatal("setsockopt: %s", strerror(errno));
-	sin.sin6_family = AF_INET6;
-	sin.sin6_port = port;
-	sin.sin6_scope_id = 0;
-	sin.sin6_addr = *inet6_address;
-	rc = bind(tcpsock, (struct sockaddr6 *) &sin, sizeof (struct sockaddr_in6));
-	if (rc < 0) Log_fatal("bind6: %s", strerror(errno));
+		Log_fatal("setsockopt: %s",strerror(errno));
+	rc = bind(tcpsock, res->ai_addr, res->ai_addrlen);
+	if (rc < 0)
+		Log_fatal("bind: %s", strerror(errno));
 	rc = listen(tcpsock, 3);
-	if (rc < 0) Log_fatal("listen");
+	if (rc < 0)
+		Log_fatal("listen");
 	fcntl(tcpsock, F_SETFL, O_NONBLOCK);
 
 	pollfds[LISTEN_SOCK].fd = tcpsock;
 	pollfds[LISTEN_SOCK].events = POLLIN;
+	freeaddrinfo(res);
 
 	/* Prepare UDP socket */
-	memset(&sin, 0, sizeof(sin));
-	udpsock = socket(PF_INET6, SOCK_DGRAM, 0);
-	sin.sin6_family = AF_INET6;
-	sin.sin6_port = port;
-	sin.sin6_addr = *inet6_address;
-	
-	rc = bind(udpsock, (struct sockaddr *) &sin, sizeof (struct sockaddr_in6));
+
+	memset(&hints, 0, sizeof hints);
+	hints.ai_family = AF_INET6;  // use IPv4 or IPv6, whichever
+	hints.ai_socktype = SOCK_DGRAM;
+	hints.ai_flags = AI_PASSIVE | AI_V4MAPPED;     // fill in my IP for me
+	hints.ai_protocol = 0; //auto
+
+	rc = getaddrinfo(addr, port, &hints, &res);
+	if (rc != 0) printf("error in getaddrinfo: %s\n", gai_strerror(rc));
+
+	// make a udp socket, bind it, and listen on it:
+
+	udpsock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+	rc = bind(udpsock, res->ai_addr, res->ai_addrlen);
 	if (rc < 0)
-		Log_fatal("bind %d %s: %s", getIntConf(BINDPORT), getStrConf(BINDADDR), strerror(errno));
+		Log_fatal("bind %d %s: %s", bindport, bindaddr, strerror(errno));
 	val = 0xe0;
 	rc = setsockopt(udpsock, IPPROTO_IP, IP_TOS, &val, sizeof(val));
 	if (rc < 0)
@@ -129,11 +149,15 @@ void Server_run()
 	rc = setsockopt(udpsock, IPPROTO_IP, IP_TOS, &val, sizeof(val));
 	if (rc < 0)
 		Log_warn("Server: Failed to set TOS for UDP Socket");
-	
 	fcntl(udpsock, F_SETFL, O_NONBLOCK);
+	listen(udpsock, 10);
+
+	// now accept an incoming connection:
+
 	pollfds[UDP_SOCK].fd = udpsock;
 	pollfds[UDP_SOCK].events = POLLIN | POLLHUP | POLLERR;
-	
+	freeaddrinfo(res);
+
 	Timer_init(&janitorTimer);
 	
 	Log_info("uMurmur version %s ('%s') protocol version %d.%d.%d",
@@ -142,7 +166,7 @@ void Server_run()
 	
 	/* Main server loop */
 	while (!shutdown_server) {
-		struct sockaddr_in6 remote;
+		struct sockaddr_storage remote;
 		int i;
 		
 		pollfds[UDP_SOCK].revents = 0;
@@ -171,12 +195,12 @@ void Server_run()
 		if (pollfds[LISTEN_SOCK].revents) { /* New tcp connection */
 			int tcpfd, flag = 1;
 			uint32_t addrlen;
-			addrlen = sizeof(struct sockaddr_in6);
+			addrlen = sizeof(struct sockaddr_storage);
 			tcpfd = accept(pollfds[LISTEN_SOCK].fd, (struct sockaddr*)&remote, &addrlen);
 			fcntl(tcpfd, F_SETFL, O_NONBLOCK);
 			setsockopt(tcpfd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
 			Log_debug("Connection from %s port %d\n", inet_ntoa(remote.sin_addr),
-					  ntohs(remote.sin_port));
+					ntohs(remote.sin_port));
 			if (Client_add(tcpfd, &remote) < 0)
 				close(tcpfd);
 		}
@@ -192,7 +216,7 @@ void Server_run()
 				Client_write_fd(pollfds[i + 2].fd);
 			}
 		}
-	}	
+	}
 
 	/* Disconnect clients */
 	Client_disconnect_all();

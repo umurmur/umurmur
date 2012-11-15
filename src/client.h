@@ -66,8 +66,8 @@ typedef struct {
 	cryptState_t cryptState;
 	bool_t readBlockedOnWrite, writeBlockedOnRead;
 	
-	struct sockaddr_in6 remote_tcp;
-	struct sockaddr_in6 remote_udp; 
+	struct sockaddr_storage remote_tcp;
+	struct sockaddr_storage remote_udp;
 	uint8_t rxbuf[BUFSIZE], txbuf[BUFSIZE];
 	uint32_t rxcount, msgsize, drainleft, txcount, txsize;
 	int sessionId;
@@ -108,7 +108,7 @@ typedef struct {
 void Client_init();
 int Client_getfds(struct pollfd *pollfds);
 void Client_janitor();
-int Client_add(int fd, struct sockaddr_in6 *remote);
+int Client_add(int fd, struct sockaddr_storage *remote);
 int Client_read_fd(int fd);
 int Client_write_fd(int fd);
 int Client_send_message(client_t *client, message_t *msg);

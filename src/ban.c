@@ -74,7 +74,9 @@ void Ban_UserBan(client_t *client, char *reason)
 	memset(ban, 0, sizeof(ban_t));
 	
 	memcpy(ban->hash, client->hash, 20);
-	memcpy(&ban->address, &client->remote_tcp.sin6_addr, sizeof(in_addr_t));
+	struct sockaddr *banaddr;
+	banaddr = &client->remote_tcp;
+	memcpy(&ban->address, banaddr->sa_data, sizeof(struct in6_addr));
 	ban->mask = 128;
 	ban->reason = strdup(reason);
 	ban->name = strdup(client->username);
@@ -136,7 +138,7 @@ bool_t Ban_isBanned(client_t *client)
 	
 }
 
-bool_t Ban_isBannedAddr(in_addr_t *addr)
+bool_t Ban_isBannedAddr(struct in6_addr *addr)
 {
 	struct dlist *itr;
 	ban_t *ban;
@@ -254,7 +256,7 @@ static void Ban_saveBanFile(void)
 		ban = list_get_entry(itr, ban_t, node);
 		SSLi_hash2hex(ban->hash, hexhash);
 		fprintf(file, "%s,%s,%d,%d,%d,%s,%s\n", hexhash, inet_ntoa(*((struct in_addr *)&ban->address)),
-		        ban->mask, ban->time, ban->duration, ban->name, ban->reason);
+		        ban->mask, (int)ban->time, ban->duration, ban->name, ban->reason);
 	}
 	fclose(file);
 	banlist_changed = false;

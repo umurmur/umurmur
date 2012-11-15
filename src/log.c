@@ -163,9 +163,21 @@ void Log_info_client(client_t *client, const char *logstring, ...)
 	va_list argp;
 	char buf[STRSIZE + 1];
 	int offset = 0;
-	char inet_str[INET_ADDRSTRLEN];
+	int port;
+	char inet_str[INET6_ADDRSTRLEN];
+	struct sockaddr_storage ss;
 
-	inet_ntop(AF_INET6, &(client->remote_tcp.sin6_addr), inet_str, INET6_ADDRSTRLEN);
+	ss = client->remote_tcp;
+
+	if (ss.ss_family == AF_INET) {
+			struct sockaddr_in *s = (struct sockaddr_in *)&ss;
+			inet_ntop(ss.ss_family, &s->sin_addr, inet_str, INET6_ADDRSTRLEN);
+			port = ntohs(s->sin_port);
+	} else {
+			struct sockaddr_in6 *s = (struct sockaddr_in6 *)&ss;
+			inet_ntop(ss.ss_family,	&s->sin6_addr, inet_str, INET6_ADDRSTRLEN);
+			port = ntohs(s->sin6_port);
+	}
 	
 	va_start(argp, logstring);
 	offset = sprintf(buf, "INFO: ");
@@ -174,8 +186,7 @@ void Log_info_client(client_t *client, const char *logstring, ...)
 	offset += snprintf(&buf[offset], STRSIZE - offset, " - [%d] %s@%s:%d",
 					   client->sessionId,
 					   client->username == NULL ? "" : client->username,
-					   inet_str,
-					   ntohs(client->remote_tcp.sin6_port));
+					   inet_str, port);
 	if (termprint)
 		fprintf(stderr, "%s\n", buf);
 	else if (logfile)
