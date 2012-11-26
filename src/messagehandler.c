@@ -47,7 +47,7 @@
 
 extern channel_t *defaultChan;
 extern int iCodecAlpha, iCodecBeta;
-extern bool_t bPreferAlpha;
+extern bool_t bPreferAlpha, bOpus;
 
 static void sendServerReject(client_t *client, const char *reason, MumbleProto__Reject__RejectType type)
 {
@@ -227,8 +227,10 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			Client_codec_add(client, (int32_t)0x8000000a);
 			client->codec_count = 1;
 		}
+		if (msg->payload.authenticate->opus)
+			client->bOpus = true;
 		
-		recheckCodecVersions();
+		recheckCodecVersions(client);
 		
 		sendmsg = Msg_create(CodecVersion);
 		sendmsg->payload.codecVersion->alpha = iCodecAlpha;
@@ -814,6 +816,8 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			i = 0;
 			while (Client_codec_iterate(target, &codec_itr) != NULL)
 				sendmsg->payload.userStats->celt_versions[i++] = codec_itr->codec;
+
+			sendmsg->payload.userStats->opus = target->bOpus;
 
 			/* Address */
 			sendmsg->payload.userStats->has_address = true;
