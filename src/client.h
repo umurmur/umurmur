@@ -73,7 +73,7 @@ typedef struct {
 	int sessionId;
 	uint64_t key;
 	char *username;
-	bool_t bUDP, authenticated, deaf, mute, self_deaf, self_mute, recording;
+	bool_t bUDP, authenticated, deaf, mute, self_deaf, self_mute, recording, bOpus;
 	char *os, *release, *os_version;
 	uint32_t version;
 	int codec_count;
@@ -121,7 +121,7 @@ int Client_send_message_except(client_t *client, message_t *msg);
 int Client_read_udp(void);
 void Client_disconnect_all();
 int Client_voiceMsg(client_t *client, uint8_t *data, int len);
-void recheckCodecVersions();
+void recheckCodecVersions(client_t *connectingClient);
 void Client_codec_add(client_t *client, int codec);
 void Client_codec_free(client_t *client);
 codec_t *Client_codec_iterate(client_t *client, codec_t **codec_itr);
