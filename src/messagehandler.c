@@ -45,9 +45,14 @@
 #define MAX_TEXT 512
 #define MAX_USERNAME 128
 
+#define NO_CELT_MESSAGE "<strong>WARNING:</strong> Your client doesn't support the CELT codec, you won't be able to talk to or hear most clients. Please make sure your client was built with CELT support."
+
+
 extern channel_t *defaultChan;
 extern int iCodecAlpha, iCodecBeta;
 extern bool_t bPreferAlpha, bOpus;
+
+static bool_t fake_celt_support;
 
 static void sendServerReject(client_t *client, const char *reason, MumbleProto__Reject__RejectType type)
 {
@@ -224,8 +229,9 @@ void Mh_handle_message(client_t *client, message_t *msg)
 				Log_debug("Client %d CELT codec ver 0x%x", client->sessionId, codec_itr->codec);
 				
 		} else {
-			Client_codec_add(client, (int32_t)0x8000000a);
+			Client_codec_add(client, (int32_t)0x8000000b);
 			client->codec_count = 1;
+			fake_celt_support = true;
 		}
 		if (msg->payload.authenticate->opus)
 			client->bOpus = true;
@@ -236,8 +242,31 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		sendmsg->payload.codecVersion->alpha = iCodecAlpha;
 		sendmsg->payload.codecVersion->beta = iCodecBeta;
 		sendmsg->payload.codecVersion->prefer_alpha = bPreferAlpha;
+		sendmsg->payload.codecVersion->has_opus = true;
+		sendmsg->payload.codecVersion->opus = bOpus;
 		Client_send_message(client, sendmsg);
-		
+
+		if (!bOpus && client->bOpus && fake_celt_support) {
+			char *message;
+			uint32_t *tree_id;
+			message_t *sendmsg = NULL;
+
+			message = malloc(strlen(NO_CELT_MESSAGE) + 1);
+			if (!message)
+				Log_fatal("Out of memory");
+			tree_id = malloc(sizeof(uint32_t));
+			if (!tree_id)
+				Log_fatal("Out of memory");
+			*tree_id = 0;
+			sendmsg = Msg_create(TextMessage);
+			sendmsg->payload.textMessage->message = message;
+			sendmsg->payload.textMessage->n_tree_id = 1;
+			sendmsg->payload.textMessage->tree_id = tree_id;
+			sprintf(message, NO_CELT_MESSAGE);
+			Client_send_message(client, sendmsg);
+			sendmsg = NULL;
+		}
+
 		/* Iterate channels and send channel info */
 		ch_itr = NULL;
 		while (Chan_iterate(&ch_itr) != NULL) {
