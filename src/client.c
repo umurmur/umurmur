@@ -57,7 +57,7 @@ void Client_free(client_t *client);
 declare_list(clients);
 static int clientcount; /* = 0 */
 static int maxBandwidth;
-static bool_t bOpus = true;
+bool_t bOpus = true;
 
 int iCodecAlpha, iCodecBeta;
 bool_t bPreferAlpha;
@@ -212,6 +212,8 @@ void recheckCodecVersions(client_t *connectingClient)
 	
 	while (Client_iterate(&client_itr) != NULL) {
 		codec_itr = NULL;
+		if (client_itr->codec_count == 0 && !client_itr->bOpus)
+			continue;
 		while (Client_codec_iterate(client_itr, &codec_itr) != NULL) {
 			found = false;			    
 			list_iterate(itr, &codec_list) {
@@ -231,12 +233,15 @@ void recheckCodecVersions(client_t *connectingClient)
 				cd->count = 1;
 				list_add_tail(&cd->node, &codec_list);
 			}
-			users++;
-			if (client_itr->bOpus)
-				opus++;
 		}
+		users++;
+		if (client_itr->bOpus)
+			opus++;
 	}
-	
+
+	if (users == 0) 
+		return;
+
 	enableOpus = ((opus * 100 / users) >= getIntConf(OPUS_THRESHOLD));
 
 	list_iterate(itr, &codec_list) {
@@ -272,7 +277,7 @@ void recheckCodecVersions(client_t *connectingClient)
 			uint32_t *tree_id;
 			message_t *sendmsg = NULL;
 
-			message = malloc(strlen(OPUS_WARN));
+			message = malloc(strlen(OPUS_WARN) + 1);
 			if (!message)
 				Log_fatal("Out of memory");
 			tree_id = malloc(sizeof(uint32_t));
@@ -291,15 +296,44 @@ void recheckCodecVersions(client_t *connectingClient)
 	}
 	
 	bOpus = enableOpus;
+	Log_info("OPUS codec is %s", bOpus ? "enabled" : "disabled");
 
 	sendmsg = Msg_create(CodecVersion);
 	sendmsg->payload.codecVersion->alpha = iCodecAlpha;
 	sendmsg->payload.codecVersion->beta = iCodecBeta;
 	sendmsg->payload.codecVersion->prefer_alpha = bPreferAlpha;
+	sendmsg->payload.codecVersion->has_opus = true;
+	sendmsg->payload.codecVersion->opus = bOpus;
+
 	Client_send_message_except(NULL, sendmsg);
 	
 	Log_info("CELT codec switch 0x%x 0x%x (prefer 0x%x)", iCodecAlpha, iCodecBeta,
 			 bPreferAlpha ? iCodecAlpha : iCodecBeta);
+
+	client_itr = NULL;
+	while (Client_iterate(&client_itr) != NULL) {
+		if ((client_itr->authenticated || client_itr == connectingClient) &&
+		    !client_itr->bOpus) {
+			char *message;
+			uint32_t *tree_id;
+			message_t *sendmsg = NULL;
+
+			message = malloc(strlen(OPUS_WARN) + 1);
+			if (!message)
+				Log_fatal("Out of memory");
+			tree_id = malloc(sizeof(uint32_t));
+			if (!tree_id)
+				Log_fatal("Out of memory");
+			*tree_id = 0;
+			sendmsg = Msg_create(TextMessage);
+			sendmsg->payload.textMessage->message = message;
+			sendmsg->payload.textMessage->n_tree_id = 1;
+			sendmsg->payload.textMessage->tree_id = tree_id;
+			sprintf(message, OPUS_WARN);
+			Client_send_message(client_itr, sendmsg);
+			sendmsg = NULL;
+		}
+	}
 	
 }
 
@@ -389,6 +423,7 @@ void Client_free(client_t *client)
 		sendmsg = Msg_create(UserRemove);
 		sendmsg->payload.userRemove->session = client->sessionId;
 		Client_send_message_except(client, sendmsg);
+		recheckCodecVersions(NULL); /* Can use better codec now? */
 	}
 	list_iterate_safe(itr, save, &client->txMsgQueue) {
 		list_del(&list_get_entry(itr, message_t, node)->node);
