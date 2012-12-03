@@ -514,14 +514,18 @@ int Client_read(client_t *client)
 				client->readBlockedOnWrite = true;
 				return 0;
 			}
-			else if (SSLi_get_error(client->ssl, rc) == SSLI_ERROR_ZERO_RETURN) {
+			else if (SSLi_get_error(client->ssl, rc) == SSLI_ERROR_ZERO_RETURN || 
+			         SSLi_get_error(client->ssl, rc) == 0) {
 				Log_info_client(client, "Connection closed by peer");
-				if (!client->shutdown_wait)
-					Client_close(client);
+				Client_free(client);
 			}
 			else {
 				if (SSLi_get_error(client->ssl, rc) == SSLI_ERROR_SYSCALL) {
-					Log_info_client(client,"Error: %s  - Closing connection", strerror(errno));
+					if (errno == 0)
+						Log_info_client(client, "Connection closed by peer");
+					else
+						Log_info_client(client,"Error: %s  - Closing connection (code %d)", 
+						                strerror(errno));
 				}
 				else if (SSLi_get_error(client->ssl, rc) == SSLI_ERROR_CONNRESET) {
 					Log_info_client(client, "Connection reset by peer");
