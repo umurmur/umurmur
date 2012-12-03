@@ -247,24 +247,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		Client_send_message(client, sendmsg);
 
 		if (!bOpus && client->bOpus && fake_celt_support) {
-			char *message;
-			uint32_t *tree_id;
-			message_t *sendmsg = NULL;
-
-			message = malloc(strlen(NO_CELT_MESSAGE) + 1);
-			if (!message)
-				Log_fatal("Out of memory");
-			tree_id = malloc(sizeof(uint32_t));
-			if (!tree_id)
-				Log_fatal("Out of memory");
-			*tree_id = 0;
-			sendmsg = Msg_create(TextMessage);
-			sendmsg->payload.textMessage->message = message;
-			sendmsg->payload.textMessage->n_tree_id = 1;
-			sendmsg->payload.textMessage->tree_id = tree_id;
-			sprintf(message, NO_CELT_MESSAGE);
-			Client_send_message(client, sendmsg);
-			sendmsg = NULL;
+			Client_textmessage(client, NO_CELT_MESSAGE);
 		}
 
 		/* Iterate channels and send channel info */
