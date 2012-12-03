@@ -273,24 +273,7 @@ void recheckCodecVersions(client_t *connectingClient)
 			iCodecBeta = version;
 	} else if (bOpus == enableOpus) {
 		if (connectingClient && !connectingClient->bOpus) {
-			char *message;
-			uint32_t *tree_id;
-			message_t *sendmsg = NULL;
-
-			message = malloc(strlen(OPUS_WARN) + 1);
-			if (!message)
-				Log_fatal("Out of memory");
-			tree_id = malloc(sizeof(uint32_t));
-			if (!tree_id)
-				Log_fatal("Out of memory");
-			*tree_id = 0;
-			sendmsg = Msg_create(TextMessage);
-			sendmsg->payload.textMessage->message = message;
-			sendmsg->payload.textMessage->n_tree_id = 1;
-			sendmsg->payload.textMessage->tree_id = tree_id;
-			sprintf(message, OPUS_WARN);
-			Client_send_message(connectingClient, sendmsg);
-			sendmsg = NULL;
+			Client_textmessage(client_itr, OPUS_WARN);
 		}
 		return;
 	}
@@ -314,24 +297,7 @@ void recheckCodecVersions(client_t *connectingClient)
 	while (Client_iterate(&client_itr) != NULL) {
 		if ((client_itr->authenticated || client_itr == connectingClient) &&
 		    !client_itr->bOpus) {
-			char *message;
-			uint32_t *tree_id;
-			message_t *sendmsg = NULL;
-
-			message = malloc(strlen(OPUS_WARN) + 1);
-			if (!message)
-				Log_fatal("Out of memory");
-			tree_id = malloc(sizeof(uint32_t));
-			if (!tree_id)
-				Log_fatal("Out of memory");
-			*tree_id = 0;
-			sendmsg = Msg_create(TextMessage);
-			sendmsg->payload.textMessage->message = message;
-			sendmsg->payload.textMessage->n_tree_id = 1;
-			sendmsg->payload.textMessage->tree_id = tree_id;
-			sprintf(message, OPUS_WARN);
-			Client_send_message(client_itr, sendmsg);
-			sendmsg = NULL;
+			Client_textmessage(client_itr, OPUS_WARN);
 		}
 	}
 	
@@ -691,6 +657,27 @@ client_t *Client_iterate(client_t **client_itr)
 	}
 	*client_itr = c;
 	return c;
+}
+
+void Client_textmessage(client_t *client, char *text)
+{
+	char *message;
+	uint32_t *tree_id;
+	message_t *sendmsg = NULL;
+
+	message = malloc(strlen(text) + 1);
+	if (!message)
+		Log_fatal("Out of memory");
+	tree_id = malloc(sizeof(uint32_t));
+	if (!tree_id)
+		Log_fatal("Out of memory");
+	*tree_id = 0;
+	sendmsg = Msg_create(TextMessage);
+	sendmsg->payload.textMessage->message = message;
+	sendmsg->payload.textMessage->n_tree_id = 1;
+	sendmsg->payload.textMessage->tree_id = tree_id;
+	strcpy(message, text);
+	Client_send_message(client, sendmsg);
 }
 
 

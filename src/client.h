@@ -125,5 +125,6 @@ void recheckCodecVersions(client_t *connectingClient);
 void Client_codec_add(client_t *client, int codec);
 void Client_codec_free(client_t *client);
 codec_t *Client_codec_iterate(client_t *client, codec_t **codec_itr);
+void Client_textmessage(client_t *client, char *text);
 
 #endif
