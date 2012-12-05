@@ -68,6 +68,9 @@
 	         } \
         } while (0)
     #endif
+    #if (POLARSSL_VERSION_MINOR >= 2)
+	    #define POLARSSL_API_V1_2
+    #endif
 #endif
 #endif
 
