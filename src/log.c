@@ -183,7 +183,7 @@ void Log_info_client(client_t *client, const char *logstring, ...)
 	offset = sprintf(buf, "INFO: ");
 	offset += vsnprintf(&buf[offset], STRSIZE - offset, logstring, argp);
 	va_end(argp);
-	offset += snprintf(&buf[offset], STRSIZE - offset, " - [%d] %s@%s:%d",
+	offset += snprintf(&buf[offset], STRSIZE - offset, " - [%d] %s@[%s]:%d",
 					   client->sessionId,
 					   client->username == NULL ? "" : client->username,
 					   inet_str, port);

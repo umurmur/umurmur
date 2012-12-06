@@ -55,7 +55,7 @@
 #define MAX_CODECS 10
 #define MAX_TOKENSIZE 64
 #define MAX_TOKENS 32
-
+#define KEYLEN 18 /* IPv6 address + port */
 #define IS_AUTH(_a_) ((_a_)->authenticated)
 
 typedef struct {
@@ -71,7 +71,7 @@ typedef struct {
 	uint8_t rxbuf[BUFSIZE], txbuf[BUFSIZE];
 	uint32_t rxcount, msgsize, drainleft, txcount, txsize;
 	int sessionId;
-	uint64_t key;
+	uint8_t key[KEYLEN];
 	char *username;
 	bool_t bUDP, authenticated, deaf, mute, self_deaf, self_mute, recording, bOpus;
 	char *os, *release, *os_version;

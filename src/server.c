@@ -85,10 +85,6 @@ void Server_run()
 	else
 		addr = getStrConf(BINDADDR);
 
-	Log_info(" bindaddr = %s", bindaddr);
-	Log_info(" addr = %s", addr);
-	Log_info(" getstrconf = %s", getStrConf(BINDADDR));
-
 	struct addrinfo hints, *res;
 
 	/* Prepare TCP socket */

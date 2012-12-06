@@ -339,10 +339,10 @@ int Client_add(int fd, struct sockaddr_storage *remote)
 	}
 
 	if (Ban_isBanned(newclient)) {
-		Log_info("Address %s banned. Disconnecting", inet_str);
+		Log_info("Address [%s] banned. Disconnecting", inet_str);
 		return -1;
 	} else {
-		Log_info("Address %s is not banned. Carry on.", inet_str); // trox
+		Log_info("Address [%s] is not banned. Carry on.", inet_str); // trox
 	}
 	newclient = malloc(sizeof(client_t));
 	if (newclient == NULL)
@@ -788,9 +788,10 @@ int Client_read_udp()
 	struct sockaddr_storage fromss;
 	socklen_t fromlen = sizeof(struct sockaddr_storage);
 	struct addrinfo hints, *res;
-	uint64_t fromport, fromaddr;
+	uint8_t fromaddr[16];
+	uint16_t fromport;
 	char inet_str[INET6_ADDRSTRLEN];
-	uint64_t key;
+	uint8_t key[KEYLEN];
 	client_t *itr;
 	UDPMessageType_t msgType;
 	
@@ -804,17 +805,19 @@ int Client_read_udp()
 	
 	len = recvfrom(udpsock, encrypted, UDP_PACKET_SIZE, MSG_TRUNC, (struct sockaddr *)&fromss, &fromlen);
 
-        if (fromss.ss_family == AF_INET) {
-                        struct sockaddr_in *s = (struct sockaddr_in *)&fromss;
-                        inet_ntop(fromss.ss_family, &s->sin_addr, inet_str, INET6_ADDRSTRLEN);
-			fromaddr = (uint64_t)&s->sin_addr;
-                        fromport = ntohs(s->sin_port);
-        } else {        // AF_INET6
-                        struct sockaddr_in6 *s = (struct sockaddr_in6 *)&fromss;
-                        inet_ntop(fromss.ss_family, &s->sin6_addr, inet_str, INET6_ADDRSTRLEN);
-			fromaddr = (uint64_t)&s->sin6_addr;
-                        fromport = ntohs(s->sin6_port);
-        }
+	if (fromss.ss_family == AF_INET) {
+		struct sockaddr_in *s = (struct sockaddr_in *)&fromss;
+		memcpy(fromaddr, &s->sin_addr, 4);
+		fromport = ntohs(s->sin_port);
+		memcpy(&key[2], fromaddr, 4);
+		memcpy(&key[0], &fromport, 2);
+	} else {        // AF_INET6
+		struct sockaddr_in6 *s = (struct sockaddr_in6 *)&fromss;
+		memcpy(fromaddr, &s->sin6_addr, 16);
+		fromport = ntohs(s->sin6_port);
+		memcpy(&key[2], fromaddr, 16);
+		memcpy(&key[0], &fromport, 2);
+	}
 
 	if (len == 0) {
 		return -1;
@@ -841,11 +844,10 @@ int Client_read_udp()
 		return 0;
 	}
 	
-	key = (fromaddr << 16) ^ fromport;
 	itr = NULL;
 	
 	while (Client_iterate(&itr) != NULL) {
-		if (itr->key == key) {
+		if (memcmp(itr->key, key, KEYLEN) == 0) {
 			if (!checkDecrypt(itr, encrypted, buffer, len))
 				goto out;
 			break;
@@ -853,22 +855,26 @@ int Client_read_udp()
 	}	
 	if (itr == NULL) { /* Unknown peer */
 		struct sockaddr_storage itrss;
-		uint64_t itraddr, itrport;
+		uint8_t itraddr[16];
+		uint16_t itrport;
+		int addrlen;
 		while (Client_iterate(&itr) != NULL) {
-			itrss = itr->remote_udp;
+			itrss = itr->remote_tcp;
 			if (itrss.ss_family == AF_INET) {
 				struct sockaddr_in *s = (struct sockaddr_in *)&itrss;
-				itraddr = (uint64_t)&s->sin_addr;
-				itrport = ntohs(s->sin_port);
+				inet_ntop(fromss.ss_family, &s->sin_addr, inet_str, INET6_ADDRSTRLEN);
+				memcpy(itraddr, &s->sin_addr, 4);
+				addrlen = 4;
 			} else {        // AF_INET6
 				struct sockaddr_in6 *s = (struct sockaddr_in6 *)&itrss;
-				itraddr = (uint64_t)&s->sin6_addr;
-				itrport = ntohs(s->sin6_port);
+				inet_ntop(fromss.ss_family, &s->sin6_addr, inet_str, INET6_ADDRSTRLEN);
+				memcpy(itraddr, &s->sin6_addr, 16);
+				addrlen = 16;
 			}
-			if (itraddr == fromaddr) {
+			if (memcmp(itraddr, fromaddr, addrlen) == 0) {
 				if (checkDecrypt(itr, encrypted, buffer, len)) {
-					itr->key = key;
-					Log_info_client(itr, "New UDP connection port %d", fromport);
+					memcpy(itr->key, key, KEYLEN);
+					Log_info_client(itr, "New UDP connection from [%s]:%d", inet_str, fromport);
 					memcpy(&itr->remote_udp, &fromss, sizeof(struct sockaddr_storage));
 					break;
 				}
