@@ -62,13 +62,15 @@ void Server_run()
 {
 	int timeout = 1000, rc;
 	struct pollfd *pollfds;
-	int tcpsock, sockopt6 = 1;
+	int tcpsock, sockopt = 1;
 	struct sockaddr_storage sin;
 	int val, clientcount;
 	etimer_t janitorTimer;
-	char *port;
-	char *addr;
-	
+	const char *port;
+	const char *addr;
+	struct addrinfo hints, *res;
+	bool_t enable_ipv6;
+
 	/* max clients + listen sock + udp sock + client connecting that will be disconnected */
 	pollfds = malloc((getIntConf(MAX_CLIENTS) + 3) * sizeof(struct pollfd));
 	if (pollfds == NULL)
@@ -84,29 +86,41 @@ void Server_run()
 		addr = bindaddr;
 	else
 		addr = getStrConf(BINDADDR);
-
-	struct addrinfo hints, *res;
-
+	
 	/* Prepare TCP socket */
 
-	memset(&hints, 0, sizeof hints);
-	hints.ai_family = AF_INET6; //UNSPEC;  // use IPv4 or IPv6, whichever
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_flags = AI_PASSIVE | AI_V4MAPPED;     // fill in my IP for me
-	hints.ai_protocol = 0;
+	enable_ipv6 = getBoolConf(ENABLE_IPV6);
+	if (enable_ipv6) { /* Test if supported */
+		int testsock = socket(AF_INET6, SOCK_STREAM, 0);
+		if (testsock < 0 && errno == EAFNOSUPPORT) {
+			Log_warn("IPv6 is not supported on this machine. Falling back to IPv4.");
+			enable_ipv6 = false;
+		}
+		if (testsock > 0) close(testsock);
+	}
 
+	memset(&hints, 0, sizeof hints);
+	if (enable_ipv6) {
+		hints.ai_family = AF_INET6;
+		hints.ai_socktype = SOCK_STREAM;
+		hints.ai_flags = AI_PASSIVE | AI_V4MAPPED;
+		hints.ai_protocol = 0;
+	} else { /* IPv4 */
+		hints.ai_family = AF_INET;
+		hints.ai_socktype = SOCK_STREAM;
+		hints.ai_flags = AI_PASSIVE;
+		hints.ai_protocol = 0;
+	}
 	rc = getaddrinfo(addr, port, &hints, &res);
 	if (rc != 0)
-		fprintf(stderr, "error in getaddrinfo: %s\n", gai_strerror(rc));
+		Log_fatal("getaddrinfo: %s", gai_strerror(rc));
 
 	Log_info("Bind to [%s]:%s", addr ? addr : "::" , port);
 
-	// make a tcp socket, bind it, and listen on it:
-
 	tcpsock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-	if (tcpsock < 0) Log_fatal("socket");
-	int on = 1;
-	if (setsockopt(tcpsock, SOL_SOCKET, SO_REUSEADDR, &sockopt6, sizeof(int)) != 0)
+	if (tcpsock < 0)
+		Log_fatal("socket: %s", strerror(errno));
+	if (setsockopt(tcpsock, SOL_SOCKET, SO_REUSEADDR, &sockopt, sizeof(int)) != 0)
 		Log_fatal("setsockopt: %s",strerror(errno));
 	rc = bind(tcpsock, res->ai_addr, res->ai_addrlen);
 	if (rc < 0)
@@ -123,15 +137,19 @@ void Server_run()
 	/* Prepare UDP socket */
 
 	memset(&hints, 0, sizeof hints);
-	hints.ai_family = AF_INET6;  // use IPv4 or IPv6, whichever
-	hints.ai_socktype = SOCK_DGRAM;
-	hints.ai_flags = AI_PASSIVE | AI_V4MAPPED;     // fill in my IP for me
-	hints.ai_protocol = 0; //auto
-
+	if (enable_ipv6) {
+		hints.ai_family = AF_INET6;
+		hints.ai_socktype = SOCK_DGRAM;
+		hints.ai_flags = AI_PASSIVE | AI_V4MAPPED;
+		hints.ai_protocol = 0;
+	} else { /* IPv4 */
+		hints.ai_family = AF_INET;
+		hints.ai_socktype = SOCK_DGRAM;
+		hints.ai_flags = AI_PASSIVE;
+		hints.ai_protocol = 0;
+	}
 	rc = getaddrinfo(addr, port, &hints, &res);
-	if (rc != 0) printf("error in getaddrinfo: %s\n", gai_strerror(rc));
-
-	// make a udp socket, bind it, and listen on it:
+	if (rc != 0) Log_fatal("getaddrinfo: %s", gai_strerror(rc));
 
 	udpsock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 	rc = bind(udpsock, res->ai_addr, res->ai_addrlen);
@@ -147,8 +165,6 @@ void Server_run()
 		Log_warn("Server: Failed to set TOS for UDP Socket");
 	fcntl(udpsock, F_SETFL, O_NONBLOCK);
 	listen(udpsock, 10);
-
-	// now accept an incoming connection:
 
 	pollfds[UDP_SOCK].fd = udpsock;
 	pollfds[UDP_SOCK].events = POLLIN | POLLHUP | POLLERR;

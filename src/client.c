@@ -805,6 +805,7 @@ int Client_read_udp()
 	
 	len = recvfrom(udpsock, encrypted, UDP_PACKET_SIZE, MSG_TRUNC, (struct sockaddr *)&fromss, &fromlen);
 
+	memset(key, 0, KEYLEN);
 	if (fromss.ss_family == AF_INET) {
 		struct sockaddr_in *s = (struct sockaddr_in *)&fromss;
 		memcpy(fromaddr, &s->sin_addr, 4);

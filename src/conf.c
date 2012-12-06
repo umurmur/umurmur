@@ -289,6 +289,13 @@ bool_t getBoolConf(param_t param)
 		else
 			return config_setting_get_bool(setting);
 		break;
+	case ENABLE_IPV6:
+		setting = config_lookup(&configuration, "enable_ipv6");
+		if (!setting)
+			return false;
+		else
+			return config_setting_get_bool(setting);
+		break;
 	default:
 		doAssert(false);
 	}
