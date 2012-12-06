@@ -56,7 +56,7 @@
 #include "version.h"
 
 char system_string[64], version_string[64];
-int bindport;
+char *bindport;
 char *bindaddr;
 
 void lockfile(const char *pidfile)
@@ -263,7 +263,7 @@ int main(int argc, char **argv)
 			bindaddr = optarg;
 			break;
 		case 'b':
-			bindport = atoi(optarg);
+			bindport = optarg;
 			break;
 		case 'd':
 			nodaemon = true;

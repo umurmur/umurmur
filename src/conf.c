@@ -43,7 +43,7 @@ static config_t configuration;
 #define DEFAULT_WELCOME "Welcome to uMurmur!"
 #define DEFAULT_MAX_CLIENTS 10
 #define DEFAULT_MAX_BANDWIDTH 48000
-#define DEFAULT_BINDPORT 64738
+#define DEFAULT_BINDPORT "64738"
 #define DEFAULT_BAN_LENGTH (60*60)
 #define DEFAULT_OPUS_THRESHOLD 100
 
@@ -133,12 +133,19 @@ const char *getStrConf(param_t param)
 	case BINDADDR:
 		setting = config_lookup(&configuration, "bindaddr");
 		if (!setting)
-			return "";
+			return NULL;
+		else {
+				strsetting = config_setting_get_string(setting);
+				return strsetting;
+		}
+		break;
+	case BINDPORT:
+		setting = config_lookup(&configuration, "bindport");
+		if (!setting)
+			return DEFAULT_BINDPORT;
 		else {
 			if ((strsetting = config_setting_get_string(setting)) != NULL)
 				return strsetting;
-			else
-				return "";
 		}
 		break;
 	case WELCOMETEXT:
@@ -219,14 +226,6 @@ int getIntConf(param_t param)
 	config_setting_t *setting = NULL;
 	
 	switch (param) {
-	case BINDPORT:
-		setting = config_lookup(&configuration, "bindport");
-		if (!setting)
-			return DEFAULT_BINDPORT;
-		else {
-			return config_setting_get_int(setting);
-		}
-		break;
 	case BAN_LENGTH:
 		setting = config_lookup(&configuration, "ban_length");
 		if (!setting)
