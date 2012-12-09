@@ -196,7 +196,8 @@ void Client_token_free(client_t *client)
 }
 
 
-#define OPUS_WARN "<strong>WARNING:</strong> Your client doesn't support the Opus codec the server is using, you won't be able to talk or hear anyone. Please upgrade"
+#define OPUS_WARN_USING "<strong>WARNING:</strong> Your client doesn't support the Opus codec the server is using, you won't be able to talk or hear anyone. Please upgrade your Mumble client."
+#define OPUS_WARN_SWITCHING "<strong>WARNING:</strong> Your client doesn't support the Opus codec the server is switching to, you won't be able to talk or hear anyone. Please upgrade your Mumble client."
 void recheckCodecVersions(client_t *connectingClient)
 {
 	client_t *client_itr = NULL;
@@ -238,7 +239,6 @@ void recheckCodecVersions(client_t *connectingClient)
 		if (client_itr->bOpus)
 			opus++;
 	}
-
 	if (users == 0) 
 		return;
 
@@ -271,36 +271,36 @@ void recheckCodecVersions(client_t *connectingClient)
 			iCodecAlpha = version;
 		else
 			iCodecBeta = version;
-	} else if (bOpus == enableOpus) {
-		if (connectingClient && !connectingClient->bOpus) {
-			Client_textmessage(client_itr, OPUS_WARN);
-		}
+	} else if (bOpus && enableOpus) {
+		if (connectingClient && !connectingClient->bOpus)
+			Client_textmessage(connectingClient, OPUS_WARN_USING);
 		return;
 	}
-	
-	bOpus = enableOpus;
-	Log_info("OPUS codec is %s", bOpus ? "enabled" : "disabled");
 
 	sendmsg = Msg_create(CodecVersion);
 	sendmsg->payload.codecVersion->alpha = iCodecAlpha;
 	sendmsg->payload.codecVersion->beta = iCodecBeta;
 	sendmsg->payload.codecVersion->prefer_alpha = bPreferAlpha;
 	sendmsg->payload.codecVersion->has_opus = true;
-	sendmsg->payload.codecVersion->opus = bOpus;
+	sendmsg->payload.codecVersion->opus = enableOpus;
 
 	Client_send_message_except(NULL, sendmsg);
 	
 	Log_info("CELT codec switch 0x%x 0x%x (prefer 0x%x)", iCodecAlpha, iCodecBeta,
 			 bPreferAlpha ? iCodecAlpha : iCodecBeta);
 
-	client_itr = NULL;
-	while (Client_iterate(&client_itr) != NULL) {
-		if ((client_itr->authenticated || client_itr == connectingClient) &&
-		    !client_itr->bOpus) {
-			Client_textmessage(client_itr, OPUS_WARN);
+	if (enableOpus && !bOpus) {
+		client_itr = NULL;
+		while (Client_iterate(&client_itr) != NULL) {
+			if ((client_itr->authenticated || client_itr == connectingClient) &&
+			    !client_itr->bOpus) {
+				Client_textmessage(client_itr, OPUS_WARN_SWITCHING);
+			}
 		}
 	}
-	
+
+	bOpus = enableOpus;
+	Log_info("OPUS codec is %s", bOpus ? "enabled" : "disabled");	
 }
 
 static int findFreeSessionId()
@@ -377,6 +377,7 @@ void Client_free(client_t *client)
 {
 	struct dlist *itr, *save;
 	message_t *sendmsg;
+	bool_t authenticatedLeft = client->authenticated;
 
 	if (client->authenticated) {
 		int leave_id;
@@ -389,7 +390,6 @@ void Client_free(client_t *client)
 		sendmsg = Msg_create(UserRemove);
 		sendmsg->payload.userRemove->session = client->sessionId;
 		Client_send_message_except(client, sendmsg);
-		recheckCodecVersions(NULL); /* Can use better codec now? */
 	}
 	list_iterate_safe(itr, save, &client->txMsgQueue) {
 		list_del(&list_get_entry(itr, message_t, node)->node);
@@ -415,6 +415,9 @@ void Client_free(client_t *client)
 	if (client->context)
 		free(client->context);
 	free(client);
+
+	if (authenticatedLeft)
+		recheckCodecVersions(NULL); /* Can use better codec now? */
 }
 
 void Client_close(client_t *client)
@@ -517,7 +520,7 @@ int Client_read(client_t *client)
 			else if (SSLi_get_error(client->ssl, rc) == SSLI_ERROR_ZERO_RETURN || 
 			         SSLi_get_error(client->ssl, rc) == 0) {
 				Log_info_client(client, "Connection closed by peer");
-				Client_free(client);
+				Client_close(client);
 			}
 			else {
 				if (SSLi_get_error(client->ssl, rc) == SSLI_ERROR_SYSCALL) {
