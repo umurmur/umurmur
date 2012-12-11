@@ -341,8 +341,6 @@ int Client_add(int fd, struct sockaddr_storage *remote)
 	if (Ban_isBanned(newclient)) {
 		Log_info("Address [%s] banned. Disconnecting", inet_str);
 		return -1;
-	} else {
-		Log_info("Address [%s] is not banned. Carry on.", inet_str); // trox
 	}
 	newclient = malloc(sizeof(client_t));
 	if (newclient == NULL)
@@ -797,7 +795,7 @@ int Client_read_udp()
 	uint8_t key[KEYLEN];
 	client_t *itr;
 	UDPMessageType_t msgType;
-	
+
 #if defined(__LP64__)
 	uint8_t encbuff[UDP_PACKET_SIZE + 8];
 	uint8_t *encrypted = encbuff + 4;
@@ -842,9 +840,8 @@ int Client_read_udp()
 		ping[3] = htonl((uint32_t)clientcount);
 		ping[4] = htonl((uint32_t)getIntConf(MAX_CLIENTS));
 		ping[5] = htonl((uint32_t)getIntConf(MAX_BANDWIDTH));
-		
-		sendto(udpsock, encrypted, 3 * sizeof(uint32_t), 0, (struct sockaddr *)&fromss, fromlen);
 
+		sendto(udpsock, encrypted, 6 * sizeof(uint32_t), 0, (struct sockaddr *)&fromss, fromlen);
 		return 0;
 	}
 	
