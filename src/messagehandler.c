@@ -758,6 +758,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		codec_t *codec_itr = NULL;
 		int i;
 		bool_t details = true;
+		struct sockaddr_storage ss;
 		
 		if (msg->payload.userStats->has_stats_only)
 			details = !msg->payload.userStats->stats_only;
@@ -772,7 +773,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		}
 		if (!target) /* Not found */
 			break;
-		
+
 		/*
 		 * Differences from Murmur:
 		 * o Ignoring certificates intentionally
@@ -829,34 +830,27 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			while (Client_codec_iterate(target, &codec_itr) != NULL)
 				sendmsg->payload.userStats->celt_versions[i++] = codec_itr->codec;
 
+			sendmsg->payload.userStats->has_opus = true;
 			sendmsg->payload.userStats->opus = target->bOpus;
 
 			/* Address */
+			ss = target->remote_tcp;
 			sendmsg->payload.userStats->has_address = true;
-			sendmsg->payload.userStats->address.data = malloc(sizeof(uint8_t) * INET6_ADDRSTRLEN);
-			if (!sendmsg->payload.userStats->address.data)
-				Log_fatal("Out of memory");
-			memset(sendmsg->payload.userStats->address.data, 0, INET6_ADDRSTRLEN);
-
-			struct sockaddr_storage ss = target->remote_tcp;
-			char inet_str[INET6_ADDRSTRLEN];
-
 			if (ss.ss_family == AF_INET) {
-				// this part may never be reached??? FIXME
-Log_info("Writing address.data for IPv4");
 				struct sockaddr_in *s = (struct sockaddr_in *)&ss;
-				inet_ntop(ss.ss_family, &s->sin_addr, inet_str, INET_ADDRSTRLEN);
-				memcpy(&sendmsg->payload.userStats->address.data, inet_str,
-					INET_ADDRSTRLEN);
+				sendmsg->payload.userStats->address.data = malloc(sizeof(uint8_t) * 4);
+				if (!sendmsg->payload.userStats->address.data)
+					Log_fatal("Out of memory");
+				memcpy(&sendmsg->payload.userStats->address.data, &s->sin_addr, 4);
+				sendmsg->payload.userStats->address.len = 4;
 			} else {
-Log_info("Writing address.data for IPv6");
-				// this works for both IPv4 and IPv6 o.O
 				struct sockaddr_in6 *s = (struct sockaddr_in6 *)&ss;
-				inet_ntop(ss.ss_family, &s->sin6_addr, inet_str, INET6_ADDRSTRLEN);
-				memcpy(&sendmsg->payload.userStats->address.data[0], &s->sin6_addr,
-					INET6_ADDRSTRLEN);
+				sendmsg->payload.userStats->address.data = malloc(sizeof(uint8_t) * 16);
+				if (!sendmsg->payload.userStats->address.data)
+					Log_fatal("Out of memory");
+				memcpy(sendmsg->payload.userStats->address.data, &s->sin6_addr, 16);
+				sendmsg->payload.userStats->address.len = 16;
 			}
-			sendmsg->payload.userStats->address.len = INET_ADDRSTRLEN;
 		}
 		/* BW */
 		sendmsg->payload.userStats->has_bandwidth = true;
