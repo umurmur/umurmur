@@ -836,20 +836,19 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			/* Address */
 			ss = target->remote_tcp;
 			sendmsg->payload.userStats->has_address = true;
+			sendmsg->payload.userStats->address.data = malloc(sizeof(uint8_t) * 16);
+			if (!sendmsg->payload.userStats->address.data)
+				Log_fatal("Out of memory");
+			memset(sendmsg->payload.userStats->address.data, 0, 16);
+			sendmsg->payload.userStats->address.len = 16;
+			
 			if (ss.ss_family == AF_INET) {
 				struct sockaddr_in *s = (struct sockaddr_in *)&ss;
-				sendmsg->payload.userStats->address.data = malloc(sizeof(uint8_t) * 4);
-				if (!sendmsg->payload.userStats->address.data)
-					Log_fatal("Out of memory");
-				memcpy(&sendmsg->payload.userStats->address.data, &s->sin_addr, 4);
-				sendmsg->payload.userStats->address.len = 4;
+				memset(&sendmsg->payload.userStats->address.data[10], 0xff, 2);
+				memcpy(&sendmsg->payload.userStats->address.data[12], &s->sin_addr, 4);
 			} else {
 				struct sockaddr_in6 *s = (struct sockaddr_in6 *)&ss;
-				sendmsg->payload.userStats->address.data = malloc(sizeof(uint8_t) * 16);
-				if (!sendmsg->payload.userStats->address.data)
-					Log_fatal("Out of memory");
 				memcpy(sendmsg->payload.userStats->address.data, &s->sin6_addr, 16);
-				sendmsg->payload.userStats->address.len = 16;
 			}
 		}
 		/* BW */
