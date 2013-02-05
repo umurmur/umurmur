@@ -286,9 +286,6 @@ void recheckCodecVersions(client_t *connectingClient)
 
 	Client_send_message_except(NULL, sendmsg);
 	
-	Log_info("CELT codec switch 0x%x 0x%x (prefer 0x%x)", iCodecAlpha, iCodecBeta,
-			 bPreferAlpha ? iCodecAlpha : iCodecBeta);
-
 	if (enableOpus && !bOpus) {
 		client_itr = NULL;
 		while (Client_iterate(&client_itr) != NULL) {
@@ -297,10 +294,10 @@ void recheckCodecVersions(client_t *connectingClient)
 				Client_textmessage(client_itr, OPUS_WARN_SWITCHING);
 			}
 		}
+		Log_info("OPUS codec %s", bOpus ? "enabled" : "disabled");	
 	}
-
+	
 	bOpus = enableOpus;
-	Log_info("OPUS codec is %s", bOpus ? "enabled" : "disabled");	
 }
 
 static int findFreeSessionId()
