@@ -31,6 +31,7 @@
 
 #include <stdlib.h>
 #include <time.h>
+#include <byteswap.h>
 #include "log.h"
 #include "list.h"
 #include "ban.h"
@@ -67,17 +68,24 @@ void Ban_UserBan(client_t *client, char *reason)
 {
 	ban_t *ban;
 	char hexhash[41];
-
+	struct sockaddr_storage *banaddr;
+	
 	ban = malloc(sizeof(ban_t));
 	if (ban == NULL)
 		Log_fatal("Out of memory");
 	memset(ban, 0, sizeof(ban_t));
 	
 	memcpy(ban->hash, client->hash, 20);
-	struct sockaddr *banaddr;
 	banaddr = &client->remote_tcp;
-	memcpy(&ban->address, banaddr->sa_data, sizeof(struct in6_addr));
-	ban->mask = 128;
+	if (client->remote_tcp.ss_family == AF_INET) {
+			struct sockaddr_in *s = (struct sockaddr_in *)&client->remote_tcp;
+			memcpy(ban->address, &s->sin_addr, 4);
+			ban->mask = 32;
+	} else { 
+			struct sockaddr_in6 *s = (struct sockaddr_in6 *)&client->remote_tcp;
+			memcpy(ban->address, &s->sin6_addr, 16);
+			ban->mask = 128;			
+	}
 	ban->reason = strdup(reason);
 	ban->name = strdup(client->username);
 	ban->time = time(NULL);
@@ -90,8 +98,9 @@ void Ban_UserBan(client_t *client, char *reason)
 		Ban_saveBanFile();
 	
 	SSLi_hash2hex(ban->hash, hexhash);
-	Log_info_client(client, "User kickbanned. Reason: '%s' Hash: %s IP: %s Banned for: %d seconds",
-	                ban->reason, hexhash, inet_ntoa(*((struct in_addr *)&ban->address)), ban->duration);
+	
+	Log_info_client(client, "User kickbanned. Reason: '%s' Hash: %s IP: [%s] Banned for: %d seconds",
+	                ban->reason, hexhash, Client_ntop(client), ban->duration);
 }
 
 
@@ -108,7 +117,7 @@ void Ban_pruneBanned()
 #ifdef DEBUG
 		SSLi_hash2hex(ban->hash, hexhash);
 		Log_debug("BL: User %s Reason: '%s' Hash: %s IP: %s Time left: %d",
-		          ban->name, ban->reason, hexhash, inet_ntoa(*((struct in_addr *)&ban->address)),
+		          ban->name, ban->reason, hexhash, inet_ntoa(*((struct in_addr *)&ban->address)), /* XXX no ipv6 */
 		          bantime_long / 1000000LL - Timer_elapsed(&ban->startTime) / 1000000LL);
 #endif
 		/* Duration of 0 = forever */
@@ -138,23 +147,45 @@ bool_t Ban_isBanned(client_t *client)
 	
 }
 
-bool_t Ban_isBannedAddr(struct in6_addr *addr)
+
+/*
+  bool HostAddress::isV6() const {
+	return (addr[0] != 0ULL) || (shorts[4] != 0) || (shorts[5] != 0xffff);
+}
+*/
+
+bool_t Ban_isBannedAddr(struct sockaddr_storage *remote)
 {
 	struct dlist *itr;
 	ban_t *ban;
-	int mask;
-	in_addr_t tempaddr1, tempaddr2;
+	int bits;
+	uint8_t addr_b[16], banaddr_b[16];
+
+	uint64_t mask[2], *addr = (uint64_t *)addr_b, *banaddr = (uint64_t *)banaddr_b;
+	memset(addr_b, 0, 16);
 	
+	if (remote->ss_family == AF_INET) {
+			struct sockaddr_in *s = (struct sockaddr_in *)remote;
+			memcpy(addr_b, &s->sin_addr, 4);
+	} else {
+			struct sockaddr_in6 *s = (struct sockaddr_in6 *)remote;
+			memcpy(addr_b, &s->sin6_addr, 16);
+	}
 	list_iterate(itr, &banlist) {
 		ban = list_get_entry(itr, ban_t, node);
-		mask = ban->mask - 96;
-		if (mask < 32) { /* XXX - only ipv4 support */
-			memcpy(&tempaddr1, addr, sizeof(in_addr_t));
-			memcpy(&tempaddr2, &ban->address, sizeof(in_addr_t));
-			tempaddr1 &= (2 ^ mask) - 1;
-			tempaddr2 &= (2 ^ mask) - 1;
+		bits = ban->mask;
+
+		if (bits == 128) {
+			mask[0] = mask[1] = 0xffffffffffffffffULL;
+		} else if (bits > 64) {
+			mask[0] = 0xffffffffffffffffULL;
+			mask[1] = bswap_64(~((1ULL << (128 - bits)) - 1));
+		} else {
+			mask[0] = bswap_64(~((1ULL << (64 - bits)) - 1));
+			mask[1] = 0ULL;
 		}
-		if (memcmp(&tempaddr1, &tempaddr2, sizeof(in_addr_t)) == 0) 
+		memcpy(banaddr, ban->address, 16);
+		if (((addr[0] & mask[0]) == (banaddr[0] & mask[0])) && ((addr[1] & mask[1]) == (banaddr[1] & mask[1])))
 			return true;
 	}
 	return false;
