@@ -127,4 +127,17 @@ void Client_codec_free(client_t *client);
 codec_t *Client_codec_iterate(client_t *client, codec_t **codec_itr);
 void Client_textmessage(client_t *client, char *text);
 
+static char *Client_ntop(client_t *client)
+{
+	static char addrstr[INET6_ADDRSTRLEN];
+
+	if (client->remote_tcp.ss_family == AF_INET) {
+			struct sockaddr_in *s = (struct sockaddr_in *)&client->remote_tcp;
+			inet_ntop(AF_INET, &s->sin_addr, addrstr, INET6_ADDRSTRLEN);
+	} else { 
+			struct sockaddr_in6 *s = (struct sockaddr_in6 *)&client->remote_tcp;
+			inet_ntop(AF_INET6, &s->sin6_addr, addrstr, INET6_ADDRSTRLEN);
+	}
+	return addrstr;
+}
 #endif
