@@ -253,8 +253,8 @@ static void Ban_saveBanFile(void)
 	list_iterate(itr, &banlist) {
 		ban = list_get_entry(itr, ban_t, node);
 		SSLi_hash2hex(ban->hash, hexhash);
-		fprintf(file, "%s,%s,%d,%d,%d,%s,%s\n", hexhash, inet_ntoa(*((struct in_addr *)&ban->address)),
-		        ban->mask, ban->time, ban->duration, ban->name, ban->reason);
+		fprintf(file, "%s,%s,%d,%ld,%d,%s,%s\n", hexhash, inet_ntoa(*((struct in_addr *)&ban->address)),
+		        ban->mask, (long int)ban->time, ban->duration, ban->name, ban->reason);
 	}
 	fclose(file);
 	banlist_changed = false;

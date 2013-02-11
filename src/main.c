@@ -89,7 +89,7 @@ void lockfile(const char *pidfile)
 	}
 
 	snprintf(str,16,"%d\n", getpid());
-	write(lfp, str, strlen(str)); /* record pid to lockfile */
+	(void)write(lfp, str, strlen(str)); /* record pid to lockfile */
 	Log_info("PID-file: %s", pidfile);
 
 	/* If uMurmur ever starts to fork()+exec(), we don't want it to
@@ -195,11 +195,11 @@ void daemonize()
 		close(i); /* close all descriptors */
 	
 	i = open("/dev/null",O_RDWR);
-	dup(i);
-	dup(i);
+	(void)dup(i);
+	(void)dup(i);
 	
 	umask(027); /* set newly created file permissions */
-	chdir("/");
+	(void)chdir("/");
 		
 }
 

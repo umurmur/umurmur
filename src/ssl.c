@@ -173,7 +173,7 @@ void SSLi_deinit(void)
 /* Create SHA1 of last certificate in the peer's chain. */
 bool_t SSLi_getSHA1Hash(SSL_handle_t *ssl, uint8_t *hash)
 {
-	x509_cert *cert;
+	x509_cert const *cert;
 #ifdef POLARSSL_API_V1_2
 	cert = ssl_get_peer_cert(ssl);
 #else
@@ -201,7 +201,7 @@ SSL_handle_t *SSLi_newconnection(int *fd, bool_t *SSLready)
 	
 	rc = ssl_init(ssl);
 	if (rc != 0 )
-		Log_fatal("Failed to initalize: %d", rc);
+		Log_fatal("Failed to initialize: %d", rc);
 	
 	ssl_set_endpoint(ssl, SSL_IS_SERVER);	
 	ssl_set_authmode(ssl, SSL_VERIFY_OPTIONAL);
