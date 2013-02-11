@@ -817,9 +817,12 @@ void Mh_handle_message(client_t *client, message_t *msg)
 
 			sendmsg->payload.userStats->version->has_version = true;
 			sendmsg->payload.userStats->version->version = target->version;
-			sendmsg->payload.userStats->version->release = strdup(target->release);
-			sendmsg->payload.userStats->version->os = strdup(target->os);
-			sendmsg->payload.userStats->version->os_version = strdup(target->os_version);
+			if (target->release)
+				sendmsg->payload.userStats->version->release = strdup(target->release);
+			if (target->os)
+				sendmsg->payload.userStats->version->os = strdup(target->os);
+			if (target->os_version)
+				sendmsg->payload.userStats->version->os_version = strdup(target->os_version);
 			
 			sendmsg->payload.userStats->n_celt_versions = target->codec_count;
 			sendmsg->payload.userStats->celt_versions = malloc(sizeof(int32_t) * target->codec_count);
