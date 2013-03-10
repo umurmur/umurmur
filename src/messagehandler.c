@@ -832,6 +832,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			while (Client_codec_iterate(target, &codec_itr) != NULL)
 				sendmsg->payload.userStats->celt_versions[i++] = codec_itr->codec;
 
+			sendmsg->payload.userStats->has_opus = true;
 			sendmsg->payload.userStats->opus = target->bOpus;
 
 			/* Address */
