@@ -14,6 +14,7 @@ Instructions for building from source
 	* [libprotoc-c](http://code.google.com/p/protobuf-c/) version 0.14 or 0.15 (use --disable-protoc option in its ./configure to build only the library). If you for some reason have to run an earlier version you need to recompile the protocol file `Mumble.proto` using the protobuf compiler for the corresponding version.
 
 2. Build
+	* `./autogen.sh`
 	* `./configure`
 	* `make`
 
