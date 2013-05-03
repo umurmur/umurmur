@@ -36,6 +36,7 @@ AM_INIT_AUTOMAKE
 
 # Configure options.
 AC_ARG_WITH([ssl], [AC_HELP_STRING([--with-ssl=@<:@LIB@:>@], [SSL library (openssl|polarssl) @<:@default=polarssl@:>@])], [], [with_ssl=polarssl])
+AC_ARG_ENABLE(polarssl-test-cert, [  --enable-polarssl-test-cert  Link to PolarSSL test certificate and key @<:@default=no@:>@], [enable_polarssl_test_cert=yes])
 
 # Checks for programs.
 AC_PROG_CC
@@ -49,6 +50,10 @@ AS_IF([test "x$with_ssl" = xpolarssl], [
 	AC_CHECK_HEADERS([polarssl/ssl.h], [], [AC_MSG_ERROR([could not find polarssl/ssl.h])])
 	AC_CHECK_LIB([polarssl], [ssl_init], [], [AC_MSG_ERROR([could not find libpolarssl])])
 	AC_DEFINE([USE_POLARSSL], [], [Use PolarSSL])
+    AS_IF([test "x$enable_polarssl_test_cert" = xyes], [
+	    AC_CHECK_LIB([polarssl], [test_srv_crt], [], [AC_MSG_ERROR([could not find test_srv_crt])])
+	    AC_DEFINE([USE_POLARSSL_TESTCERT], [], [Use PolarSSL test certificate])
+    ])
 ])
 AS_IF([test "x$with_ssl" = xopenssl], [
 	AC_CHECK_HEADERS([openssl/ssl.h], [], [AC_MSG_ERROR([could not find openssl/ssl.h])])

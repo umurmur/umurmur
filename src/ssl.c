@@ -80,6 +80,7 @@ char *my_dhm_P =
 	"DEF409C08E8AC24D1732A6128D2220DC53";
 char *my_dhm_G = "4";
 
+#ifdef USE_POLARSSL_TESTCERT
 static void initTestCert()
 {
 	int rc;
@@ -99,6 +100,7 @@ static void initTestKey()
 	if (rc != 0)
 		Log_fatal("Could not parse built-in test RSA key");
 }
+#endif
 
 /*
  * How to generate a self-signed cert with openssl:
@@ -111,14 +113,22 @@ static void initCert()
 	char *crtfile = (char *)getStrConf(CERTIFICATE);
 	
 	if (crtfile == NULL) {
-		Log_warn("No certificate file specified");
+#ifdef USE_POLARSSL_TESTCERT
+		Log_warn("No certificate file specified. Falling back to test certificate.");
 		initTestCert();
+#else
+		Log_fatal("No certificate file specified");
+#endif
 		return;
 	}
 	rc = x509parse_crtfile(&certificate, crtfile);
 	if (rc != 0) {
-		Log_warn("Could not read certificate file %s", crtfile);
+#ifdef USE_POLARSSL_TESTCERT
+		Log_warn("Could not read certificate file '%s'. Falling back to test certificate.", crtfile);
 		initTestCert();
+#else
+		Log_fatal("Could not read certificate file '%s'", crtfile);
+#endif
 		return;
 	}
 }
@@ -147,13 +157,17 @@ void SSLi_init(void)
 	char verstring[12];
 	
 	initCert();
+#ifdef USE_POLARSSL_TESTCERT
 	if (builtInTestCertificate) {
 		Log_warn("*** Using built-in test certificate and RSA key ***");
-		Log_warn("*** This is not secure! Please use a CA-signed certificate or create a self-signed certificate ***");
+		Log_warn("*** This is not secure! Please use a CA-signed certificate or create a key and self-signed certificate ***");
 		initTestKey();
 	}
 	else
 		initKey();
+#else
+	initKey();
+#endif
     havege_init(&hs);
     
 #ifdef POLARSSL_VERSION_MAJOR
