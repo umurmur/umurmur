@@ -40,38 +40,29 @@
 #include <polarssl/ssl.h>
 #include <polarssl/version.h>
 
-#ifndef POLARSSL_VERSION_MAJOR
-	#define POLARSSL_API_V0
-#else
-#if (POLARSSL_VERSION_MAJOR == 0)
-	#define POLARSSL_API_V0
-    #define HAVEGE_RAND (havege_rand)
-    #define RAND_bytes(_dst_, _size_) do { \
-	    int i; \
-	    for (i = 0; i < _size_; i++) { \
-	        _dst_[i] = havege_rand(&hs); \
-	    } \
-    } while (0)
-#else
-	#define POLARSSL_API_V1
+#define POLARSSL_API_V1
+#ifdef USE_POLARSSL_HAVEGE
     #if (POLARSSL_VERSION_MINOR >= 1)
         #define HAVEGE_RAND (havege_random)
         #define RAND_bytes(_dst_, _size_) do { \
 	        havege_random(&hs, _dst_, _size_); \
-		} while (0)
+        } while (0)
     #else
         #define HAVEGE_RAND (havege_rand)
         #define RAND_bytes(_dst_, _size_) do { \
-	         int i; \
-	         for (i = 0; i < _size_; i++) { \
-	             _dst_[i] = havege_rand(&hs); \
-	         } \
+            int i; \
+	        for (i = 0; i < _size_; i++) { \
+	            _dst_[i] = havege_rand(&hs); \
+	        } \
         } while (0)
     #endif
-    #if (POLARSSL_VERSION_MINOR >= 2)
-	    #define POLARSSL_API_V1_2
-    #endif
+#else
+#define RAND_bytes(_dst_, _size_) do { urandom_bytes(NULL, _dst_, _size_); } while (0)
+int urandom_bytes(void *ctx, unsigned char *dest, size_t len);
 #endif
+
+#if (POLARSSL_VERSION_MINOR >= 2)
+    #define POLARSSL_API_V1_2
 #endif
 
 #else /* OpenSSL */

@@ -30,6 +30,7 @@
 */
 #include <string.h>
 #include <stdlib.h>
+#include <fcntl.h>
 
 #include "conf.h"
 #include "log.h"
@@ -67,7 +68,11 @@ static x509_cert certificate;
 static rsa_context key;
 bool_t builtInTestCertificate;
 
-havege_state hs; /* exported to crypt.c */
+#ifdef USE_POLARSSL_HAVEGE
+havege_state hs;
+#else
+int urandom_fd;
+#endif
 
 /* DH prime */
 char *my_dhm_P =
@@ -145,6 +150,20 @@ static void initKey()
 		Log_fatal("Could not read RSA key file %s", keyfile);
 }
 
+#ifndef USE_POLARSSL_HAVEGE
+int urandom_bytes(void *ctx, unsigned char *dest, size_t len)
+{
+	int cur;
+
+	while (len) {
+		cur = read(urandom_fd, dest, len);
+		if (cur < 0)
+			continue;
+		len -= cur;
+	}
+}
+#endif
+
 #define DEBUG_LEVEL 0
 static void pssl_debug(void *ctx, int level, const char *str)
 {
@@ -168,7 +187,16 @@ void SSLi_init(void)
 #else
 	initKey();
 #endif
+
+	/* Initialize random number generator */
+#ifdef USE_POLARSSL_HAVEGE
     havege_init(&hs);
+#else
+    urandom_fd = open("/dev/urandom", O_RDONLY);
+    if (urandom_fd < 0)
+	    Log_fatal("Cannot open /dev/urandom");
+    Log_info("Using random number generator /dev/urandom");
+#endif
     
 #ifdef POLARSSL_VERSION_MAJOR
     version_get_string(verstring);
@@ -219,8 +247,13 @@ SSL_handle_t *SSLi_newconnection(int *fd, bool_t *SSLready)
 	
 	ssl_set_endpoint(ssl, SSL_IS_SERVER);	
 	ssl_set_authmode(ssl, SSL_VERIFY_OPTIONAL);
-
+	
+#ifdef USE_POLARSSL_HAVEGE
 	ssl_set_rng(ssl, HAVEGE_RAND, &hs);
+#else
+	ssl_set_rng(ssl, urandom_bytes, NULL);
+#endif
+	
 	ssl_set_dbg(ssl, pssl_debug, NULL);
 	ssl_set_bio(ssl, net_recv, fd, net_send, fd);
 

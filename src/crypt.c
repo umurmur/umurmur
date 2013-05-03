@@ -43,8 +43,7 @@
 #include "crypt.h"
 #include "ssl.h"
 
-#ifdef USE_POLARSSL
-#include <polarssl/havege.h>
+#ifdef USE_POLARSSL_HAVEGE
 extern havege_state hs;
 #endif
 
