@@ -257,11 +257,7 @@ SSL_handle_t *SSLi_newconnection(int *fd, bool_t *SSLready)
 	ssl_set_dbg(ssl, pssl_debug, NULL);
 	ssl_set_bio(ssl, net_recv, fd, net_send, fd);
 
-#ifdef POLARSSL_API_V1
 	ssl_set_ciphersuites(ssl, ciphers);
-#else
-	ssl_set_ciphers(ssl, ciphers);
-#endif
 
 #ifdef POLARSSL_API_V1_2
     ssl_set_session(ssl, ssn);
@@ -282,11 +278,7 @@ int SSLi_nonblockaccept(SSL_handle_t *ssl, bool_t *SSLready)
 	
 	rc = ssl_handshake(ssl);
 	if (rc != 0) {
-#ifdef POLARSSL_API_V1		
 		if (rc == POLARSSL_ERR_NET_WANT_READ || rc == POLARSSL_ERR_NET_WANT_WRITE) {
-#else
-		if (rc == POLARSSL_ERR_NET_TRY_AGAIN) {
-#endif
 			return 0;
 		} else if (POLARSSL_ERR_X509_CERT_VERIFY_FAILED) { /* Allow this (selfsigned etc) */
 			return 0;			
@@ -304,11 +296,7 @@ int SSLi_read(SSL_handle_t *ssl, uint8_t *buf, int len)
 	int rc;
 
 	rc = ssl_read(ssl, buf, len);
-#ifdef POLARSSL_API_V1		
 	if (rc == POLARSSL_ERR_NET_WANT_READ)
-#else
-	if (rc == POLARSSL_ERR_NET_TRY_AGAIN)
-#endif
 		return SSLI_ERROR_WANT_READ;
 	return rc;
 }
@@ -318,11 +306,7 @@ int SSLi_write(SSL_handle_t *ssl, uint8_t *buf, int len)
 	int rc;
 	
 	rc = ssl_write(ssl, buf, len);
-#ifdef POLARSSL_API_V1		
 	if (rc == POLARSSL_ERR_NET_WANT_WRITE)
-#else
-	if (rc == POLARSSL_ERR_NET_TRY_AGAIN)
-#endif
 		return SSLI_ERROR_WANT_WRITE;
 	return rc;
 }
