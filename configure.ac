@@ -49,6 +49,7 @@ AC_CHECK_HEADERS([libconfig.h], [], [AC_MSG_ERROR([could not find libconfig.h])]
 AC_CHECK_LIB([config], [config_init], [], [AC_MSG_ERROR([could not find libconfig])])
 AS_IF([test "x$with_ssl" = xpolarssl], [
 	AC_CHECK_HEADERS([polarssl/ssl.h], [], [AC_MSG_ERROR([could not find polarssl/ssl.h])])
+	AC_CHECK_HEADERS([polarssl/version.h], [], [AC_MSG_ERROR([could not find polarssl/version.h])])
 	AC_CHECK_LIB([polarssl], [ssl_init], [], [AC_MSG_ERROR([could not find libpolarssl])])
 	AC_DEFINE([USE_POLARSSL], [], [Use PolarSSL])
     AS_IF([test "x$enable_polarssl_test_cert" = xyes], [

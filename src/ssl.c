@@ -195,15 +195,10 @@ void SSLi_init(void)
     urandom_fd = open("/dev/urandom", O_RDONLY);
     if (urandom_fd < 0)
 	    Log_fatal("Cannot open /dev/urandom");
-    Log_info("Using random number generator /dev/urandom");
 #endif
     
-#ifdef POLARSSL_VERSION_MAJOR
     version_get_string(verstring);
     Log_info("PolarSSL library version %s initialized", verstring);
-#else
-	Log_info("PolarSSL library initialized");
-#endif
 }
 
 void SSLi_deinit(void)
@@ -422,23 +417,15 @@ static RSA *SSL_readprivatekey(char *keyfile)
 static void SSL_writecert(char *certfile, X509 *x509)
 {
 	FILE *fp;
-	BIO *err_output;
-	
-	/* prepare a BIO for outputting error messages */
-	
-	err_output = BIO_new_fp(stderr,BIO_NOCLOSE);
-	
+		
 	/* open the private key file */
 	fp = fopen(certfile, "w");
 	if (fp == NULL) {
-		BIO_printf(err_output, "Unable to open the X509 file for writing.\n");
-		BIO_free(err_output);
+		Log_warn("Unable to open the X509 file %s for writing", certfile);
 		return;
-	}
-		
+	}		
 	if (PEM_write_X509(fp, x509) == 0) {
-		BIO_printf(err_output, "Error trying to write X509 info.\n");
-		ERR_print_errors(err_output);
+		Log_warn("Error trying to write X509 info.");
 	}
 	fclose(fp);
 }
@@ -446,22 +433,16 @@ static void SSL_writecert(char *certfile, X509 *x509)
 static void SSL_writekey(char *keyfile, RSA *rsa)
 {
 	FILE *fp;
-	BIO *err_output;
-	/* prepare a BIO for outputing error messages */	
-	err_output = BIO_new_fp(stderr, BIO_NOCLOSE);
 	
 	/* open the private key file for reading */
 	fp = fopen(keyfile, "w");
 	if (fp == NULL) {
-		BIO_printf(err_output, "Unable to open the private key file %s for writing.\n", keyfile);
-		BIO_free(err_output);
+		Log_warn("Unable to open the private key file %s for writing.", keyfile);
 		return;
 	}
 	
 	if (PEM_write_RSAPrivateKey(fp, rsa, NULL, NULL, 0, NULL, NULL) == 0) {
-		/* error reading the key - check the error stack */
-		BIO_printf(err_output, "Error trying to write private key\n");
-		ERR_print_errors(err_output);
+		Log_warn("Error trying to write private key");
 	}
 	fclose(fp);
 }
@@ -512,14 +493,11 @@ static void SSL_initializeCert() {
 #endif
 	
 	if (!rsa || !x509) {
-		logthis("Generating new server certificate.");
+		Log_info("Generating new server certificate.");
 
-		BIO *bio_err;
 		
 		CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-		
-		bio_err=BIO_new_fp(stderr, BIO_NOCLOSE);
-		
+				
 		x509 = X509_new();
 		pkey = EVP_PKEY_new();
 		rsa = RSA_generate_key(1024,RSA_F4,NULL,NULL);

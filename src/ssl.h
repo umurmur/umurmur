@@ -40,8 +40,12 @@
 #include <polarssl/ssl.h>
 #include <polarssl/version.h>
 
+#ifdef POLARSSL_VERSION_MAJOR
 #if (POLARSSL_VERSION_MAJOR < 1)
-#error PolarSSL version 1.0.0 or later is required!
+#error PolarSSL version 1.0.0 or greater is required!
+#endif
+#else
+#error PolarSSL version 1.0.0 or greater is required!
 #endif
 
 #ifdef USE_POLARSSL_HAVEGE
