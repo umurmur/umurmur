@@ -3,9 +3,16 @@ Support Mumble protocol 1.2.4.
 Support Opus codec.
 Add config file option for 'Opus threshold'.
 Support PolarSSL 1.2.x.
+Remove support for PolarSSL versions prior to 1.0.0.
 Fix disconnect when using PTT.
 Fix possible crash when many clients disconnects simultaneously.
 Fix error message at client disconnect when using OpenSSL.
+Autoconf './configure' switches added:
+--enable-polarssl-test-certificate - use and link the PolarSSL
+	test certificate. Not used by default, causing umurmurd to exit
+	with error if no certificate and/or key file is found.
+--enable-polarssl-havege - use PolarSSL's HAVEGE random number
+	generator. Defaults to /dev/urandom.
 + some other fixes.
 
 0.2.10:

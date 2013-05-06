@@ -2,7 +2,7 @@
 #define VERSION_H_989876
 
 #define UMURMUR_VERSION "0.2.11"
-#define UMURMUR_CODENAME "Demented"
+#define UMURMUR_CODENAME "Bananas"
 
 #endif
 
