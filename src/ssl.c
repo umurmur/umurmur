@@ -161,6 +161,7 @@ int urandom_bytes(void *ctx, unsigned char *dest, size_t len)
 			continue;
 		len -= cur;
 	}
+	return 0;
 }
 #endif
 

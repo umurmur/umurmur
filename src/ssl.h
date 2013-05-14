@@ -49,6 +49,7 @@
 #endif
 
 #ifdef USE_POLARSSL_HAVEGE
+#include <polarssl/havege.h>
     #if (POLARSSL_VERSION_MINOR >= 1)
         #define HAVEGE_RAND (havege_random)
         #define RAND_bytes(_dst_, _size_) do { \
