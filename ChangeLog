@@ -1,3 +1,7 @@
+0.2.12:
+Fix crash at client disconnect using PolarSSL >= 1.2.6
+Fix usage of /dev/urandom for random numbers (PolarSSL)
+
 0.2.11:
 Support Mumble protocol 1.2.4.
 Support Opus codec.
