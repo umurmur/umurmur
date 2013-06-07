@@ -882,8 +882,8 @@ int Client_voiceMsg(client_t *client, uint8_t *data, int len)
 	Timer_restart(&client->idleTime);
 	Timer_restart(&client->lastActivity);
 	
+	counter = Pds_get_numval(pdi); /* step past session id */
 	if ((type >> 5) != UDPVoiceOpus) {
-		counter = Pds_get_numval(pdi); /* step past session id */
 		do {
 			counter = Pds_next8(pdi);
 			offset = Pds_skip(pdi, counter & 0x7f);
