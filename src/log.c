@@ -69,6 +69,18 @@ static void openlogfile(const char *logfilename)
 	fcntl(fd, F_SETFL, flags | O_NONBLOCK);
 }
 
+static char *timestring(void)
+{
+	static char timebuf[32];
+	time_t t;
+	struct tm *timespec;
+
+	t= time(NULL);
+	timespec = localtime(&t);
+	strftime(timebuf, 32, "%b %e %T", timespec);
+	return timebuf;
+}
+
 void Log_init(bool_t terminal)
 {
 	const char *logfilename;
@@ -114,10 +126,11 @@ void logthis(const char *logstring, ...)
 	va_start(argp, logstring);
 	vsnprintf(&buf[0], STRSIZE, logstring, argp);
 	va_end(argp);
+	
 	if (termprint)
 		fprintf(stderr, "%s\n", buf);
 	else if (logfile)
-		fprintf(logfile, "%s\n", buf);
+		fprintf(logfile, "%s %s\n", timestring(), buf);
 	else
 		syslog(LOG_INFO, "%s", buf);
 }
@@ -128,14 +141,17 @@ void Log_warn(const char *logstring, ...)
 	char buf[STRSIZE + 1];
 	int offset = 0;
 	
+	if (termprint || logfile)
+		offset = sprintf(buf, "WARN: ");
+	
 	va_start(argp, logstring);
-	offset = sprintf(buf, "WARN: ");
 	vsnprintf(&buf[offset], STRSIZE - offset, logstring, argp);
 	va_end(argp);
+	
 	if (termprint)
 		fprintf(stderr, "%s\n", buf);
 	else if (logfile)
-		fprintf(logfile, "%s\n", buf);
+		fprintf(logfile, "%s %s\n", timestring(), buf);
 	else
 		syslog(LOG_WARNING, "%s", buf);
 }
@@ -146,14 +162,17 @@ void Log_info(const char *logstring, ...)
 	char buf[STRSIZE + 1];
 	int offset = 0;
 	
-	va_start(argp, logstring);
-	offset = sprintf(buf, "INFO: ");
+	if (termprint || logfile)
+		offset = sprintf(buf, "INFO: ");
+	
+	va_start(argp, logstring);	
 	vsnprintf(&buf[offset], STRSIZE - offset, logstring, argp);
 	va_end(argp);
+	
 	if (termprint)
 		fprintf(stderr, "%s\n", buf);
 	else if (logfile)
-		fprintf(logfile, "%s\n", buf);
+		fprintf(logfile, "%s %s\n", timestring(), buf);
 	else
 		syslog(LOG_INFO, "%s", buf);
 }
@@ -164,10 +183,13 @@ void Log_info_client(client_t *client, const char *logstring, ...)
 	char buf[STRSIZE + 1];
 	int offset = 0;
 	
+	if (termprint || logfile)
+		offset = sprintf(buf, "INFO: ");
+
 	va_start(argp, logstring);
-	offset = sprintf(buf, "INFO: ");
 	offset += vsnprintf(&buf[offset], STRSIZE - offset, logstring, argp);
 	va_end(argp);
+	
 	offset += snprintf(&buf[offset], STRSIZE - offset, " - [%d] %s@%s:%d",
 					   client->sessionId,
 					   client->username == NULL ? "" : client->username,
@@ -176,7 +198,7 @@ void Log_info_client(client_t *client, const char *logstring, ...)
 	if (termprint)
 		fprintf(stderr, "%s\n", buf);
 	else if (logfile)
-		fprintf(logfile, "%s\n", buf);
+		fprintf(logfile, "%s %s\n", timestring(), buf);
 	else
 		syslog(LOG_INFO, "%s", buf);
 }
@@ -188,14 +210,16 @@ void Log_debug(const char *logstring, ...)
 	char buf[STRSIZE + 1];
 	int offset = 0;
 	
-	va_start(argp, logstring);
-	offset = sprintf(buf, "DEBUG: ");
+	if (termprint || logfile)
+		offset = sprintf(buf, "DEBUG: ");
+	
+	va_start(argp, logstring);	
 	vsnprintf(&buf[offset], STRSIZE - offset, logstring, argp);
 	va_end(argp);
 	if (termprint)
 		fprintf(stderr, "%s\n", buf);
 	else if (logfile)
-		fprintf(logfile, "%s\n", buf);
+		fprintf(logfile, "%s %s\n", timestring(), buf);
 	else
 		syslog(LOG_DEBUG, "%s", buf);
 }
@@ -206,14 +230,18 @@ void Log_fatal(const char *logstring, ...)
 	va_list argp;
 	char buf[STRSIZE + 1];
 	int offset = 0;
-	va_start(argp, logstring);
-	offset = sprintf(buf, "FATAL: ");
+	
+	if (termprint || logfile)
+		offset = sprintf(buf, "FATAL: ");
+	
+	va_start(argp, logstring);	
 	vsnprintf(&buf[offset], STRSIZE - offset, logstring, argp);
 	va_end(argp);
+	
 	if (termprint)
 		fprintf(stderr, "%s\n", buf);
 	else if (logfile)
-		fprintf(logfile, "%s\n", buf);
+		fprintf(logfile, "%s %s\n", timestring(), buf);
 	else { /* If logging subsystem is not initialized, fall back to stderr +
 			* syslog logging for fatal errors. 
 			*/
