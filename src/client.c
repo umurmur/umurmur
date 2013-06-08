@@ -1,5 +1,5 @@
-/* Copyright (C) 2009-2012, Martin Johansson <martin@fatbob.nu>
-   Copyright (C) 2005-2012, Thorvald Natvig <thorvald@natvig.com>
+/* Copyright (C) 2009-2013, Martin Johansson <martin@fatbob.nu>
+   Copyright (C) 2005-2013, Thorvald Natvig <thorvald@natvig.com>
 
    All rights reserved.
 
