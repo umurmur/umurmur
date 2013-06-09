@@ -1,3 +1,7 @@
+0.2.13:
+Fix Opus not working.
+Add timestamp when logging to file.
+
 0.2.12:
 Fix crash at client disconnect using PolarSSL >= 1.2.6
 Fix usage of /dev/urandom for random numbers (PolarSSL)
