@@ -40,6 +40,12 @@ channels = ( {
 	 description = "Lobby channel";
 	 },
 	 {
+	 name = "Silent";
+	 parent = "Root";
+	 description = "Silent channel";
+	 silent = true; # Default is false 
+	 },
+	 {
 	 name = "Red team";
 	 parent = "Lobby";
 	 description = "The Red team channel";

@@ -871,7 +871,7 @@ int Client_voiceMsg(client_t *client, uint8_t *data, int len)
 	channel_t *ch = (channel_t *)client->channel;
 	struct dlist *itr;
 	
-	if (!client->authenticated || client->mute || client->self_mute)
+	if (!client->authenticated || client->mute || client->self_mute || ch->silent)
 		goto out;
 	
 	packetsize = 20 + 8 + 4 + len;

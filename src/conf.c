@@ -333,6 +333,13 @@ int Conf_getNextChannel(conf_channel_t *chdesc, int index)
 		chdesc->noenter = false;
 	else
 		chdesc->noenter = config_setting_get_bool(setting);
+	
+	ret = snprintf(configstr, maxconfig, "channels.[%d].silent", index);
+	setting = config_lookup(&configuration, configstr);
+	if (ret >= maxconfig || ret < 0 || setting == NULL) /* Optional */
+		chdesc->silent = false;
+	else
+		chdesc->silent = config_setting_get_bool(setting);
 
 	return 0;
 }

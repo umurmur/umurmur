@@ -55,6 +55,7 @@ typedef enum param {
 	BANFILE,
 	SYNC_BANFILE,
 	OPUS_THRESHOLD,
+	SILENT_CHANNEL,
 } param_t;
 
 typedef struct {
@@ -62,7 +63,7 @@ typedef struct {
 	const char *name;
 	const char *description;
 	const char *password;
-	bool_t noenter;
+	bool_t noenter, silent;
 } conf_channel_t;
 
 typedef struct {
