@@ -36,12 +36,12 @@
 
 static uint64_t Timer_now()
 {
-	struct timeval tv;
+	struct timespec ts;
 	uint64_t e;
 	
-	gettimeofday(&tv, NULL);
-	e = tv.tv_sec * 1000000LL;
-	e += tv.tv_usec;
+        clock_gettime(CLOCK_MONOTONIC, &ts);
+        e = ts.tv_sec * 1000000LL;
+        e += ts.tv_nsec / 1000LL; //convert to microseconds
 	return e;
 }
 
