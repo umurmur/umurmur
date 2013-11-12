@@ -70,7 +70,10 @@ int urandom_bytes(void *ctx, unsigned char *dest, size_t len);
 #endif
 
 #if (POLARSSL_VERSION_MINOR >= 2)
-    #define POLARSSL_API_V1_2
+    #define POLARSSL_API_V1_2_ABOVE
+#endif
+#if (POLARSSL_VERSION_MINOR == 3)
+    #define POLARSSL_API_V1_3_ABOVE
 #endif
 
 #else /* OpenSSL */

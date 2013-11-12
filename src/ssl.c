@@ -41,13 +41,14 @@
  * PolarSSL interface
  */
 
+#include <polarssl/config.h>
 #include <polarssl/havege.h>
 #include <polarssl/certs.h>
 #include <polarssl/x509.h>
 #include <polarssl/ssl.h>
 #include <polarssl/net.h>
 
-#ifdef POLARSSL_API_V1_2
+#ifdef POLARSSL_API_V1_2_ABOVE
 int ciphers[] =
 {
     TLS_DHE_RSA_WITH_AES_256_CBC_SHA,
@@ -64,7 +65,30 @@ int ciphers[] =
     0
 };
 #endif
+
+#ifdef POLARSSL_API_V1_3_ABOVE
+static x509_crt certificate;
+static inline int x509parse_keyfile(rsa_context *rsa, const char *path,
+                                    const char *pwd)
+{
+    int ret;
+    pk_context pk;
+    
+    pk_init(&pk);
+    ret = pk_parse_keyfile(&pk, path, pwd);
+    if (ret == 0 && !pk_can_do( &pk, POLARSSL_PK_RSA))
+        ret = POLARSSL_ERR_PK_TYPE_MISMATCH;
+    if (ret == 0)
+        rsa_copy(rsa, pk_rsa(pk));
+    else
+        rsa_free(rsa);
+    pk_free(&pk);
+    return ret;
+}
+#else
 static x509_cert certificate;
+#endif
+
 static rsa_context key;
 bool_t builtInTestCertificate;
 
@@ -90,8 +114,13 @@ static void initTestCert()
 {
 	int rc;
 	builtInTestCertificate = true;
+#ifdef POLARSSL_API_V1_3_ABOVE
+	rc = x509_crt_parse_rsa(&certificate, (unsigned char *)test_srv_crt,
+		strlen(test_srv_crt));
+#else
 	rc = x509parse_crt(&certificate, (unsigned char *)test_srv_crt,
-					   strlen(test_srv_crt));	
+		strlen(test_srv_crt));
+#endif
 	if (rc != 0)
 		Log_fatal("Could not parse built-in test certificate");
 }
@@ -100,8 +129,8 @@ static void initTestKey()
 {
 	int rc;
 	
-	rc = x509parse_key(&key, (unsigned char *)test_srv_key,
-					   strlen(test_srv_key), NULL, 0);
+	rc = x509parse_key_rsa(&key, (unsigned char *)test_srv_key,
+	                       strlen(test_srv_key), NULL, 0);
 	if (rc != 0)
 		Log_fatal("Could not parse built-in test RSA key");
 }
@@ -126,7 +155,11 @@ static void initCert()
 #endif
 		return;
 	}
+#ifdef POLARSSL_API_V1_3_ABOVE
+	rc = x509_crt_parse_file(&certificate, crtfile);
+#else
 	rc = x509parse_crtfile(&certificate, crtfile);
+#endif
 	if (rc != 0) {
 #ifdef USE_POLARSSL_TESTCERT
 		Log_warn("Could not read certificate file '%s'. Falling back to test certificate.", crtfile);
@@ -204,15 +237,23 @@ void SSLi_init(void)
 
 void SSLi_deinit(void)
 {
+#ifdef POLARSSL_API_V1_3_ABOVE
+	x509_crt_free(&certificate);
+#else	
 	x509_free(&certificate);
+#endif
 	rsa_free(&key);
 }
 
 /* Create SHA1 of last certificate in the peer's chain. */
 bool_t SSLi_getSHA1Hash(SSL_handle_t *ssl, uint8_t *hash)
 {
+#ifdef POLARSSL_API_V1_3_ABOVE
+	x509_crt const *cert;
+#else
 	x509_cert const *cert;
-#ifdef POLARSSL_API_V1_2
+#endif
+#ifdef POLARSSL_API_V1_2_ABOVE
 	cert = ssl_get_peer_cert(ssl);
 #else
 	cert = ssl->peer_cert;
@@ -255,14 +296,18 @@ SSL_handle_t *SSLi_newconnection(int *fd, bool_t *SSLready)
 
 	ssl_set_ciphersuites(ssl, ciphers);
 
-#ifdef POLARSSL_API_V1_2
+#ifdef POLARSSL_API_V1_2_ABOVE
     ssl_set_session(ssl, ssn);
 #else
     ssl_set_session(ssl, 0, 0, ssn);
 #endif
     
     ssl_set_ca_chain(ssl, &certificate, NULL, NULL);
+#ifdef POLARSSL_API_V1_3_ABOVE
+	ssl_set_own_cert_rsa(ssl, &certificate, &key);
+#else
 	ssl_set_own_cert(ssl, &certificate, &key);
+#endif
 	ssl_set_dh_param(ssl, my_dhm_P, my_dhm_G);
 
 	return ssl;
