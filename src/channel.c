@@ -161,6 +161,7 @@ void Chan_init()
 			channel_t *ch, *ch_itr = NULL;
 			ch = Chan_createChannel(chdesc.name, chdesc.description);
 			ch->noenter = chdesc.noenter;
+			ch->position = chdesc.position;
 			if (chdesc.password) {
 				Log_info("Setting password on channel '%s'", ch->name); 
 				ch->password = strdup(chdesc.password);

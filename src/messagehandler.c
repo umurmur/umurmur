@@ -263,6 +263,10 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			sendmsg->payload.channelState->name = strdup(ch_itr->name);
 			if (ch_itr->desc)
 				sendmsg->payload.channelState->description = strdup(ch_itr->desc);
+			if (ch_itr->position != 0) {
+				sendmsg->payload.channelState->has_position = true;
+				sendmsg->payload.channelState->position = ch_itr->position;
+			}
 			Log_debug("Send channel info: %s", sendmsg->payload.channelState->name);
 			Client_send_message(client, sendmsg);			
 		}
@@ -728,6 +732,8 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		newchan = Chan_createChannel(msg->payload.channelState->name,
 									 msg->payload.channelState->description);
 		newchan->temporary = true;
+		if (msg->payload.channelState->has_position)
+			newchan->position = msg->payload.channelState->position;
 		Chan_addChannel(parent, newchan);
 		msg->payload.channelState->has_channel_id = true;
 		msg->payload.channelState->channel_id = newchan->id;

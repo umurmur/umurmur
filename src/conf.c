@@ -340,6 +340,13 @@ int Conf_getNextChannel(conf_channel_t *chdesc, int index)
 		chdesc->silent = false;
 	else
 		chdesc->silent = config_setting_get_bool(setting);
+	
+	ret = snprintf(configstr, maxconfig, "channels.[%d].position", index);
+	setting = config_lookup(&configuration, configstr);
+	if (ret >= maxconfig || ret < 0 || setting == NULL) /* Optional */
+		chdesc->position = 0;
+	else
+		chdesc->position = config_setting_get_int(setting);
 
 	return 0;
 }
