@@ -108,6 +108,17 @@ const char *getStrConf(param_t param)
 				return "/etc/umurmur/private_key.key";
 		}
 		break;
+	case CAPATH:
+		setting = config_lookup(&configuration, "ca_path");
+		if (!setting)
+		  return NULL;
+		else {
+			if ((strsetting = config_setting_get_string(setting)) != NULL)
+				return strsetting;
+			else
+				return NULL;
+		}
+		break;
 	case PASSPHRASE:
 		setting = config_lookup(&configuration, "password");
 		if (!setting)
