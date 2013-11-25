@@ -413,7 +413,7 @@ static X509 *SSL_readcert(char *certfile)
 	FILE *fp;
 	X509 *x509;
 			
-	/* open the private key file */
+	/* open the certificate file */
 	fp = fopen(certfile, "r");
 	if (fp == NULL) {
 		Log_warn("Unable to open the X509 file %s for reading.", certfile);
@@ -497,6 +497,7 @@ static void SSL_writekey(char *keyfile, RSA *rsa)
 }
 
 static void SSL_initializeCert() {
+
 	char *crt, *key, *pass;
 	
 	crt = (char *)getStrConf(CERTIFICATE);
@@ -509,6 +510,7 @@ static void SSL_initializeCert() {
 		pkey = EVP_PKEY_new();
 		EVP_PKEY_assign_RSA(pkey, rsa);
 	}		
+
 	
 #if 0
 	/* Later ... */
@@ -585,16 +587,23 @@ void SSLi_init(void)
 	char *cipherstring, tempstring[128];
 		
 	SSL_library_init();
-    OpenSSL_add_all_algorithms();		/* load & register all cryptos, etc. */
-    SSL_load_error_strings();			/* load all error messages */
-    ERR_load_crypto_strings();			/* load all error messages */
-    method = SSLv23_server_method();		/* create new server-method instance */
-    context = SSL_CTX_new(method);			/* create new context from method */
-    if (context == NULL)
-    {
-        ERR_print_errors_fp(stderr);
-        abort();
-    }
+	OpenSSL_add_all_algorithms();		/* load & register all cryptos, etc. */
+	SSL_load_error_strings();			/* load all error messages */
+	ERR_load_crypto_strings();			/* load all error messages */
+	method = SSLv23_server_method();		/* create new server-method instance */
+	context = SSL_CTX_new(method);			/* create new context from method */
+	if (context == NULL)
+	{
+		ERR_print_errors_fp(stderr);
+		abort();
+	}
+	
+	char* sslCAPath = getStrConf(CAPATH);
+	if(sslCAPath != NULL)
+	{
+		SSL_CTX_load_verify_locations(context, NULL, sslCAPath);
+	}
+	
 	SSL_initializeCert();
 	if (SSL_CTX_use_certificate(context, x509) <= 0)
 		Log_fatal("Failed to initialize cert");
@@ -602,7 +611,7 @@ void SSLi_init(void)
 		ERR_print_errors_fp(stderr);
 		Log_fatal("Failed to initialize private key");
 	}
-
+	
 	/* Set cipher list */
 	ssl = SSL_new(context);	
 	cipherlist = (STACK_OF(SSL_CIPHER) *) SSL_get_ciphers(ssl);
