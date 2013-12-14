@@ -153,6 +153,7 @@ void Chan_init()
 		if (i == 0) {
 			rootChan = createChannel(0, chdesc.name, chdesc.description);
 			rootChan->noenter = chdesc.noenter;
+			rootChan->silent = chdesc.silent;
 			list_add_tail(&rootChan->flatlist_node, &channels);
 			if (strcmp(defaultChannelName, chdesc.name) == 0)
 				defaultChan = rootChan;
@@ -162,6 +163,7 @@ void Chan_init()
 			ch = Chan_createChannel(chdesc.name, chdesc.description);
 			ch->noenter = chdesc.noenter;
 			ch->position = chdesc.position;
+			ch->silent = chdesc.silent;
 			if (chdesc.password) {
 				Log_info("Setting password on channel '%s'", ch->name); 
 				ch->password = strdup(chdesc.password);
