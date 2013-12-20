@@ -25,6 +25,9 @@ max_users = 10;
 # umurmurd will close and reopen the logfile if SIGHUP is received.
 # logfile = "/var/log/umurmurd.log";
 
+# CA location for CA-signed certificates
+# ca_path = "/path/to/ca/certificates/";
+
 # Channel tree definition:
 # Root channel must always be defined first.
 # If a channel has a parent, the parent must be defined before the child channel(s).
