@@ -43,18 +43,20 @@ channels = ( {
 	 name = "Silent";
 	 parent = "Root";
 	 description = "Silent channel";
-	 silent = true; # Default is false 
+	 silent = true; # Optional. Default is false 
 	 },
 	 {
 	 name = "Red team";
 	 parent = "Lobby";
 	 description = "The Red team channel";
+     position = 0;   # Optional. Default is 0 and the channels will be shown in alphabetic order.
      # password = "redpw";
 	 },
 	 {
 	 name = "Blue team";
 	 parent = "Lobby";
 	 description = "The Blue team channel";
+     position = 1;   # Optional. Default is 0 and the channels will be shown in alphabetic order.
      # password = "bluepw";
 	 }
 );
