@@ -315,19 +315,23 @@ int Chan_userJoin_id(int channelid, client_t *client)
 
 channelJoinResult_t Chan_userJoin_id_test(int channelid, client_t *client)
 {
+	channelJoinResult_t result;
 	channel_t *ch_itr = NULL;
 	do {
 		Chan_iterate(&ch_itr);
 	} while (ch_itr != NULL && ch_itr->id != channelid);
 	if (ch_itr == NULL) {
 		Log_warn("Channel id %d not found - ignoring.", channelid);
-		return CHJOIN_NOTFOUND;
+		result.CHJOIN_NOTFOUND = true;
 	}
-	else if (ch_itr->noenter)
-		return CHJOIN_NOENTER;
-	else if (ch_itr->password && !Client_token_match(client, ch_itr->password))
-		return CHJOIN_WRONGPW;
-	else return CHJOIN_OK;
+	else
+		result.CHJOIN_NOTFOUND = false;
+
+	result.CHJOIN_NOENTER = ch_itr->noenter;
+	result.CHJOIN_WRONGPW = ch_itr->password && !Client_token_match(client, ch_itr->password) && !client->isAdmin;
+	result.CHJOIN_SILENT = ch_itr->silent;
+
+	return result;
 }
 
 #if 0
