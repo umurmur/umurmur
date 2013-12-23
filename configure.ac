@@ -51,6 +51,15 @@ AC_CHECK_FUNC([clock_gettime], [], [AC_CHECK_LIB([rt], [clock_gettime], [], [AC_
 AS_IF([test "x$with_ssl" = xpolarssl], [
 	AC_CHECK_HEADERS([polarssl/ssl.h], [], [AC_MSG_ERROR([could not find polarssl/ssl.h])])
 	AC_CHECK_HEADERS([polarssl/version.h], [], [AC_MSG_ERROR([could not find polarssl/version.h])])
+
+	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <polarssl/ssl.h>]],
+		[[#if defined(POLARSSL_ZLIB_SUPPORT)
+		int x;
+		#endif
+		x = 0;
+		return 0;]])],
+		[AC_CHECK_LIB([z], [deflate], [], [AC_MSG_ERROR([could not find zlib])])],
+		[])
 	AC_CHECK_LIB([polarssl], [ssl_init], [], [AC_MSG_ERROR([could not find libpolarssl])])
 	AC_DEFINE([USE_POLARSSL], [], [Use PolarSSL])
     AS_IF([test "x$enable_polarssl_test_cert" = xyes], [
