@@ -47,9 +47,19 @@ AC_CHECK_HEADERS([google/protobuf-c/protobuf-c.h], [], [AC_MSG_ERROR([could not 
 AC_CHECK_LIB([protobuf-c], [protobuf_c_data_buffer_init], [], [AC_MSG_ERROR([could not find protobuf-c library])])
 AC_CHECK_HEADERS([libconfig.h], [], [AC_MSG_ERROR([could not find libconfig.h])])
 AC_CHECK_LIB([config], [config_init], [], [AC_MSG_ERROR([could not find libconfig])])
+AC_CHECK_FUNC([clock_gettime], [], [AC_CHECK_LIB([rt], [clock_gettime], [], [AC_MSG_ERROR([could not find clock_gettime() in librt])])])
 AS_IF([test "x$with_ssl" = xpolarssl], [
 	AC_CHECK_HEADERS([polarssl/ssl.h], [], [AC_MSG_ERROR([could not find polarssl/ssl.h])])
 	AC_CHECK_HEADERS([polarssl/version.h], [], [AC_MSG_ERROR([could not find polarssl/version.h])])
+
+	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <polarssl/ssl.h>]],
+		[[#if defined(POLARSSL_ZLIB_SUPPORT)
+		int x;
+		#endif
+		x = 0;
+		return 0;]])],
+		[AC_CHECK_LIB([z], [deflate], [], [AC_MSG_ERROR([could not find zlib])])],
+		[])
 	AC_CHECK_LIB([polarssl], [ssl_init], [], [AC_MSG_ERROR([could not find libpolarssl])])
 	AC_DEFINE([USE_POLARSSL], [], [Use PolarSSL])
     AS_IF([test "x$enable_polarssl_test_cert" = xyes], [
@@ -84,7 +94,7 @@ AC_TYPE_UINT64_T
 AC_TYPE_UINT8_T
 
 # Checks for library functions.
-AC_CHECK_FUNCS([ftruncate gettimeofday inet_ntoa memchr memmove memset socket strdup strerror strrchr uname poll clock_gettime], [], [AC_MSG_ERROR([missing a required func])])
+AC_CHECK_FUNCS([ftruncate gettimeofday inet_ntoa memchr memmove memset socket strdup strerror strrchr uname poll], [], [AC_MSG_ERROR([missing a required func])])
 
 AC_CONFIG_FILES([Makefile src/Makefile])
 AC_OUTPUT
