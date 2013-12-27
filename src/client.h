@@ -91,6 +91,7 @@ typedef struct {
 	int tokencount;
 	uint8_t hash[20];
 	bool_t isAdmin;
+	bool_t isSuppressed;
 	float UDPPingAvg, UDPPingVar, TCPPingAvg, TCPPingVar;
 	uint32_t UDPPackets, TCPPackets;
 } client_t;

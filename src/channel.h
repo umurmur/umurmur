@@ -57,11 +57,11 @@ typedef struct {
 	struct dlist node;
 } channellist_t;
 
-typedef enum {
-	CHJOIN_OK,
+typedef struct {
+  bool_t CHJOIN_SILENT,
 	CHJOIN_NOENTER,
 	CHJOIN_WRONGPW,
-	CHJOIN_NOTFOUND,
+	CHJOIN_NOTFOUND;
 } channelJoinResult_t;
 	
 void Chan_init();
