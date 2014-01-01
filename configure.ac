@@ -1,4 +1,5 @@
 # Copyright (C) 2011, Antoine Bertin <diaoulael@gmail.com>
+# Copyright (C) 2011-2014, Martin Johansson <martin@fatbob.nu>
 #
 #  All rights reserved.
 #
