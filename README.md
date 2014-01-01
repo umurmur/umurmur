@@ -34,6 +34,10 @@ Contributors
 * [pierre.h](http://code.google.com/u/@VBRUQ1ZTAhNEXwJ9/)
 * [phr0z3nt04st](https://github.com/phr0z3nt04st)
 * [Troy C](https://github.com/troxor)
+* [Trivve](https://github.com/Trivve)
+* [hasufell](https://github.com/hasufell)
+* [fmorgner](https://github.com/fmorgner)
+* [Rawi666](https://github.com/Rawi666)
 
 Hope I didn't forget anyone... Please just send me a mail if you feel this is the case.
 
