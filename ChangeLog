@@ -2,6 +2,7 @@
 Add 'silent' option to channel configuration.
 Add 'position' option to channel configuration.
 Support PolarSSL 1.3.x.
+Handle PolarSSL compiled with zlib-support.
 Use CLOCK_MONOTONIC instead of gettimeofday() which can cause mayhem if
 	time changes dramatically, e.g. when synchronizing with time
 	server.
