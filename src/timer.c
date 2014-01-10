@@ -32,16 +32,31 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#ifdef __MACH__
+#include <mach/clock.h>
+#include <mach/mach.h>
+#endif
+
 #include "timer.h"
 
 static uint64_t Timer_now()
 {
 	struct timespec ts;
 	uint64_t e;
-	
-        clock_gettime(CLOCK_MONOTONIC, &ts);
-        e = ts.tv_sec * 1000000LL;
-        e += ts.tv_nsec / 1000LL; //convert to microseconds
+
+#ifdef __MACH__
+  clock_serv_t clock;
+  mach_timespec_t mts;
+  host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &clock);
+  clock_get_time(clock, &mts);
+  mach_port_deallocate(mach_task_self(), clock);
+  ts.tv_sec = mts.tv_sec;
+  ts.tv_nsec = mts.tv_nsec;
+#else
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+#endif
+  e = ts.tv_sec * 1000000LL;
+  e += ts.tv_nsec / 1000LL; //convert to microseconds
 	return e;
 }
 
