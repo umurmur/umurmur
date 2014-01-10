@@ -34,6 +34,7 @@ AC_INIT([umurmur], [0.2.14], [http://code.google.com/p/umurmur/issues/entry], [u
 AC_CONFIG_SRCDIR([src/client.h])
 AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE
+AC_CANONICAL_HOST
 
 # Configure options.
 AC_ARG_WITH([ssl], [AC_HELP_STRING([--with-ssl=@<:@LIB@:>@], [SSL library (openssl|polarssl) @<:@default=polarssl@:>@])], [], [with_ssl=polarssl])
@@ -48,7 +49,14 @@ AC_CHECK_HEADERS([google/protobuf-c/protobuf-c.h], [], [AC_MSG_ERROR([could not 
 AC_CHECK_LIB([protobuf-c], [protobuf_c_data_buffer_init], [], [AC_MSG_ERROR([could not find protobuf-c library])])
 AC_CHECK_HEADERS([libconfig.h], [], [AC_MSG_ERROR([could not find libconfig.h])])
 AC_CHECK_LIB([config], [config_init], [], [AC_MSG_ERROR([could not find libconfig])])
-AC_CHECK_FUNC([clock_gettime], [], [AC_CHECK_LIB([rt], [clock_gettime], [], [AC_MSG_ERROR([could not find clock_gettime() in librt])])])
+case $host_os in
+  darwin* )
+    AC_CHECK_FUNC([clock_get_time], [], [AC_MSG_ERROR([could not find clock_get_time()])])
+    ;;
+  * )
+    AC_CHECK_FUNC([clock_gettime], [], [AC_CHECK_LIB([rt], [clock_gettime], [], [AC_MSG_ERROR([could not find clock_gettime() in librt])])])
+    ;;
+esac
 AS_IF([test "x$with_ssl" = xpolarssl], [
 	AC_CHECK_HEADERS([polarssl/ssl.h], [], [AC_MSG_ERROR([could not find polarssl/ssl.h])])
 	AC_CHECK_HEADERS([polarssl/version.h], [], [AC_MSG_ERROR([could not find polarssl/version.h])])
