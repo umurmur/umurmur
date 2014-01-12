@@ -47,7 +47,7 @@ static uint64_t Timer_now()
 #ifdef __MACH__
   clock_serv_t clock;
   mach_timespec_t mts;
-  host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &clock);
+  host_get_clock_service(mach_host_self(), SYSTEM_CLOCK, &clock);
   clock_get_time(clock, &mts);
   mach_port_deallocate(mach_task_self(), clock);
   ts.tv_sec = mts.tv_sec;
