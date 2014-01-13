@@ -31,7 +31,7 @@
 #ifndef CLIENT_H_45786678
 #define CLIENT_H_45786678
 
-//#include <config.h>
+#include <config.h>
 #include <stdint.h>
 #include <unistd.h>             /* close() */
 #include <sys/types.h>
