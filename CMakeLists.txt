@@ -19,6 +19,9 @@ endif()
 pkg_check_modules(LIBCONFIG libconfig)
 pkg_check_modules(LIBPROTOBUF libprotobuf-c)
 
+set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} ${LIBCONFIG_LIDIR})
+set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} ${LIBPROTOBUF_LIDIR})
+
 check_function_exists(clock_gettime HAVE_CLOCK_GETTIME)
 
 if(NOT HAVE_CLOCK_GETTIME)
