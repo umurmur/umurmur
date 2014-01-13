@@ -1,25 +1,30 @@
-project(umurmurd)
-
 cmake_minimum_required(VERSION 2.8)
 
-add_definitions()
+project(umurmurd C)
 
-include(FindPkgConfig)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
+
+find_package(Libconfig REQUIRED)
+find_package(ProtobufC REQUIRED)
 include(CheckFunctionExists)
 include(CheckLibraryExists)
-include(CheckSymbolExists)
 
 if(SSL MATCHES "openssl")
-  pkg_check_modules(SSLIMP REQUIRED openssl)
-else()
-  pkg_check_modules(SSLIMP REQUIRED polarssl)
-  set(USE_POLARSSL ON)
-endif()
-
-pkg_check_modules(LIBCONFIG REQUIRED libconfig)
-pkg_check_modules(LIBPROTOBUF REQUIRED libprotobuf-c)
-
-link_directories(${LIBCONFIG_LIBDIR} ${LIBPROTOBUF_LIBDIR})
+  find_package(OpenSSL REQUIRED)
+  if(OPENSSL_FOUND)
+    set(SSLIMP_LIBRARIES ${OPENSSL_LIBRARIES})
+    set(SSLIMP_INCLUDE_DIR ${OPENSSL_INCLUDE_DIR})
+    set(SSLIMP_LIBRARY_DIR ${OPENSSL_LIB_DIR})
+  endif(OPENSSL_FOUND)
+else(SSL MATCHES "openssl")
+  find_package(PolarSSL REQUIRED)
+  if(POLARSSL_FOUND)
+    set(USE_POLARSSL ON)
+    set(SSLIMP_LIBRARIES ${POLARSSL_LIBRARIES})
+    set(SSLIMP_INCLUDE_DIR ${POLARSSL_INCLUDE_DIR})
+    set(SSLIMP_LIBRARY_DIR ${POLARSSL_LIB_DIR})
+  endif(POLARSSL_FOUND)
+endif(SSL MATCHES "openssl")
 
 check_function_exists(clock_gettime HAVE_CLOCK_GETTIME)
 
@@ -37,12 +42,13 @@ endif()
 
 set(SOURCE "")
 add_subdirectory(src)
-include_directories(include)
+
+configure_file(src/config.h.in ${CMAKE_SOURCE_DIR}/src/config.h)
+
+include_directories(${LIBCONFIG_INCLUDE_DIR} ${PROTOBUFC_INCLUDE_DIR} ${SSLIMP_INCLUDE_DIR}) 
+link_directories(${LIBCONFIG_LIB_DIR} ${PROTOBUFC_LIB_DIR} ${SSLIMP_LIB_DIR})
 
 add_executable(umurmurd ${SOURCE})
 
-
-add_definitions(${LIBCONFIG_CFLAGS} ${LIBPROTOBUF_CFLAGS} ${SSLIMP_CFLAGS})
-target_link_libraries(umurmurd ${LIBCONFIG_LIBRARIES} ${LIBPROTOBUF_LIBRARIES} ${SSLIMP_LIBRARIES})
-
-configure_file(src/config.h.in ${CMAKE_SOURCE_DIR}/src/config.h)
+add_definitions(${SSLIMP_CFLAGS})
+target_link_libraries(umurmurd ${LIBCONFIG_LIBRARIES} ${PROTOBUFC_LIBRARIES} ${SSLIMP_LIBRARIES})
