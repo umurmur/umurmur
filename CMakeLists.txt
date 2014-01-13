@@ -9,14 +9,15 @@ include(CheckFunctionExists)
 include(CheckLibraryExists)
 include(CheckSymbolExists)
 
-pkg_check_modules(LIBCONFIG libconfig)
-pkg_check_modules(LIBPROTOBUF libprotobuf-c)
-
-if(DEFINED SSL)
-  pkg_check_modules(SSLIMP REQUIRED ${SSL})
+if(SSL MATCHES "openssl")
+  pkg_check_modules(SSLIMP REQUIRED openssl)
 else()
   pkg_check_modules(SSLIMP REQUIRED polarssl)
+  set(USE_POLARSSL ON)
 endif()
+
+pkg_check_modules(LIBCONFIG libconfig)
+pkg_check_modules(LIBPROTOBUF libprotobuf-c)
 
 check_function_exists(clock_gettime HAVE_CLOCK_GETTIME)
 
@@ -33,12 +34,13 @@ if(NOT HAVE_CLOCK_GETTIME)
 endif()
 
 set(SOURCE "")
-
 add_subdirectory(src)
 include_directories(include)
 
-add_definitions(${LIBCONFIG_CFLAGS} ${LIBPROTOBUF_CFLAGS} ${SSLIMP_CFLAGS})
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${LIBCONFIG_CFLAGS} ${LIBPROTOBUF_CFLAGS}")
-
 add_executable(umurmurd ${SOURCE})
+
+
+add_definitions(${LIBCONFIG_CFLAGS} ${LIBPROTOBUF_CFLAGS} ${SSLIMP_CFLAGS})
 target_link_libraries(umurmurd ${LIBCONFIG_LIBRARIES} ${LIBPROTOBUF_LIBRARIES} ${SSLIMP_LIBRARIES})
+
+configure_file(src/config.h.in ${CMAKE_SOURCE_DIR}/src/config.h)
