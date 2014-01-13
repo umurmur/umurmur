@@ -32,7 +32,7 @@
 #define CRYPTSTATE_H_34564356
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+//#include <config.h>
 #endif
 
 #ifdef USE_POLARSSL
@@ -53,12 +53,12 @@ typedef struct CryptState {
 	uint8_t encrypt_iv[AES_BLOCK_SIZE];
 	uint8_t decrypt_iv[AES_BLOCK_SIZE];
 	uint8_t decrypt_history[0x100];
-	
+
 	unsigned int uiGood;
 	unsigned int uiLate;
 	unsigned int uiLost;
 	unsigned int uiResync;
-	
+
 	unsigned int uiRemoteGood;
 	unsigned int uiRemoteLate;
 	unsigned int uiRemoteLost;
@@ -72,7 +72,7 @@ typedef struct CryptState {
 #endif
 	etimer_t tLastGood;
 	etimer_t tLastRequest;
-	bool_t bInit;	
+	bool_t bInit;
 } cryptState_t;
 
 void CryptState_init(cryptState_t *cs);

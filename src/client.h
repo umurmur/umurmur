@@ -31,7 +31,7 @@
 #ifndef CLIENT_H_45786678
 #define CLIENT_H_45786678
 
-#include <config.h>
+//#include <config.h>
 #include <stdint.h>
 #include <unistd.h>             /* close() */
 #include <sys/types.h>
@@ -65,9 +65,9 @@ typedef struct {
 	bool_t shutdown_wait;
 	cryptState_t cryptState;
 	bool_t readBlockedOnWrite, writeBlockedOnRead;
-	
+
 	struct sockaddr_in remote_tcp;
-	struct sockaddr_in remote_udp; 
+	struct sockaddr_in remote_udp;
 	uint8_t rxbuf[BUFSIZE], txbuf[BUFSIZE];
 	uint32_t rxcount, msgsize, drainleft, txcount, txsize;
 	int sessionId;
