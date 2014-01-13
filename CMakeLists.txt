@@ -16,8 +16,8 @@ else()
   set(USE_POLARSSL ON)
 endif()
 
-pkg_check_modules(LIBCONFIG libconfig)
-pkg_check_modules(LIBPROTOBUF libprotobuf-c)
+pkg_check_modules(LIBCONFIG REQUIRED libconfig)
+pkg_check_modules(LIBPROTOBUF REQUIRED libprotobuf-c)
 
 link_directories(${LIBCONFIG_LIBDIR} ${LIBPROTOBUF_LIBDIR})
 
