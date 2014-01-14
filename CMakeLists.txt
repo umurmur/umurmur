@@ -37,7 +37,7 @@ if(NOT HAVE_CLOCK_GETTIME)
       message(FATAL_ERROR "Didn't find clock_gettime() or clock_get_time!")
     endif()
   else()
-    set(LIBRARIES ${LIBRARIES} rt)
+    set(LIBRT rt)
   endif()
 endif()
 
@@ -46,11 +46,11 @@ add_subdirectory(src)
 
 configure_file(src/config.h.in ${CMAKE_SOURCE_DIR}/src/config.h)
 
-include_directories(${LIBCONFIG_INCLUDE_DIR} ${PROTOBUFC_INCLUDE_DIR} ${SSLIMP_INCLUDE_DIR}) 
+include_directories(${LIBCONFIG_INCLUDE_DIR} ${PROTOBUFC_INCLUDE_DIR} ${SSLIMP_INCLUDE_DIR})
 link_directories(${LIBCONFIG_LIB_DIR} ${PROTOBUFC_LIB_DIR} ${SSLIMP_LIB_DIR})
 
 add_executable(umurmurd ${SOURCE})
 install(TARGETS umurmurd RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}/bin")
 
 add_definitions(${SSLIMP_CFLAGS})
-target_link_libraries(umurmurd ${LIBCONFIG_LIBRARIES} ${PROTOBUFC_LIBRARIES} ${SSLIMP_LIBRARIES})
+target_link_libraries(umurmurd ${LIBCONFIG_LIBRARIES} ${PROTOBUFC_LIBRARIES} ${SSLIMP_LIBRARIES} ${LIBRT})
