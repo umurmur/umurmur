@@ -1,0 +1,6 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+
+#cmakedefine USE_POLARSSL
+
+#endif // CONFIG_H
