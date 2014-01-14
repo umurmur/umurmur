@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 2.8)
 project(umurmurd C)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH true)
 
 find_package(Libconfig REQUIRED)
 find_package(ProtobufC REQUIRED)
@@ -49,6 +50,7 @@ include_directories(${LIBCONFIG_INCLUDE_DIR} ${PROTOBUFC_INCLUDE_DIR} ${SSLIMP_I
 link_directories(${LIBCONFIG_LIB_DIR} ${PROTOBUFC_LIB_DIR} ${SSLIMP_LIB_DIR})
 
 add_executable(umurmurd ${SOURCE})
+install(TARGETS umurmurd RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}/bin")
 
 add_definitions(${SSLIMP_CFLAGS})
 target_link_libraries(umurmurd ${LIBCONFIG_LIBRARIES} ${PROTOBUFC_LIBRARIES} ${SSLIMP_LIBRARIES})
