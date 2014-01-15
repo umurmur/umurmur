@@ -50,7 +50,12 @@ include_directories(${LIBCONFIG_INCLUDE_DIR} ${PROTOBUFC_INCLUDE_DIR} ${SSLIMP_I
 link_directories(${LIBCONFIG_LIB_DIR} ${PROTOBUFC_LIB_DIR} ${SSLIMP_LIB_DIR})
 
 add_executable(umurmurd ${SOURCE})
-install(TARGETS umurmurd RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}/bin")
+install(TARGETS umurmurd RUNTIME DESTINATION "bin")
+
+find_path(OLD_CONFIG_FILE NAMES "umurmur.conf" PATHS ${CMAKE_INSTALL_PREFIX} PATH_SUFFIXES "etc")
+if(NOT OLD_CONFIG_FILE)
+  install(FILES "umurmur.conf.example" DESTINATION "etc" RENAME "umurmur.conf")
+endif(NOT OLD_CONFIG_FILE)
 
 add_definitions(${SSLIMP_CFLAGS})
 target_link_libraries(umurmurd ${LIBCONFIG_LIBRARIES} ${PROTOBUFC_LIBRARIES} ${SSLIMP_LIBRARIES} ${LIBRT})
