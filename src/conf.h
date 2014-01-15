@@ -32,8 +32,7 @@
 #define CONF_H_24564356
 
 #include "messages.h"
-
-#define DEFAULT_CONFIG "/etc/umurmur.conf"
+#include "config.h"
 
 typedef enum param {
 	CERTIFICATE,

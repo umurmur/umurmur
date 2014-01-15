@@ -2,5 +2,6 @@
 #define CONFIG_H
 
 #cmakedefine USE_POLARSSL
+#define DEFAULT_CONFIG "${CMAKE_INSTALL_PREFIX}/etc/umurmurd.conf"
 
 #endif // CONFIG_H
