@@ -2,7 +2,7 @@ include(FindPackageHandleStandardArgs)
 include(CheckSymbolExists)
 
 find_path(POLARSSL_INCLUDE_DIR NAMES "version.h" PATHS /usr/pkg /usr/local /usr PATH_SUFFIXES "include/polarssl")
-find_path(POLARSSL_LIB_DIR NAMES "libpolarssl.so" "libpolarssl.dylib" PATHS /usr/pkg /usr/local /usr PATH_SUFFIXES "lib" "lib/${CMAKE_LIBRARY_ARCHITECTURE}")
+find_path(POLARSSL_LIB_DIR NAMES "libpolarssl.so" "libpolarssl.dylib" "libpolarssl.a" PATHS /usr/pkg /usr/local /usr PATH_SUFFIXES "lib" "lib/${CMAKE_LIBRARY_ARCHITECTURE}")
 
 if(POLARSSL_INCLUDE_DIR AND POLARSSL_LIB_DIR)
   set(POLARSSL_LIBRARIES polarssl)
