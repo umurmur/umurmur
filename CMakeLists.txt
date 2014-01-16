@@ -5,6 +5,15 @@ project(umurmurd C)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH true)
 
+option(USE_POLARSSL_TESTCERT "Link to the PolarSSL test certificate and key." OFF)
+option(USE_POLARSSL_HAVEGE "Use the PolarSSL HAVEGE random generator key." OFF)
+
+if(USE_POLARSSL_TESTCERT OR USE_POLARSSL_HAVEGE)
+  if(SSL MATCHES "openssl")
+    message(FATAL_ERROR "Selecting USE_POLARSSL_TESTCERT or USE_POLARSSL_HAVEGE implies SSL=polarssl")
+  endif(SSL MATCHES "openssl")
+endif(USE_POLARSSL_TESTCERT OR USE_POLARSSL_HAVEGE)
+
 find_package(Libconfig REQUIRED)
 find_package(ProtobufC REQUIRED)
 include(CheckFunctionExists)
