@@ -56,7 +56,7 @@ static void openlogfile(const char *logfilename)
 	/* Set the stream as line buffered */
 	if (setvbuf(logfile, NULL, _IOLBF, 0) < 0)
 		Log_fatal("setvbuf() failed: %s\n", strerror(errno));
-	
+
 	/* XXX - Is it neccessary/appropriate that logging to file is non-blocking?
 	 * If not, there's a risk that execution blocks, meaning that voice blocks
 	 * as well since uMurmur is single threaded by design. OTOH, what could
@@ -84,11 +84,11 @@ static char *timestring(void)
 void Log_init(bool_t terminal)
 {
 	const char *logfilename;
-	
-	termprint = terminal;		
+
+	termprint = terminal;
 	if (termprint)
 		return;
-	
+
 	logfilename = getStrConf(LOGFILE);
 	if (logfilename != NULL) {
 		openlogfile(logfilename);
@@ -103,14 +103,14 @@ void Log_free()
 		return;
 	else if (logfile)
 		fclose(logfile);
-	else 
+	else
 		closelog();
 }
-		
+
 void Log_reset()
 {
 	const char *logfilename;
-	
+
 	if (logfile) {
 		logfilename = getStrConf(LOGFILE);
 		fclose(logfile);
@@ -122,11 +122,11 @@ void logthis(const char *logstring, ...)
 {
 	va_list argp;
 	char buf[STRSIZE + 1];
-	
+
 	va_start(argp, logstring);
 	vsnprintf(&buf[0], STRSIZE, logstring, argp);
 	va_end(argp);
-	
+
 	if (termprint)
 		fprintf(stderr, "%s\n", buf);
 	else if (logfile)
@@ -140,14 +140,14 @@ void Log_warn(const char *logstring, ...)
 	va_list argp;
 	char buf[STRSIZE + 1];
 	int offset = 0;
-	
+
 	if (termprint || logfile)
 		offset = sprintf(buf, "WARN: ");
-	
+
 	va_start(argp, logstring);
 	vsnprintf(&buf[offset], STRSIZE - offset, logstring, argp);
 	va_end(argp);
-	
+
 	if (termprint)
 		fprintf(stderr, "%s\n", buf);
 	else if (logfile)
@@ -161,14 +161,14 @@ void Log_info(const char *logstring, ...)
 	va_list argp;
 	char buf[STRSIZE + 1];
 	int offset = 0;
-	
+
 	if (termprint || logfile)
 		offset = sprintf(buf, "INFO: ");
-	
-	va_start(argp, logstring);	
+
+	va_start(argp, logstring);
 	vsnprintf(&buf[offset], STRSIZE - offset, logstring, argp);
 	va_end(argp);
-	
+
 	if (termprint)
 		fprintf(stderr, "%s\n", buf);
 	else if (logfile)
@@ -182,14 +182,14 @@ void Log_info_client(client_t *client, const char *logstring, ...)
 	va_list argp;
 	char buf[STRSIZE + 1];
 	int offset = 0;
-	
+
 	if (termprint || logfile)
 		offset = sprintf(buf, "INFO: ");
 
 	va_start(argp, logstring);
 	offset += vsnprintf(&buf[offset], STRSIZE - offset, logstring, argp);
 	va_end(argp);
-	
+
 	offset += snprintf(&buf[offset], STRSIZE - offset, " - [%d] %s@%s:%d",
 					   client->sessionId,
 					   client->username == NULL ? "" : client->username,
@@ -209,11 +209,11 @@ void Log_debug(const char *logstring, ...)
 	va_list argp;
 	char buf[STRSIZE + 1];
 	int offset = 0;
-	
+
 	if (termprint || logfile)
 		offset = sprintf(buf, "DEBUG: ");
-	
-	va_start(argp, logstring);	
+
+	va_start(argp, logstring);
 	vsnprintf(&buf[offset], STRSIZE - offset, logstring, argp);
 	va_end(argp);
 	if (termprint)
@@ -230,20 +230,20 @@ void Log_fatal(const char *logstring, ...)
 	va_list argp;
 	char buf[STRSIZE + 1];
 	int offset = 0;
-	
+
 	if (termprint || logfile)
 		offset = sprintf(buf, "FATAL: ");
-	
-	va_start(argp, logstring);	
+
+	va_start(argp, logstring);
 	vsnprintf(&buf[offset], STRSIZE - offset, logstring, argp);
 	va_end(argp);
-	
+
 	if (termprint)
 		fprintf(stderr, "%s\n", buf);
 	else if (logfile)
 		fprintf(logfile, "%s %s\n", timestring(), buf);
 	else { /* If logging subsystem is not initialized, fall back to stderr +
-			* syslog logging for fatal errors. 
+			* syslog logging for fatal errors.
 			*/
 		if (!init) {
 			openlog("uMurmurd", LOG_PID, LOG_DAEMON);
@@ -251,6 +251,6 @@ void Log_fatal(const char *logstring, ...)
 		}
 		syslog(LOG_CRIT, "%s", buf);
 	}
-	
+
 	exit(1);
 }

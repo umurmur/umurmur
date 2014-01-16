@@ -102,7 +102,7 @@ int Pds_skip(pds_t *pds, int offset)
 		pds->bOk = false;
 		return 0;
 	}
-	
+
 }
 
 static inline uint64_t next(pds_t *pds)
@@ -135,9 +135,9 @@ void Pds_free(pds_t *pds)
 void Pds_add_double(pds_t *pds, double value)
 {
 	double64u_t u;
-	
+
 	u.dval = value;
-	
+
 	Pds_add_numval(pds, u.u64);
 }
 
@@ -150,7 +150,7 @@ double Pds_get_double(pds_t *pds)
 void Pds_add_numval(pds_t *pds, const uint64_t value)
 {
 	uint64_t i = value;
-	
+
 	if ((i & 0x8000000000000000LL) && (~i < 0x100000000LL)) {
 		// Signed number.
 		i = ~i;
@@ -200,12 +200,12 @@ void Pds_add_numval(pds_t *pds, const uint64_t value)
 		append_val(pds, i & 0xFF);
 	}
 }
-	
+
 uint64_t Pds_get_numval(pds_t *pds)
 {
 	uint64_t i = 0;
 	uint64_t v = next(pds);
-	
+
 	if ((v & 0x80) == 0x00) {
 		i=(v & 0x7F);
 	} else if ((v & 0xC0) == 0x80) {

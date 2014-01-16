@@ -56,10 +56,10 @@ void Ban_init(void)
 
 void Ban_deinit(void)
 {
-	/* Save banlist */	
+	/* Save banlist */
 	if (getStrConf(BANFILE) != NULL)
 		Ban_saveBanFile();
-		
+
 	Ban_clearBanList();
 }
 
@@ -72,7 +72,7 @@ void Ban_UserBan(client_t *client, char *reason)
 	if (ban == NULL)
 		Log_fatal("Out of memory");
 	memset(ban, 0, sizeof(ban_t));
-	
+
 	memcpy(ban->hash, client->hash, 20);
 	memcpy(&ban->address, &client->remote_tcp.sin_addr, sizeof(in_addr_t));
 	ban->mask = 128;
@@ -86,7 +86,7 @@ void Ban_UserBan(client_t *client, char *reason)
 	banlist_changed = true;
 	if(getBoolConf(SYNC_BANFILE))
 		Ban_saveBanFile();
-	
+
 	SSLi_hash2hex(ban->hash, hexhash);
 	Log_info_client(client, "User kickbanned. Reason: '%s' Hash: %s IP: %s Banned for: %d seconds",
 	                ban->reason, hexhash, inet_ntoa(*((struct in_addr *)&ban->address)), ban->duration);
@@ -99,7 +99,7 @@ void Ban_pruneBanned()
 	ban_t *ban;
 	char hexhash[41];
 	uint64_t bantime_long;
-		
+
 	list_iterate(itr, &banlist) {
 		ban = list_get_entry(itr, ban_t, node);
 		bantime_long = ban->duration * 1000000LL;
@@ -129,11 +129,11 @@ bool_t Ban_isBanned(client_t *client)
 	ban_t *ban;
 	list_iterate(itr, &banlist) {
 		ban = list_get_entry(itr, ban_t, node);
-		if (memcmp(ban->hash, client->hash, 20) == 0) 
+		if (memcmp(ban->hash, client->hash, 20) == 0)
 			return true;
 	}
 	return false;
-	
+
 }
 
 bool_t Ban_isBannedAddr(in_addr_t *addr)
@@ -142,7 +142,7 @@ bool_t Ban_isBannedAddr(in_addr_t *addr)
 	ban_t *ban;
 	int mask;
 	in_addr_t tempaddr1, tempaddr2;
-	
+
 	list_iterate(itr, &banlist) {
 		ban = list_get_entry(itr, ban_t, node);
 		mask = ban->mask - 96;
@@ -152,7 +152,7 @@ bool_t Ban_isBannedAddr(in_addr_t *addr)
 			tempaddr1 &= (2 ^ mask) - 1;
 			tempaddr2 &= (2 ^ mask) - 1;
 		}
-		if (memcmp(&tempaddr1, &tempaddr2, sizeof(in_addr_t)) == 0) 
+		if (memcmp(&tempaddr1, &tempaddr2, sizeof(in_addr_t)) == 0)
 			return true;
 	}
 	return false;
@@ -173,7 +173,7 @@ message_t *Ban_getBanList(void)
 	char timestr[32];
 	char hexhash[41];
 	uint8_t address[16];
-	
+
 	msg = Msg_banList_create(bancount);
 	list_iterate(itr, &banlist) {
 		ban = list_get_entry(itr, ban_t, node);
@@ -212,7 +212,7 @@ void Ban_putBanList(message_t *msg, int n_bans)
 	char *hexhash, *name, *reason, *start;
 	uint32_t duration, mask;
 	uint8_t *address;
-	
+
 	for (i = 0; i < n_bans; i++) {
 		Msg_banList_getEntry(msg, i, &address, &mask, &name, &hexhash, &reason, &start, &duration);
 		ban = malloc(sizeof(ban_t));
@@ -297,7 +297,7 @@ static void Ban_readBanFile(void)
 		p = strtok(NULL, "\n");
 		if (p == NULL) break;
 		reason = p;
-		
+
 		ban = malloc(sizeof(ban_t));
 		if (ban == NULL)
 			Log_fatal("Out of memory");

@@ -44,21 +44,21 @@
 static message_t *Msg_create_nopayload(messageType_t messageType);
 
 static void Msg_addPreamble(uint8_t *buffer, uint16_t type, uint32_t len)
-{	
+{
 	buffer[1] = (type) & 0xff;
 	buffer[0] = (type >> 8) & 0xff;
-	
+
 	buffer[5] = (len) & 0xff;
 	buffer[4] = (len >> 8) & 0xff;
 	buffer[3] = (len >> 16) & 0xff;
-	buffer[2] = (len >> 24) & 0xff;	
+	buffer[2] = (len >> 24) & 0xff;
 }
 
 static void Msg_getPreamble(uint8_t *buffer, int *type, int *len)
 {
 	uint16_t msgType;
 	uint32_t msgLen;
-	
+
 	msgType = buffer[1] | (buffer[0] << 8);
 	msgLen = buffer[5] | (buffer[4] << 8) | (buffer[3] << 16) | (buffer[2] << 24);
 	*type = (int)msgType;
@@ -70,7 +70,7 @@ int Msg_messageToNetwork(message_t *msg, uint8_t *buffer)
 {
 	int len;
 	uint8_t *bufptr = buffer + PREAMBLE_SIZE;
-		
+
 	Log_debug("To net: msg type %d", msg->messageType);
 	switch (msg->messageType) {
 	case Version:
@@ -227,7 +227,7 @@ int Msg_messageToNetwork(message_t *msg, uint8_t *buffer)
 		mumble_proto__channel_remove__pack(msg->payload.channelRemove, bufptr);
 		break;
 	case UserStats:
-	{		
+	{
 		len = mumble_proto__user_stats__get_packed_size(msg->payload.userStats);
 		if (len > MAX_MSGSIZE) {
 			Log_warn("Too big tx message. Discarding");
@@ -281,7 +281,7 @@ message_t *Msg_create(messageType_t messageType)
 {
 	message_t *msg = Msg_create_nopayload(messageType);
 	int i;
-	
+
 	switch (messageType) {
 	case Version:
 		msg->payload.version = malloc(sizeof(MumbleProto__Version));
@@ -354,7 +354,7 @@ message_t *Msg_create(messageType_t messageType)
 	case UserStats:
 		msg->payload.userStats = malloc(sizeof(MumbleProto__UserStats));
 		mumble_proto__user_stats__init(msg->payload.userStats);
-		
+
 		msg->payload.userStats->from_client = malloc(sizeof(MumbleProto__UserStats__Stats));
 		mumble_proto__user_stats__stats__init(msg->payload.userStats->from_client);
 
@@ -363,7 +363,7 @@ message_t *Msg_create(messageType_t messageType)
 
 		msg->payload.userStats->version = malloc(sizeof(MumbleProto__Version));
 		mumble_proto__version__init(msg->payload.userStats->version);
-		
+
 		if (!msg->payload.userStats || !msg->payload.userStats->from_client ||
 			!msg->payload.userStats->from_server || !msg->payload.userStats->version)
 			Log_fatal("Out of memory");
@@ -385,7 +385,7 @@ message_t *Msg_banList_create(int n_bans)
 {
 	message_t *msg = Msg_create_nopayload(BanList);
 	int i;
-	
+
 	msg->payload.banList = malloc(sizeof(MumbleProto__BanList));
 	if (msg->payload.banList == NULL)
 		Log_fatal("Out of memory");
@@ -409,10 +409,10 @@ void Msg_banList_addEntry(message_t *msg, int index, uint8_t *address, uint32_t 
                           char *name, char *hash, char *reason, char *start, uint32_t duration)
 {
 	MumbleProto__BanList__BanEntry *entry = msg->payload.banList->bans[index];
-	
+
 	entry->address.data = malloc(16);
 	if (!entry->address.data)
-		Log_fatal("Out of memory");	
+		Log_fatal("Out of memory");
 	memcpy(entry->address.data, address, 16);
 	entry->address.len = 16;
 	entry->mask = mask;
@@ -421,8 +421,8 @@ void Msg_banList_addEntry(message_t *msg, int index, uint8_t *address, uint32_t 
 	entry->reason = strdup(reason);
 	entry->start = strdup(start);
 	if (!entry->name || !entry->hash || !entry->reason || !entry->start)
-		Log_fatal("Out of memory");	
-		
+		Log_fatal("Out of memory");
+
 	if (duration > 0) {
 		entry->duration = duration;
 		entry->has_duration = true;
@@ -456,7 +456,7 @@ void Msg_inc_ref(message_t *msg)
 void Msg_free(message_t *msg)
 {
 	int i;
-	
+
 	if (msg->refcount) msg->refcount--;
 	if (msg->refcount > 0)
 		return;
@@ -670,7 +670,7 @@ void Msg_free(message_t *msg)
 message_t *Msg_CreateVoiceMsg(uint8_t *data, int size)
 {
 	message_t *msg = NULL;
-	
+
 	msg = Msg_create_nopayload(UDPTunnel);
 	msg->unpacked = false;
 	msg->payload.UDPTunnel = malloc(sizeof(struct _MumbleProto__UDPTunnel));
@@ -694,7 +694,7 @@ message_t *Msg_networkToMessage(uint8_t *data, int size)
 
 	Log_debug("Message type %d size %d", messageType, msgLen);
 	//dumpmsg(data, size);
-	
+
 	switch (messageType) {
 	case Version:
 	{
@@ -869,7 +869,7 @@ message_t *Msg_networkToMessage(uint8_t *data, int size)
 		break;
 	}
 	return msg;
-	
+
 err_out:
 	free(msg);
 	return NULL;
