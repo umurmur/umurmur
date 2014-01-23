@@ -73,7 +73,7 @@ static inline int x509parse_keyfile(rsa_context *rsa, const char *path,
 {
     int ret;
     pk_context pk;
-    
+
     pk_init(&pk);
     ret = pk_parse_keyfile(&pk, path, pwd);
     if (ret == 0 && !pk_can_do( &pk, POLARSSL_PK_RSA))
@@ -128,7 +128,7 @@ static void initTestCert()
 static void initTestKey()
 {
 	int rc;
-	
+
 	rc = x509parse_key_rsa(&key, (unsigned char *)test_srv_key,
 	                       strlen(test_srv_key), NULL, 0);
 	if (rc != 0)
@@ -145,7 +145,7 @@ static void initCert()
 {
 	int rc;
 	char *crtfile = (char *)getStrConf(CERTIFICATE);
-	
+
 	if (crtfile == NULL) {
 #ifdef USE_POLARSSL_TESTCERT
 		Log_warn("No certificate file specified. Falling back to test certificate.");
@@ -177,7 +177,7 @@ static void initKey()
 	char *keyfile = (char *)getStrConf(KEY);
 
 	if (keyfile == NULL)
-		Log_fatal("No key file specified"); 
+		Log_fatal("No key file specified");
 	rc = x509parse_keyfile(&key, keyfile, NULL);
 	if (rc != 0)
 		Log_fatal("Could not read RSA key file %s", keyfile);
@@ -187,7 +187,7 @@ static void initKey()
 int urandom_bytes(void *ctx, unsigned char *dest, size_t len)
 {
 	int cur;
-	
+
 	while (len) {
 		cur = read(urandom_fd, dest, len);
 		if (cur < 0)
@@ -208,7 +208,7 @@ static void pssl_debug(void *ctx, int level, const char *str)
 void SSLi_init(void)
 {
 	char verstring[12];
-	
+
 	initCert();
 #ifdef USE_POLARSSL_TESTCERT
 	if (builtInTestCertificate) {
@@ -230,7 +230,7 @@ void SSLi_init(void)
     if (urandom_fd < 0)
 	    Log_fatal("Cannot open /dev/urandom");
 #endif
-    
+
     version_get_string(verstring);
     Log_info("PolarSSL library version %s initialized", verstring);
 }
@@ -239,7 +239,7 @@ void SSLi_deinit(void)
 {
 #ifdef POLARSSL_API_V1_3_ABOVE
 	x509_crt_free(&certificate);
-#else	
+#else
 	x509_free(&certificate);
 #endif
 	rsa_free(&key);
@@ -260,37 +260,37 @@ bool_t SSLi_getSHA1Hash(SSL_handle_t *ssl, uint8_t *hash)
 #endif
 	if (!cert) {
 		return false;
-	}	
+	}
 	sha1(cert->raw.p, cert->raw.len, hash);
 	return true;
 }
-	
+
 SSL_handle_t *SSLi_newconnection(int *fd, bool_t *SSLready)
 {
 	ssl_context *ssl;
 	ssl_session *ssn;
 	int rc;
-	
+
 	ssl = malloc(sizeof(ssl_context));
 	ssn = malloc(sizeof(ssl_session));
 	if (!ssl || !ssn)
 		Log_fatal("Out of memory");
 	memset(ssl, 0, sizeof(ssl_context));
 	memset(ssn, 0, sizeof(ssl_session));
-	
+
 	rc = ssl_init(ssl);
 	if (rc != 0 )
 		Log_fatal("Failed to initialize: %d", rc);
-	
-	ssl_set_endpoint(ssl, SSL_IS_SERVER);	
+
+	ssl_set_endpoint(ssl, SSL_IS_SERVER);
 	ssl_set_authmode(ssl, SSL_VERIFY_OPTIONAL);
-	
+
 #ifdef USE_POLARSSL_HAVEGE
 	ssl_set_rng(ssl, HAVEGE_RAND, &hs);
 #else
 	ssl_set_rng(ssl, urandom_bytes, NULL);
 #endif
-	
+
 	ssl_set_dbg(ssl, pssl_debug, NULL);
 	ssl_set_bio(ssl, net_recv, fd, net_send, fd);
 
@@ -301,7 +301,7 @@ SSL_handle_t *SSLi_newconnection(int *fd, bool_t *SSLready)
 #else
     ssl_set_session(ssl, 0, 0, ssn);
 #endif
-    
+
     ssl_set_ca_chain(ssl, &certificate, NULL, NULL);
 #ifdef POLARSSL_API_V1_3_ABOVE
 	ssl_set_own_cert_rsa(ssl, &certificate, &key);
@@ -316,13 +316,13 @@ SSL_handle_t *SSLi_newconnection(int *fd, bool_t *SSLready)
 int SSLi_nonblockaccept(SSL_handle_t *ssl, bool_t *SSLready)
 {
 	int rc;
-	
+
 	rc = ssl_handshake(ssl);
 	if (rc != 0) {
 		if (rc == POLARSSL_ERR_NET_WANT_READ || rc == POLARSSL_ERR_NET_WANT_WRITE) {
 			return 0;
 		} else if (rc == POLARSSL_ERR_X509_CERT_VERIFY_FAILED) { /* Allow this (selfsigned etc) */
-			return 0;			
+			return 0;
 		} else {
 			Log_warn("SSL handshake failed: %d", rc);
 			return -1;
@@ -345,7 +345,7 @@ int SSLi_read(SSL_handle_t *ssl, uint8_t *buf, int len)
 int SSLi_write(SSL_handle_t *ssl, uint8_t *buf, int len)
 {
 	int rc;
-	
+
 	rc = ssl_write(ssl, buf, len);
 	if (rc == POLARSSL_ERR_NET_WANT_WRITE)
 		return SSLI_ERROR_WANT_WRITE;
@@ -391,7 +391,7 @@ static X509 *x509;
 static RSA *rsa;
 static SSL_CTX *context;
 static EVP_PKEY *pkey;
- 
+
 static int verify_callback(int preverify_ok, X509_STORE_CTX *ctx);
 
 static int SSL_add_ext(X509 * crt, int nid, char *value) {
@@ -412,17 +412,17 @@ static X509 *SSL_readcert(char *certfile)
 {
 	FILE *fp;
 	X509 *x509;
-			
+
 	/* open the certificate file */
 	fp = fopen(certfile, "r");
 	if (fp == NULL) {
 		Log_warn("Unable to open the X509 file %s for reading.", certfile);
 		return NULL;
 	}
-	
-	/* allocate memory for the cert structure */	
+
+	/* allocate memory for the cert structure */
 	x509 = X509_new();
-	
+
 	if (PEM_read_X509(fp, &x509, NULL, NULL) == 0) {
 		/* error reading the x509 information - check the error stack */
 		Log_warn("Error trying to read X509 info.");
@@ -445,13 +445,13 @@ static RSA *SSL_readprivatekey(char *keyfile)
 		Log_warn("Unable to open the private key file %s for reading.", keyfile);
 		return NULL;
 	}
-	
+
 /* allocate memory for the RSA structure */
 	rsa = RSA_new();
-	
+
 	/* assign a callback function for the password */
-	
-	/* read a private key from file */	
+
+	/* read a private key from file */
 	if (PEM_read_RSAPrivateKey(fp, &rsa, NULL, NULL) <= 0) {
 		/* error reading the key - check the error stack */
 		Log_warn("Error trying to read private key.");
@@ -466,13 +466,13 @@ static RSA *SSL_readprivatekey(char *keyfile)
 static void SSL_writecert(char *certfile, X509 *x509)
 {
 	FILE *fp;
-		
+
 	/* open the private key file */
 	fp = fopen(certfile, "w");
 	if (fp == NULL) {
 		Log_warn("Unable to open the X509 file %s for writing", certfile);
 		return;
-	}		
+	}
 	if (PEM_write_X509(fp, x509) == 0) {
 		Log_warn("Error trying to write X509 info.");
 	}
@@ -482,14 +482,14 @@ static void SSL_writecert(char *certfile, X509 *x509)
 static void SSL_writekey(char *keyfile, RSA *rsa)
 {
 	FILE *fp;
-	
+
 	/* open the private key file for reading */
 	fp = fopen(keyfile, "w");
 	if (fp == NULL) {
 		Log_warn("Unable to open the private key file %s for writing.", keyfile);
 		return;
 	}
-	
+
 	if (PEM_write_RSAPrivateKey(fp, rsa, NULL, NULL, 0, NULL, NULL) == 0) {
 		Log_warn("Error trying to write private key");
 	}
@@ -499,7 +499,7 @@ static void SSL_writekey(char *keyfile, RSA *rsa)
 static void SSL_initializeCert() {
 
 	char *crt, *key, *pass;
-	
+
 	crt = (char *)getStrConf(CERTIFICATE);
 	key = (char *)getStrConf(KEY);
 	pass = (char *)getStrConf(PASSPHRASE);
@@ -509,12 +509,12 @@ static void SSL_initializeCert() {
 	if (rsa != NULL) {
 		pkey = EVP_PKEY_new();
 		EVP_PKEY_assign_RSA(pkey, rsa);
-	}		
+	}
 
-	
+
 #if 0
 	/* Later ... */
-	if (key && !x509) {		
+	if (key && !x509) {
 		qscCert = QSslCertificate(key);
 		if (! qscCert.isNull()) {
 			logthis("Using certificate from key.");
@@ -542,35 +542,35 @@ static void SSL_initializeCert() {
 
 	}
 #endif
-	
+
 	if (!rsa || !x509) {
 		Log_info("Generating new server certificate.");
 
-		
+
 		CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-				
+
 		x509 = X509_new();
 		pkey = EVP_PKEY_new();
 		rsa = RSA_generate_key(1024,RSA_F4,NULL,NULL);
 		EVP_PKEY_assign_RSA(pkey, rsa);
-		
+
 		X509_set_version(x509, 2);
 		ASN1_INTEGER_set(X509_get_serialNumber(x509),1);
 		X509_gmtime_adj(X509_get_notBefore(x509),0);
 		X509_gmtime_adj(X509_get_notAfter(x509),60*60*24*365);
 		X509_set_pubkey(x509, pkey);
-		
+
 		X509_NAME *name=X509_get_subject_name(x509);
-		
+
 		X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC, (const uint8_t *)"Murmur Autogenerated Certificate v2", -1, -1, 0);
 		X509_set_issuer_name(x509, name);
 		SSL_add_ext(x509, NID_basic_constraints, "critical,CA:FALSE");
 		SSL_add_ext(x509, NID_ext_key_usage, "serverAuth,clientAuth");
 		SSL_add_ext(x509, NID_subject_key_identifier, "hash");
 		SSL_add_ext(x509, NID_netscape_comment, "Generated from umurmur");
-		
+
 		X509_sign(x509, pkey, EVP_md5());
-		
+
 		SSL_writecert(crt, x509);
 		SSL_writekey(key, rsa);
 	}
@@ -585,7 +585,7 @@ void SSLi_init(void)
 	STACK_OF(SSL_CIPHER) *cipherlist = NULL, *cipherlist_new = NULL;
 	SSL_CIPHER *cipher;
 	char *cipherstring, tempstring[128];
-		
+
 	SSL_library_init();
 	OpenSSL_add_all_algorithms();		/* load & register all cryptos, etc. */
 	SSL_load_error_strings();			/* load all error messages */
@@ -597,13 +597,13 @@ void SSLi_init(void)
 		ERR_print_errors_fp(stderr);
 		abort();
 	}
-	
+
 	char* sslCAPath = getStrConf(CAPATH);
 	if(sslCAPath != NULL)
 	{
 		SSL_CTX_load_verify_locations(context, NULL, sslCAPath);
 	}
-	
+
 	SSL_initializeCert();
 	if (SSL_CTX_use_certificate(context, x509) <= 0)
 		Log_fatal("Failed to initialize cert");
@@ -611,12 +611,12 @@ void SSLi_init(void)
 		ERR_print_errors_fp(stderr);
 		Log_fatal("Failed to initialize private key");
 	}
-	
+
 	/* Set cipher list */
-	ssl = SSL_new(context);	
+	ssl = SSL_new(context);
 	cipherlist = (STACK_OF(SSL_CIPHER) *) SSL_get_ciphers(ssl);
 	cipherlist_new = (STACK_OF(SSL_CIPHER) *) sk_SSL_CIPHER_new_null();
-	
+
 	for ( i = 0; (cipher = sk_SSL_CIPHER_value(cipherlist, i)) != NULL; i++) {
 		if (SSL_CIPHER_get_bits(cipher, NULL) >= 128) {
 			sk_SSL_CIPHER_push(cipherlist_new, cipher);
@@ -635,21 +635,21 @@ void SSLi_init(void)
 			offset += sprintf(cipherstring + offset, "%s:", SSL_CIPHER_get_name(cipher));
 		}
 	}
-	
+
 	if (cipherlist_new)
 		sk_SSL_CIPHER_free(cipherlist_new);
-	
+
 	if (strlen(cipherstring) == 0)
 		Log_fatal("No suitable ciphers found!");
-	
+
 	if (SSL_CTX_set_cipher_list(context, cipherstring) == 0)
 		Log_fatal("Failed to set cipher list!");
 
 	free(cipherstring);
-	
+
 	SSL_CTX_set_verify(context, SSL_VERIFY_PEER|SSL_VERIFY_CLIENT_ONCE,
-	                   verify_callback);		
-	
+	                   verify_callback);
+
 	SSL_free(ssl);
 	Log_info("OpenSSL library initialized");
 
@@ -682,7 +682,7 @@ int SSLi_nonblockaccept(SSL_handle_t *ssl, bool_t *SSLready)
 SSL_handle_t *SSLi_newconnection(int *fd, bool_t *SSLready)
 {
 	SSL *ssl;
-	
+
 	*SSLready = false;
 	ssl = SSL_new(context);
 	SSL_set_fd(ssl, *fd);
@@ -699,12 +699,12 @@ bool_t SSLi_getSHA1Hash(SSL_handle_t *ssl, uint8_t *hash)
 	X509 *x509;
 	uint8_t *buf, *p;
 	int len;
-	
+
 	x509 = SSL_get_peer_certificate(ssl);
 	if (!x509) {
 		return false;
-	}	
-	
+	}
+
 	len = i2d_X509(x509, NULL);
 	buf = malloc(len);
 	if (buf == NULL) {
@@ -712,13 +712,13 @@ bool_t SSLi_getSHA1Hash(SSL_handle_t *ssl, uint8_t *hash)
 	}
 
 	p = buf;
-	i2d_X509(x509, &p);	
-	
+	i2d_X509(x509, &p);
+
 	SHA1(buf, len, hash);
 	free(buf);
 	return true;
 }
- 
+
 void SSLi_closeconnection(SSL_handle_t *ssl)
 {
 	SSL_free(ssl);
@@ -760,14 +760,14 @@ static int verify_callback(int preverify_ok, X509_STORE_CTX *ctx)
 	X509   *err_cert;
 	int     err, depth;
 	SSL    *ssl;
-    
+
     err_cert = X509_STORE_CTX_get_current_cert(ctx);
     err = X509_STORE_CTX_get_error(ctx);
     depth = X509_STORE_CTX_get_error_depth(ctx);
-    
+
     ssl = X509_STORE_CTX_get_ex_data(ctx, SSL_get_ex_data_X509_STORE_CTX_idx());
     X509_NAME_oneline(X509_get_subject_name(err_cert), buf, 256);
-        
+
     if (depth > 5) {
         preverify_ok = 0;
         err = X509_V_ERR_CERT_CHAIN_TOO_LONG;
@@ -787,5 +787,5 @@ static int verify_callback(int preverify_ok, X509_STORE_CTX *ctx)
     }
     return 1;
 }
- 
+
 #endif

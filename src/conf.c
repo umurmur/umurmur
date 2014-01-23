@@ -84,7 +84,7 @@ const char *getStrConf(param_t param)
 {
 	config_setting_t *setting = NULL;
 	const char *strsetting = NULL;
-	
+
 	switch (param) {
 	case CERTIFICATE:
 		setting = config_lookup(&configuration, "certificate");
@@ -228,7 +228,7 @@ const char *getStrConf(param_t param)
 int getIntConf(param_t param)
 {
 	config_setting_t *setting = NULL;
-	
+
 	switch (param) {
 	case BINDPORT:
 		setting = config_lookup(&configuration, "bindport");
@@ -278,7 +278,7 @@ int getIntConf(param_t param)
 bool_t getBoolConf(param_t param)
 {
 	config_setting_t *setting = NULL;
-	
+
 	switch (param) {
 	case ALLOW_TEXTMESSAGE:
 		setting = config_lookup(&configuration, "allow_textmessage");
@@ -311,47 +311,47 @@ int Conf_getNextChannel(conf_channel_t *chdesc, int index)
 	config_setting_t *setting = NULL;
 	int maxconfig = 64, ret = 0;
 	char configstr[maxconfig];
-	
+
 	ret = snprintf(configstr, maxconfig, "channels.[%d].name", index);
 	setting = config_lookup(&configuration, configstr);
 	if (ret >= maxconfig || ret < 0 || setting == NULL)
 		return -1; /* Required */
 	chdesc->name =  config_setting_get_string(setting);
-	
+
 	ret = snprintf(configstr, maxconfig, "channels.[%d].parent", index);
 	setting = config_lookup(&configuration, configstr);
 	if (ret >= maxconfig || ret < 0 || setting == NULL)
 		return -1; /* Required */
 	chdesc->parent = config_setting_get_string(setting);
-	
+
 	ret = snprintf(configstr, maxconfig, "channels.[%d].description", index);
 	setting = config_lookup(&configuration, configstr);
 	if (ret >= maxconfig || ret < 0 || setting == NULL) /* Optional */
 		chdesc->description = NULL;
 	else
 		chdesc->description = config_setting_get_string(setting);
-	
+
 	ret = snprintf(configstr, maxconfig, "channels.[%d].password", index);
 	setting = config_lookup(&configuration, configstr);
 	if (ret >= maxconfig || ret < 0 || setting == NULL) /* Optional */
 		chdesc->password = NULL;
 	else
 		chdesc->password = config_setting_get_string(setting);
-	
+
 	ret = snprintf(configstr, maxconfig, "channels.[%d].noenter", index);
 	setting = config_lookup(&configuration, configstr);
 	if (ret >= maxconfig || ret < 0 || setting == NULL) /* Optional */
 		chdesc->noenter = false;
 	else
 		chdesc->noenter = config_setting_get_bool(setting);
-	
+
 	ret = snprintf(configstr, maxconfig, "channels.[%d].silent", index);
 	setting = config_lookup(&configuration, configstr);
 	if (ret >= maxconfig || ret < 0 || setting == NULL) /* Optional */
 		chdesc->silent = false;
 	else
 		chdesc->silent = config_setting_get_bool(setting);
-	
+
 	ret = snprintf(configstr, maxconfig, "channels.[%d].position", index);
 	setting = config_lookup(&configuration, configstr);
 	if (ret >= maxconfig || ret < 0 || setting == NULL) /* Optional */
@@ -367,7 +367,7 @@ int Conf_getNextChannelLink(conf_channel_link_t *chlink, int index)
 	config_setting_t *setting = NULL;
 	int maxconfig = 64, ret = 0;
 	char configstr[maxconfig];
-	
+
 	ret = snprintf(configstr, maxconfig, "channel_links.[%d].source", index);
 	setting = config_lookup(&configuration, configstr);
 	if (ret >= maxconfig || ret < 0 || setting == NULL)

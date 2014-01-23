@@ -93,7 +93,7 @@ static channel_t *next_channel(channel_t *ch)
 	if (list_get_next(&ch->node) == &list_get_entry(&ch->node, channel_t, node)->parent->subs)
 		return NULL;
 	else
-		return list_get_entry(list_get_next(&ch->node), channel_t, node);	
+		return list_get_entry(list_get_next(&ch->node), channel_t, node);
 }
 #endif
 
@@ -134,7 +134,7 @@ channel_t *Chan_iterate_siblings(channel_t *parent, channel_t **channelpptr)
 	*channelpptr = ch;
 	return ch;
 }
-			
+
 void Chan_init()
 {
 	int i;
@@ -143,7 +143,7 @@ void Chan_init()
 	const char *defaultChannelName;
 
 	defaultChannelName = getStrConf(DEFAULT_CHANNEL);
-	
+
 	for (i = 0; ; i++) {
 		if (Conf_getNextChannel(&chdesc, i) < 0) {
 			if (i == 0)
@@ -165,18 +165,18 @@ void Chan_init()
 			ch->position = chdesc.position;
 			ch->silent = chdesc.silent;
 			if (chdesc.password) {
-				Log_info("Setting password on channel '%s'", ch->name); 
+				Log_info("Setting password on channel '%s'", ch->name);
 				ch->password = strdup(chdesc.password);
 			}
 			if (strcmp(defaultChannelName, chdesc.name) == 0) {
-				Log_info("Setting default channel '%s'", ch->name); 
+				Log_info("Setting default channel '%s'", ch->name);
 				defaultChan = ch;
 			}
-			
+
 			do {
 				Chan_iterate(&ch_itr);
 			} while (ch_itr != NULL && strcmp(ch_itr->name, chdesc.parent) != 0);
-			
+
 			if (ch_itr == NULL)
 				Log_fatal("Error in channel configuration: parent '%s' not found", chdesc.parent);
 			else {
@@ -187,7 +187,7 @@ void Chan_init()
 	}
 	if (defaultChan == NULL)
 		defaultChan = rootChan;
-	
+
 	if (defaultChan->noenter)
 		Log_fatal("Error in channel configuration: default channel is marked as noenter");
 	if (defaultChan->password)
@@ -210,8 +210,8 @@ void Chan_init()
 					  chlink.source);
 		else
 			ch_src = ch_itr;
-		
-		ch_itr = NULL;		
+
+		ch_itr = NULL;
 		do {
 			Chan_iterate(&ch_itr);
 		} while (ch_itr != NULL && strcmp(ch_itr->name, chlink.destination) != 0);
@@ -220,7 +220,7 @@ void Chan_init()
 					  chlink.destination);
 		else
 			ch_dst = ch_itr;
-		
+
 		list_add_tail(&ch_dst->link_node, &ch_src->channel_links);
 		ch_src->linkcount++;
 		Log_info("Adding channel link '%s' -> '%s'", ch_src->name, ch_dst->name);
@@ -231,7 +231,7 @@ void Chan_free()
 {
 	struct dlist *itr, *save;
 	channel_t *ch;
-	
+
 	list_iterate_safe(itr, save, &channels) {
 		ch = list_get_entry(itr, channel_t, flatlist_node);
 		Log_debug("Free channel '%s'", ch->name);
@@ -271,7 +271,7 @@ int Chan_userLeave(client_t *client)
 {
 	channel_t *leaving = NULL;
 	int leaving_id = -1;
-	
+
 	if (client->channel) {
 		list_del(&client->chan_node);
 		leaving = (channel_t *)client->channel;
@@ -290,8 +290,8 @@ int Chan_userJoin(channel_t *ch, client_t *client)
 	/* Do nothing if user already is in this channel */
 	if ((channel_t *)client->channel == ch)
 		return 0;
-	
-	Log_debug("Add user %s to channel %s", client->username, ch->name); 
+
+	Log_debug("Add user %s to channel %s", client->username, ch->name);
 	/* Only allowed in one channel at a time */
 	leaving_id = Chan_userLeave(client);
 	list_add_tail(&client->chan_node, &ch->clients);
@@ -310,7 +310,7 @@ int Chan_userJoin_id(int channelid, client_t *client)
 		return -1;
 	}
 	else
-		return Chan_userJoin(ch_itr, client);	
+		return Chan_userJoin(ch_itr, client);
 }
 
 channelJoinResult_t Chan_userJoin_id_test(int channelid, client_t *client)
@@ -369,7 +369,7 @@ void Chan_buildTreeList(channel_t *ch, struct dlist *head)
 	channellist_t *chl;
 	struct dlist *itr;
 	channel_t *sub;
-	
+
 	chl = malloc(sizeof(channellist_t));
 	chl->chan = ch;
 	init_list_entry(&chl->node);
