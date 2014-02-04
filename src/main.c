@@ -54,6 +54,10 @@
 #include "client.h"
 #include "conf.h"
 #include "version.h"
+#include <config.h>
+#ifdef HAVE_LIBCAP_NG
+#include <cap-ng.h>
+#endif
 
 char system_string[64], version_string[64];
 int bindport;
@@ -147,6 +151,12 @@ static void switch_user(void)
 	if (initgroups(pwd->pw_name, gid))
 		Log_fatal("initgroups() failed: %s", strerror(errno));
 
+#ifdef HAVE_LIBCAP_NG
+	capng_clear(CAPNG_SELECT_BOTH);
+	capng_update(CAPNG_ADD, CAPNG_EFFECTIVE|CAPNG_PERMITTED, CAP_SYS_NICE);
+	if (capng_change_id(pwd->pw_uid, gid, CAPNG_DROP_SUPP_GRP | CAPNG_CLEAR_BOUNDING))
+		Log_fatal("capng_change_id() failed: %s", strerror(errno));
+#else
 	if (setgid(gid))
 		Log_fatal("setgid() failed: %s", strerror(errno));
 
@@ -157,6 +167,7 @@ static void switch_user(void)
 		grp = getgrgid(gid);
 	if (!grp)
 		Log_fatal("getgrgid() failed: %s", strerror(errno));
+#endif
 	
 	Log_info("Switch to user '%s' group '%s'", pwd->pw_name, grp->gr_name);
 }
