@@ -54,6 +54,7 @@
 #include "client.h"
 #include "conf.h"
 #include "version.h"
+#include "config.h"
 
 char system_string[64], version_string[64];
 int bindport;

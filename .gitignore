@@ -1,2 +1,17 @@
 build
 config.h
+
+# Autotools noise
+Makefile.in
+aclocal.m4
+autom4te.cache/
+config.guess
+config.h.in
+config.h.in~
+config.sub
+configure
+depcomp
+install-sh
+missing
+src/Makefile.in
+
