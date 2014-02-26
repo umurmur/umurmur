@@ -38,7 +38,7 @@ void Voicetarget_add_session(client_t *client, int targetId, int sessionId)
 {
 	struct dlist *itr;
 	voicetarget_t *vt;
-	
+
 	list_iterate(itr, &client->voicetargets) {
 		if (targetId == list_get_entry(itr, voicetarget_t, node)->id) {
 			int i;
@@ -59,7 +59,7 @@ void Voicetarget_add_channel(client_t *client, int targetId, int channelId,
 {
 	struct dlist *itr;
 	voicetarget_t *vt;
-	
+
 	list_iterate(itr, &client->voicetargets) {
 		if (targetId == list_get_entry(itr, voicetarget_t, node)->id) {
 			int i;
@@ -74,14 +74,14 @@ void Voicetarget_add_channel(client_t *client, int targetId, int channelId,
 				}
 			}
 		}
-	}	
+	}
 }
 
 void Voicetarget_add_id(client_t *client, int targetId)
 {
 	voicetarget_t *newtarget;
 	int i;
-	
+
 	Voicetarget_del_id(client, targetId);
 	newtarget = malloc(sizeof(voicetarget_t));
 	if (!newtarget)

@@ -61,7 +61,7 @@ static void sendServerReject(client_t *client, const char *reason, MumbleProto__
 	msg->payload.reject->type = type;
 	msg->payload.reject->has_type = true;
 	Client_send_message(client, msg);
-	
+
 	Log_info_client(client, "Server reject reason: %s", reason);
 }
 
@@ -85,7 +85,7 @@ static void addTokens(client_t *client, message_t *msg)
 				return;
 			}
 		}
-		
+
 		for (i = 0; i < msg->payload.authenticate->n_tokens; i++) {
 			Log_debug("Adding token '%s' to client '%s'", msg->payload.authenticate->tokens[i], client->username);
 			Client_token_add(client, msg->payload.authenticate->tokens[i]);
@@ -105,7 +105,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 									msg->messageType == Version)) {
 		goto out;
 	}
-	
+
 	switch (msg->messageType) {
 	case UDPTunnel:
 	case Ping:
@@ -117,31 +117,31 @@ void Mh_handle_message(client_t *client, message_t *msg)
 	default:
 		Timer_restart(&client->idleTime);
 	}
-	
+
 	switch (msg->messageType) {
 	case Authenticate:
 		Log_debug("Authenticate message received");
-		
+
 		if (IS_AUTH(client) || !msg->payload.authenticate->username) {
 			/* Authenticate message might be sent when a tokens are changed by the user.*/
 			Client_token_free(client); /* Clear the token list */
 			if (msg->payload.authenticate->n_tokens > 0) {
 				Log_debug("Tokens in auth message from '%s'. n_tokens = %d", client->username,
 				          msg->payload.authenticate->n_tokens);
-				addTokens(client, msg);				
+				addTokens(client, msg);
 			}
 			break;
 		}
-		
+
 		if (SSLi_getSHA1Hash(client->ssl, client->hash) && Ban_isBanned(client)) {
 			char hexhash[41];
 			SSLi_hash2hex(client->hash, hexhash);
 			Log_info("Client with hash '%s' is banned. Disconnecting", hexhash);
 			goto disconnect;
 		}
-		
+
 		client->authenticated = true;
-		
+
 		client_itr = NULL;
 		while (Client_iterate(&client_itr) != NULL) {
 			if (!IS_AUTH(client_itr))
@@ -152,7 +152,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 				Log_debug("Username already in use");
 				sendServerReject(client, buf, MUMBLE_PROTO__REJECT__REJECT_TYPE__UsernameInUse);
 				goto disconnect;
-			}				
+			}
 		}
 		if (strlen(getStrConf(PASSPHRASE)) > 0) {
 			if (!msg->payload.authenticate->password ||
@@ -165,7 +165,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 						  msg->payload.authenticate->password : "(null)");
 				goto disconnect;
 			}
-		}				
+		}
 		if (strlen(msg->payload.authenticate->username) == 0 ||
 			strlen(msg->payload.authenticate->username) >= MAX_USERNAME) { /* XXX - other invalid names? */
 			char buf[64];
@@ -173,7 +173,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			Log_debug("Invalid username");
 			sendServerReject(client, buf, MUMBLE_PROTO__REJECT__REJECT_TYPE__InvalidUsername);
 			goto disconnect;
-		}				
+		}
 
 		if (Client_count() >= getIntConf(MAX_CLIENTS)) {
 			char buf[64];
@@ -181,21 +181,21 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			sendServerReject(client, buf, MUMBLE_PROTO__REJECT__REJECT_TYPE__ServerFull);
 			goto disconnect;
 		}
-		
+
 		/* Name */
-		client->username = strdup(msg->payload.authenticate->username);				
+		client->username = strdup(msg->payload.authenticate->username);
 
 		/* Tokens */
 		if (msg->payload.authenticate->n_tokens > 0)
 			addTokens(client, msg);
-		
+
 		/* Check if admin PW among tokens */
 		if (strlen(getStrConf(ADMIN_PASSPHRASE)) > 0 &&
 		    Client_token_match(client, getStrConf(ADMIN_PASSPHRASE))) {
 			client->isAdmin = true;
 			Log_info_client(client, "User provided admin password");
 		}
-		
+
 		/* Setup UDP encryption */
 		CryptState_init(&client->cryptState);
 		CryptState_genKey(&client->cryptState);
@@ -214,20 +214,20 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		/* Channel stuff */
 		Chan_userJoin(defaultChan, client); /* Join default channel */
 
-		/* Codec version */		
+		/* Codec version */
 		Log_debug("Client %d has %d CELT codecs", client->sessionId,
 				  msg->payload.authenticate->n_celt_versions);
 		if (msg->payload.authenticate->n_celt_versions > 0) {
 			int i;
 			codec_t *codec_itr;
 			client->codec_count = msg->payload.authenticate->n_celt_versions;
-			
+
 			for (i = 0; i < client->codec_count; i++)
 			Client_codec_add(client, msg->payload.authenticate->celt_versions[i]);
 			codec_itr = NULL;
 			while (Client_codec_iterate(client, &codec_itr) != NULL)
 				Log_debug("Client %d CELT codec ver 0x%x", client->sessionId, codec_itr->codec);
-				
+
 		} else {
 			Client_codec_add(client, (int32_t)0x8000000b);
 			client->codec_count = 1;
@@ -235,9 +235,9 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		}
 		if (msg->payload.authenticate->opus)
 			client->bOpus = true;
-		
+
 		recheckCodecVersions(client);
-		
+
 		sendmsg = Msg_create(CodecVersion);
 		sendmsg->payload.codecVersion->alpha = iCodecAlpha;
 		sendmsg->payload.codecVersion->beta = iCodecBeta;
@@ -268,7 +268,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 				sendmsg->payload.channelState->position = ch_itr->position;
 			}
 			Log_debug("Send channel info: %s", sendmsg->payload.channelState->name);
-			Client_send_message(client, sendmsg);			
+			Client_send_message(client, sendmsg);
 		}
 
 		/* Iterate channels and send channel links info */
@@ -278,12 +278,12 @@ void Mh_handle_message(client_t *client, message_t *msg)
 				uint32_t *links;
 				int i = 0;
 				struct dlist *itr;
-				
+
 				sendmsg = Msg_create(ChannelState);
 				sendmsg->payload.channelState->has_channel_id = true;
 				sendmsg->payload.channelState->channel_id = ch_itr->id;
 				sendmsg->payload.channelState->n_links = ch_itr->linkcount;
-				
+
 				links = (uint32_t *)malloc(ch_itr->linkcount * sizeof(uint32_t));
 				list_iterate(itr, &ch_itr->channel_links) { /* Iterate links */
 					channel_t *ch;
@@ -294,7 +294,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 				Client_send_message(client, sendmsg);
 			}
 		}
-		
+
 		/* Send user state for connecting user to other users */
 		sendmsg = Msg_create(UserState);
 		sendmsg->payload.userState->has_session = true;
@@ -358,7 +358,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		Client_send_message(client, sendmsg);
 
 		/* Server config message */
-		sendmsg = Msg_create(ServerConfig);		
+		sendmsg = Msg_create(ServerConfig);
 		sendmsg->payload.serverConfig->has_allow_html = true;
 		sendmsg->payload.serverConfig->allow_html = true; /* Support this? */
 		sendmsg->payload.serverConfig->has_message_length = true;
@@ -369,7 +369,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 
 		Log_info_client(client, "User %s authenticated", client->username);
 		break;
-		
+
 	case Ping:
 		if (msg->payload.ping->has_good)
 			client->cryptState.uiRemoteGood = msg->payload.ping->good;
@@ -384,14 +384,14 @@ void Mh_handle_message(client_t *client, message_t *msg)
 				  client->cryptState.uiRemoteGood, client->cryptState.uiRemoteLate,
 				  client->cryptState.uiRemoteLost, client->cryptState.uiRemoteResync
 			);
-		
+
 		client->UDPPingAvg = msg->payload.ping->udp_ping_avg;
 		client->UDPPingVar = msg->payload.ping->udp_ping_var;
 		client->TCPPingAvg = msg->payload.ping->tcp_ping_avg;
 		client->TCPPingVar = msg->payload.ping->tcp_ping_var;
 		client->UDPPackets = msg->payload.ping->udp_packets;
 		client->TCPPackets = msg->payload.ping->tcp_packets;
-		
+
 		sendmsg = Msg_create(Ping);
 
 		sendmsg->payload.ping->timestamp = msg->payload.ping->timestamp;
@@ -451,7 +451,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 
 		if (target == NULL)
 			target = client;
-		
+
 		msg->payload.userState->has_session = true;
 		msg->payload.userState->session = target->sessionId;
 		msg->payload.userState->has_actor = true;
@@ -492,7 +492,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			client->recording = msg->payload.userState->recording;
 			char *message;
 			uint32_t *tree_id;
-			
+
 			message = malloc(strlen(client->username) + 32);
 			if (!message)
 				Log_fatal("Out of memory");
@@ -560,19 +560,19 @@ void Mh_handle_message(client_t *client, message_t *msg)
 				Log_fatal("Out of memory");
 			memcpy(client->context, msg->payload.userState->plugin_context.data,
 				   msg->payload.userState->plugin_context.len);
-			
+
 			break; /* Don't inform other users about this state */
 		}
 		/* Re-use message */
 		Msg_inc_ref(msg);
-				
+
 		Client_send_message_except(NULL, msg);
 
 		/* Need to send remove channel message _after_ UserState message */
 		if (sendmsg != NULL)
 			Client_send_message_except(NULL, sendmsg);
 		break;
-		
+
 	case TextMessage:
 		if (!getBoolConf(ALLOW_TEXTMESSAGE))
 			break;
@@ -584,7 +584,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			sendPermissionDenied(client, "Tree message not supported");
 			break;
 		}
-			
+
 		if (msg->payload.textMessage->n_channel_id > 0) { /* To channel */
 			int i;
 			channel_t *ch_itr;
@@ -668,12 +668,12 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			Log_debug("Client release %s", client->release);
 		}
 		if (msg->payload.version->os) {
-			if (client->os) free(client->os);			
+			if (client->os) free(client->os);
 			client->os = strdup(msg->payload.version->os);
 			Log_debug("Client OS %s", client->os);
 		}
 		if (msg->payload.version->os_version) {
-			if (client->os_version) free(client->os_version);			
+			if (client->os_version) free(client->os_version);
 			client->os_version = strdup(msg->payload.version->os_version);
 			Log_debug("Client OS version %s", client->os_version);
 		}
@@ -681,17 +681,17 @@ void Mh_handle_message(client_t *client, message_t *msg)
 	case PermissionQuery:
 		Msg_inc_ref(msg); /* Re-use message */
 		msg->payload.permissionQuery->has_permissions = true;
-		
+
 		if (client->isAdmin)
 			msg->payload.permissionQuery->permissions = PERM_ADMIN;
 		else
 			msg->payload.permissionQuery->permissions = PERM_DEFAULT;
-		
+
 		if (!getBoolConf(ALLOW_TEXTMESSAGE))
 			msg->payload.permissionQuery->permissions &= ~PERM_TEXTMESSAGE;
 		if (!getBoolConf(ENABLE_BAN))
 			msg->payload.permissionQuery->permissions &= ~PERM_BAN;
-		
+
 		Client_send_message(client, msg);
 		break;
 	case UDPTunnel:
@@ -701,7 +701,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 	case ChannelState:
 	{
 		channel_t *ch_itr, *parent, *newchan;
-		int leave_id;		
+		int leave_id;
 		/* Don't allow any changes to existing channels */
 		if (msg->payload.channelState->has_channel_id) {
 			sendPermissionDenied(client, "Not supported by uMurmur");
@@ -727,7 +727,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			sendPermissionDenied(client, "Channel name too long");
 			break;
 		}
-			
+
 		parent = Chan_fromId(msg->payload.channelState->parent);
 		if (parent == NULL)
 			break;
@@ -740,13 +740,13 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		}
 		if (ch_itr != NULL)
 			break;
-		
+
 		/* Disallow temporary channels as siblings to temporary channels */
 		if (parent->temporary) {
 			sendPermissionDenied(client, "Parent channel is temporary channel");
 			break;
 		}
-			
+
 		/* XXX - Murmur looks for "\\w" and sends perm denied if not found.
 		 * I don't know why so I don't do that here...
 		 */
@@ -785,7 +785,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			sendmsg->payload.channelRemove->channel_id = leave_id;
 			Client_send_message_except(NULL, sendmsg);
 		}
-	}		
+	}
 	break;
 
 	case UserStats:
@@ -794,10 +794,10 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		codec_t *codec_itr = NULL;
 		int i;
 		bool_t details = true;
-		
+
 		if (msg->payload.userStats->has_stats_only)
 			details = !msg->payload.userStats->stats_only;
-		
+
 		if (!msg->payload.userStats->has_session)
 			sendPermissionDenied(client, "Not supported by uMurmur");
 		while (Client_iterate(&target) != NULL) {
@@ -808,13 +808,13 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		}
 		if (!target) /* Not found */
 			break;
-		
+
 		/*
 		 * Differences from Murmur:
 		 * o Ignoring certificates intentionally
 		 * o Ignoring channel local determining
 		 */
-		
+
 		sendmsg = Msg_create(UserStats);
 		sendmsg->payload.userStats->session = msg->payload.userStats->session;
 		sendmsg->payload.userStats->from_client->has_good = true;
@@ -825,7 +825,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		sendmsg->payload.userStats->from_client->lost = target->cryptState.uiLost;
 		sendmsg->payload.userStats->from_client->has_resync = true;
 		sendmsg->payload.userStats->from_client->resync = target->cryptState.uiResync;
-		
+
 		sendmsg->payload.userStats->from_server->has_good = true;
 		sendmsg->payload.userStats->from_server->good = target->cryptState.uiRemoteGood;
 		sendmsg->payload.userStats->from_server->has_late = true;
@@ -841,14 +841,14 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		sendmsg->payload.userStats->udp_ping_avg = target->UDPPingAvg;
 		sendmsg->payload.userStats->has_udp_ping_var = true;
 		sendmsg->payload.userStats->udp_ping_var = target->UDPPingVar;
-		
+
 		sendmsg->payload.userStats->has_tcp_ping_avg = true;
 		sendmsg->payload.userStats->tcp_ping_avg = target->TCPPingAvg;
 		sendmsg->payload.userStats->has_tcp_ping_var = true;
 		sendmsg->payload.userStats->tcp_ping_var = target->TCPPingVar;
 		sendmsg->payload.userStats->has_tcp_packets = true;
 		sendmsg->payload.userStats->tcp_packets = target->TCPPackets;
-		
+
 		if (details) {
 
 			sendmsg->payload.userStats->version->has_version = true;
@@ -859,7 +859,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 				sendmsg->payload.userStats->version->os = strdup(target->os);
 			if (target->os_version)
 				sendmsg->payload.userStats->version->os_version = strdup(target->os_version);
-			
+
 			sendmsg->payload.userStats->n_celt_versions = target->codec_count;
 			sendmsg->payload.userStats->celt_versions = malloc(sizeof(int32_t) * target->codec_count);
 			if (!sendmsg->payload.userStats->celt_versions)
@@ -885,13 +885,13 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		/* BW */
 		sendmsg->payload.userStats->has_bandwidth = true;
 		sendmsg->payload.userStats->bandwidth = target->availableBandwidth;
-		
+
 		/* Onlinesecs */
 		sendmsg->payload.userStats->has_onlinesecs = true;
-		sendmsg->payload.userStats->onlinesecs = Timer_elapsed(&target->connectTime) / 1000000LL;		
+		sendmsg->payload.userStats->onlinesecs = Timer_elapsed(&target->connectTime) / 1000000LL;
 		/* Idlesecs */
 		sendmsg->payload.userStats->has_idlesecs = true;
-		sendmsg->payload.userStats->idlesecs = Timer_elapsed(&target->idleTime) / 1000000LL;		
+		sendmsg->payload.userStats->idlesecs = Timer_elapsed(&target->idleTime) / 1000000LL;
 		Client_send_message(client, sendmsg);
 	}
 	break;
@@ -925,7 +925,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		}
 		/* Re-use message */
 		Msg_inc_ref(msg);
-				
+
 		Client_send_message_except(NULL, msg);
 		Client_close(target);
 		break;
@@ -949,7 +949,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			Ban_putBanList(msg, msg->payload.banList->n_bans);
 		}
 		break;
-		
+
 		/* Permission denied for all these messages. Not implemented. */
 	case ChannelRemove:
 	case ContextAction:
@@ -959,7 +959,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 	case QueryUsers:
 		sendPermissionDenied(client, "Not supported by uMurmur");
 		break;
-				
+
 	default:
 		Log_warn("Message %d not handled", msg->messageType);
 		break;
@@ -967,7 +967,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 out:
 	Msg_free(msg);
 	return;
-	
+
 disconnect:
 	Msg_free(msg);
 	Client_close(client);

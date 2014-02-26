@@ -52,7 +52,7 @@
 #define UDP_SOCK 1
 
 /* globals */
-int udpsock; 
+int udpsock;
 bool_t shutdown_server;
 extern char *bindaddr;
 extern int bindport;
@@ -67,7 +67,7 @@ void Server_run()
 	etimer_t janitorTimer;
 	unsigned short port;
 	in_addr_t inet_address;
-	
+
 	/* max clients + listen sock + udp sock + client connecting that will be disconnected */
 	pollfds = malloc((getIntConf(MAX_CLIENTS) + 3) * sizeof(struct pollfd));
 	if (pollfds == NULL)
@@ -78,7 +78,7 @@ void Server_run()
 		port = htons(bindport);
 	else
 		port = htons(getIntConf(BINDPORT));
-	
+
 	if (bindaddr != NULL && inet_addr(bindaddr) != -1)
 		inet_address = inet_addr(bindaddr);
 	else if (inet_addr(getStrConf(BINDADDR)) !=  -1)
@@ -86,7 +86,7 @@ void Server_run()
 	else
 		inet_address = inet_addr("0.0.0.0");
 	Log_info("Bind to %s:%hu", inet_address == 0 ? "*" : inet_ntoa(*((struct in_addr *)&inet_address)), ntohs(port));
-	
+
 	/* Prepare TCP socket */
 	memset(&sin, 0, sizeof(sin));
 	tcpsock = socket(PF_INET, SOCK_STREAM, 0);
@@ -95,15 +95,15 @@ void Server_run()
 	if (setsockopt(tcpsock, SOL_SOCKET, SO_REUSEADDR, &sockopt, sizeof(int)) != 0)
 		Log_fatal("setsockopt: %s", strerror(errno));
 	sin.sin_family = AF_INET;
-	sin.sin_port = port;	
+	sin.sin_port = port;
 	sin.sin_addr.s_addr = inet_address;
-	
+
 	rc = bind(tcpsock, (struct sockaddr *) &sin, sizeof (struct sockaddr_in));
 	if (rc < 0) Log_fatal("bind: %s", strerror(errno));
 	rc = listen(tcpsock, 3);
 	if (rc < 0) Log_fatal("listen");
 	fcntl(tcpsock, F_SETFL, O_NONBLOCK);
-	
+
 	pollfds[LISTEN_SOCK].fd = tcpsock;
 	pollfds[LISTEN_SOCK].events = POLLIN;
 
@@ -113,7 +113,7 @@ void Server_run()
 	sin.sin_family = AF_INET;
 	sin.sin_port = port;
 	sin.sin_addr.s_addr = inet_address;
-	
+
 	rc = bind(udpsock, (struct sockaddr *) &sin, sizeof (struct sockaddr_in));
 	if (rc < 0)
 		Log_fatal("bind %d %s: %s", getIntConf(BINDPORT), getStrConf(BINDADDR), strerror(errno));
@@ -125,26 +125,26 @@ void Server_run()
 	rc = setsockopt(udpsock, IPPROTO_IP, IP_TOS, &val, sizeof(val));
 	if (rc < 0)
 		Log_warn("Server: Failed to set TOS for UDP Socket");
-	
+
 	fcntl(udpsock, F_SETFL, O_NONBLOCK);
 	pollfds[UDP_SOCK].fd = udpsock;
 	pollfds[UDP_SOCK].events = POLLIN | POLLHUP | POLLERR;
-	
+
 	Timer_init(&janitorTimer);
-	
+
 	Log_info("uMurmur version %s ('%s') protocol version %d.%d.%d",
 	         UMURMUR_VERSION, UMURMUR_CODENAME, PROTVER_MAJOR, PROTVER_MINOR, PROTVER_PATCH);
 	Log_info("Visit http://code.google.com/p/umurmur/");
-	
+
 	/* Main server loop */
 	while (!shutdown_server) {
 		struct sockaddr_in remote;
 		int i;
-		
+
 		pollfds[UDP_SOCK].revents = 0;
 		pollfds[TCP_SOCK].revents = 0;
 		clientcount = Client_getfds(&pollfds[2]);
-		
+
 		timeout = (int)(1000000LL - (int64_t)Timer_elapsed(&janitorTimer)) / 1000LL;
 		if (timeout <= 0) {
 			Client_janitor();
@@ -188,7 +188,7 @@ void Server_run()
 				Client_write_fd(pollfds[i + 2].fd);
 			}
 		}
-	}	
+	}
 
 	/* Disconnect clients */
 	Client_disconnect_all();
