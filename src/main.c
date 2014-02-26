@@ -54,6 +54,7 @@
 #include "client.h"
 #include "conf.h"
 #include "version.h"
+#include "config.h"
 
 char system_string[64], version_string[64];
 int bindport;
@@ -68,7 +69,7 @@ void lockfile(const char *pidfile)
 	 * unmodified if we cannot lock it.
 	 */
 	lfp = open(pidfile, O_WRONLY|O_CREAT, 0640);
-	
+
 	if (lfp < 0)
 		Log_fatal("Cannot open PID-file %s for writing", pidfile);
 
@@ -152,12 +153,12 @@ static void switch_user(void)
 
 	if (setuid(pwd->pw_uid))
 		Log_fatal("setuid() failed: %s", strerror(errno));
-	
+
 	if (!grp)
 		grp = getgrgid(gid);
 	if (!grp)
 		Log_fatal("getgrgid() failed: %s", strerror(errno));
-	
+
 	Log_info("Switch to user '%s' group '%s'", pwd->pw_name, grp->gr_name);
 }
 
@@ -178,7 +179,7 @@ void signal_handler(int sig)
 void daemonize()
 {
 	int i;
-	
+
 	if (getppid() == 1)
 		return; /* already a daemon */
 	i = fork();
@@ -188,19 +189,19 @@ void daemonize()
 	}
 	if ( i > 0)
 		exit(0); /* parent exits */
-	
+
 	/* child (daemon) continues */
 	setsid(); /* obtain a new process group */
 	for (i = getdtablesize(); i >= 0; --i)
 		close(i); /* close all descriptors */
-	
+
 	i = open("/dev/null",O_RDWR);
 	(void)dup(i);
 	(void)dup(i);
-	
+
 	umask(027); /* set newly created file permissions */
 	(void)chdir("/");
-		
+
 }
 
 #ifdef POSIX_PRIORITY_SCHEDULING
@@ -245,7 +246,7 @@ int main(int argc, char **argv)
 	char *conffile = NULL, *pidfile = NULL;
 	int c;
 	struct utsname utsbuf;
-	
+
 	/* Arguments */
 #ifdef POSIX_PRIORITY_SCHEDULING
 	while ((c = getopt(argc, argv, "drp:c:a:b:ht")) != EOF) {
@@ -292,12 +293,12 @@ int main(int argc, char **argv)
 		else
 			exit(0);
 	}
-		
+
 	/* Initialize the config subsystem early;
 	 * switch_user() will need to read some config variables as well as logging.
 	 */
 	Conf_init(conffile);
-	
+
 	/* Logging to terminal if not daemonizing, otherwise to syslog or log file.
 	 */
 	if (!nodaemon) {
@@ -311,10 +312,10 @@ int main(int argc, char **argv)
 		/* Reopen log file. If user switch results in access denied, we catch
 		 * it early.
 		 */
-		Log_reset(); 
+		Log_reset();
 	}
 	else Log_init(true);
-	
+
 	signal(SIGCHLD, SIG_IGN); /* ignore child */
 	signal(SIGTSTP, SIG_IGN); /* ignore tty signals */
 	signal(SIGTTOU, SIG_IGN);
@@ -322,7 +323,7 @@ int main(int argc, char **argv)
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGHUP, signal_handler); /* catch hangup signal */
 	signal(SIGTERM, signal_handler); /* catch kill signal */
-	
+
 	/* Build system string */
 	if (uname(&utsbuf) == 0) {
 		snprintf(system_string, 64, "%s %s", utsbuf.sysname, utsbuf.machine);
@@ -332,7 +333,7 @@ int main(int argc, char **argv)
 		snprintf(system_string, 64, "unknown unknown");
 		snprintf(version_string, 64, "unknown");
 	}
-	
+
 	/* Initializing */
 	SSLi_init();
 	Chan_init();
@@ -343,17 +344,17 @@ int main(int argc, char **argv)
 	if (realtime)
 		setscheduler();
 #endif
-	
+
 	Server_run();
-	
+
 	Ban_deinit();
 	SSLi_deinit();
 	Chan_free();
 	Log_free();
 	Conf_deinit();
-	
+
 	if (pidfile != NULL)
 		unlink(pidfile);
-	
+
 	return 0;
 }
