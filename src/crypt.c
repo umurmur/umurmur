@@ -199,7 +199,7 @@ bool_t CryptState_decrypt(cryptState_t *cs, const unsigned char *source, unsigne
 	CryptState_ocb_decrypt(cs, source+4, dst, plain_length, cs->decrypt_iv, tag);
 
 	if (memcmp(tag, source+1, 3) != 0) {
-		memcpy(cs->decrypt_iv, saveiv, AES_BLOCK_SIZE);		
+		memcpy(cs->decrypt_iv, saveiv, AES_BLOCK_SIZE);
 		return false;
 	}
 	cs->decrypt_history[cs->decrypt_iv[0]] = cs->decrypt_iv[1];

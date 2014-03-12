@@ -101,7 +101,7 @@ void Client_janitor()
 		c->availableBandwidth += maxBandwidth;
 		if (c->availableBandwidth > bwTop)
 			c->availableBandwidth = bwTop;
-		
+
 		if (Timer_isElapsed(&c->lastActivity, 1000000LL * INACTIVITY_TIMEOUT)) {
 			/* No activity from client - assume it is lost and close. */
 			Log_info_client(c, "Timeout, closing.");
@@ -136,7 +136,7 @@ codec_t *Client_codec_iterate(client_t *client, codec_t **codec_itr)
 
 	if (list_empty(&client->codecs))
 		return NULL;
-	
+
 	if (cd == NULL) {
 		cd = list_get_entry(list_get_first(&client->codecs), codec_t, node);
 	} else {
@@ -170,7 +170,7 @@ bool_t Client_token_match(client_t *client, char *str)
 {
 	token_t *token;
 	struct dlist *itr;
-	
+
 	if (list_empty(&client->tokens))
 		return false;
 	list_iterate(itr, &client->tokens) {
@@ -185,7 +185,7 @@ void Client_token_free(client_t *client)
 {
 	struct dlist *itr, *save;
 	token_t *token;
-	
+
 	list_iterate_safe(itr, save, &client->tokens) {
 		token = list_get_entry(itr, token_t, node);
 		list_del(&token->node);
@@ -210,13 +210,13 @@ void recheckCodecVersions(client_t *connectingClient)
 	bool_t enableOpus;
 
 	init_list_entry(&codec_list);
-	
+
 	while (Client_iterate(&client_itr) != NULL) {
 		codec_itr = NULL;
 		if (client_itr->codec_count == 0 && !client_itr->bOpus)
 			continue;
 		while (Client_codec_iterate(client_itr, &codec_itr) != NULL) {
-			found = false;			    
+			found = false;
 			list_iterate(itr, &codec_list) {
 				cd = list_get_entry(itr, codec_t, node);
 				if (cd->codec == codec_itr->codec) {
@@ -239,7 +239,7 @@ void recheckCodecVersions(client_t *connectingClient)
 		if (client_itr->bOpus)
 			opus++;
 	}
-	if (users == 0) 
+	if (users == 0)
 		return;
 
 	enableOpus = ((opus * 100 / users) >= getIntConf(OPUS_THRESHOLD));
@@ -266,7 +266,7 @@ void recheckCodecVersions(client_t *connectingClient)
 			bPreferAlpha = true;
 		else
 			bPreferAlpha = !bPreferAlpha;
-		
+
 		if (bPreferAlpha)
 			iCodecAlpha = version;
 		else
@@ -285,7 +285,7 @@ void recheckCodecVersions(client_t *connectingClient)
 	sendmsg->payload.codecVersion->opus = enableOpus;
 
 	Client_send_message_except(NULL, sendmsg);
-	
+
 	if (enableOpus && !bOpus) {
 		client_itr = NULL;
 		while (Client_iterate(&client_itr) != NULL) {
@@ -294,9 +294,9 @@ void recheckCodecVersions(client_t *connectingClient)
 				Client_textmessage(client_itr, OPUS_WARN_SWITCHING);
 			}
 		}
-		Log_info("OPUS codec %s", bOpus ? "enabled" : "disabled");	
+		Log_info("OPUS codec %s", bOpus ? "enabled" : "disabled");
 	}
-	
+
 	bOpus = enableOpus;
 }
 
@@ -347,17 +347,17 @@ int Client_add(int fd, struct sockaddr_in *remote)
 	newclient->sessionId = findFreeSessionId();
 	if (newclient->sessionId < 0)
 		Log_fatal("Could not find a free session ID");
-	
+
 	init_list_entry(&newclient->txMsgQueue);
 	init_list_entry(&newclient->chan_node);
 	init_list_entry(&newclient->node);
 	init_list_entry(&newclient->voicetargets);
 	init_list_entry(&newclient->codecs);
 	init_list_entry(&newclient->tokens);
-	
+
 	list_add_tail(&newclient->node, &clients);
 	clientcount++;
-	
+
 	/* Send version message to client */
 	sendmsg = Msg_create(Version);
 	sendmsg->payload.version->has_version = true;
@@ -395,7 +395,7 @@ void Client_free(client_t *client)
 	Client_codec_free(client);
 	Voicetarget_free_all(client);
 	Client_token_free(client);
-	
+
 	list_del(&client->node);
 	if (client->ssl)
 		SSLi_free(client->ssl);
@@ -404,9 +404,9 @@ void Client_free(client_t *client)
 	if (client->release)
 		free(client->release);
 	if (client->os)
-		free(client->os);			
+		free(client->os);
 	if (client->os_version)
-		free(client->os_version);			
+		free(client->os_version);
 	if (client->username)
 		free(client->username);
 	if (client->context)
@@ -426,7 +426,7 @@ void Client_close(client_t *client)
 void Client_disconnect_all()
 {
 	struct dlist *itr, *save;
-	
+
 	list_iterate_safe(itr, save, &clients) {
 		Client_free(list_get_entry(itr, client_t, node));
 	}
@@ -436,7 +436,7 @@ int Client_read_fd(int fd)
 {
 	struct dlist *itr;
 	client_t *client = NULL;
-	
+
 	list_iterate(itr, &clients) {
 		if (fd == list_get_entry(itr, client_t, node)->tcpfd) {
 			client = list_get_entry(itr, client_t, node);
@@ -454,13 +454,13 @@ int Client_read(client_t *client)
 	int rc;
 
 	Timer_restart(&client->lastActivity);
-	
+
 	if (client->writeBlockedOnRead) {
 		client->writeBlockedOnRead = false;
 		Log_debug("Client_read: writeBlockedOnRead == true");
 		return Client_write(client);
 	}
-	
+
 	if (client->shutdown_wait) {
 		Client_free(client);
 		return 0;
@@ -476,7 +476,7 @@ int Client_read(client_t *client)
 
 	do {
 		errno = 0;
-		if (!client->msgsize) 
+		if (!client->msgsize)
 			rc = SSLi_read(client->ssl, &client->rxbuf[client->rxcount], 6 - client->rxcount);
 		else
 			rc = SSLi_read(client->ssl, &client->rxbuf[client->rxcount], client->msgsize);
@@ -514,7 +514,7 @@ int Client_read(client_t *client)
 				client->readBlockedOnWrite = true;
 				return 0;
 			}
-			else if (SSLi_get_error(client->ssl, rc) == SSLI_ERROR_ZERO_RETURN || 
+			else if (SSLi_get_error(client->ssl, rc) == SSLI_ERROR_ZERO_RETURN ||
 			         SSLi_get_error(client->ssl, rc) == 0) {
 				Log_info_client(client, "Connection closed by peer");
 				Client_close(client);
@@ -524,7 +524,7 @@ int Client_read(client_t *client)
 					if (errno == 0)
 						Log_info_client(client, "Connection closed by peer");
 					else
-						Log_info_client(client,"Error: %s  - Closing connection (code %d)", 
+						Log_info_client(client,"Error: %s  - Closing connection (code %d)",
 						                strerror(errno));
 				}
 				else if (SSLi_get_error(client->ssl, rc) == SSLI_ERROR_CONNRESET) {
@@ -538,7 +538,7 @@ int Client_read(client_t *client)
 			}
 		}
 	} while (SSLi_data_pending(client->ssl));
-	
+
 	return 0;
 }
 
@@ -546,7 +546,7 @@ int Client_write_fd(int fd)
 {
 	struct dlist *itr;
 	client_t *client = NULL;
-	
+
 	list_iterate(itr, &clients) {
 		if(fd == list_get_entry(itr, client_t, node)->tcpfd) {
 			client = list_get_entry(itr, client_t, node);
@@ -562,7 +562,7 @@ int Client_write_fd(int fd)
 int Client_write(client_t *client)
 {
 	int rc;
-	
+
 	if (client->readBlockedOnWrite) {
 		client->readBlockedOnWrite = false;
 		Log_debug("Client_write: readBlockedOnWrite == true");
@@ -650,7 +650,7 @@ client_t *Client_iterate(client_t **client_itr)
 
 	if (list_empty(&clients))
 		return NULL;
-	
+
 	if (c == NULL) {
 		c = list_get_entry(list_get_first(&clients), client_t, node);
 	} else {
@@ -689,7 +689,7 @@ int Client_send_message_except(client_t *client, message_t *msg)
 {
 	client_t *itr = NULL;
 	int count = 0;
-	
+
 	Msg_inc_ref(msg); /* Make sure a reference is held during the whole iteration. */
 	while (Client_iterate(&itr) != NULL) {
 		if (itr != client) {
@@ -700,11 +700,11 @@ int Client_send_message_except(client_t *client, message_t *msg)
 		}
 	}
 	Msg_free(msg); /* Free our reference to the message */
-	
+
 	if (count == 0)
 		Msg_free(msg); /* If only 1 client is connected then no message is passed
 						* to Client_send_message(). Free it here. */
-		
+
 	return 0;
 }
 
@@ -712,7 +712,7 @@ int Client_send_message_except_ver(client_t *client, message_t *msg, uint32_t ve
 {
 	client_t *itr = NULL;
 	int count = 0;
-	
+
 	Msg_inc_ref(msg); /* Make sure a reference is held during the whole iteration. */
 	while (Client_iterate(&itr) != NULL) {
 		if (itr != client) {
@@ -723,11 +723,11 @@ int Client_send_message_except_ver(client_t *client, message_t *msg, uint32_t ve
 		}
 	}
 	Msg_free(msg); /* Free our reference to the message */
-	
+
 	if (count == 0)
 		Msg_free(msg); /* If only 1 client is connected then no message is passed
 						* to Client_send_message(). Free it here. */
-		
+
 	return 0;
 }
 
@@ -741,9 +741,9 @@ static bool_t checkDecrypt(client_t *client, const uint8_t *encrypted, uint8_t *
 		if (Timer_elapsed(&client->cryptState.tLastRequest) > 5000000ULL) {
 			message_t *sendmsg;
 			Timer_restart(&client->cryptState.tLastRequest);
-			
+
 			sendmsg = Msg_create(CryptSetup);
-			Log_info_client(client, "Requesting voice channel crypt resync");		
+			Log_info_client(client, "Requesting voice channel crypt resync");
 			Client_send_message(client, sendmsg);
 		}
 	}
@@ -759,7 +759,7 @@ int Client_read_udp()
 	uint64_t key;
 	client_t *itr;
 	UDPMessageType_t msgType;
-	
+
 #if defined(__LP64__)
 	uint8_t encbuff[UDP_PACKET_SIZE + 8];
 	uint8_t *encrypted = encbuff + 4;
@@ -767,7 +767,7 @@ int Client_read_udp()
 	uint8_t encrypted[UDP_PACKET_SIZE];
 #endif
 	uint8_t buffer[UDP_PACKET_SIZE];
-	
+
 	len = recvfrom(udpsock, encrypted, UDP_PACKET_SIZE, MSG_TRUNC, (struct sockaddr *)&from, &fromlen);
 	if (len == 0) {
 		return -1;
@@ -788,21 +788,21 @@ int Client_read_udp()
 		ping[3] = htonl((uint32_t)clientcount);
 		ping[4] = htonl((uint32_t)getIntConf(MAX_CLIENTS));
 		ping[5] = htonl((uint32_t)getIntConf(MAX_BANDWIDTH));
-		
+
 		sendto(udpsock, encrypted, 6 * sizeof(uint32_t), 0, (struct sockaddr *)&from, fromlen);
 		return 0;
 	}
-	
+
 	key = (((uint64_t)from.sin_addr.s_addr) << 16) ^ from.sin_port;
 	itr = NULL;
-	
+
 	while (Client_iterate(&itr) != NULL) {
 		if (itr->key == key) {
 			if (!checkDecrypt(itr, encrypted, buffer, len))
 				goto out;
 			break;
 		}
-	}	
+	}
 	if (itr == NULL) { /* Unknown peer */
 		while (Client_iterate(&itr) != NULL) {
 			if (itr->remote_tcp.sin_addr.s_addr == from.sin_addr.s_addr) {
@@ -818,7 +818,7 @@ int Client_read_udp()
 	if (itr == NULL) { /* Couldn't find this peer among connected clients */
 		goto out;
 	}
-	
+
 	itr->bUDP = true;
 	len -= 4; /* Adjust for crypt header */
 	msgType = (UDPMessageType_t)((buffer[0] >> 5) & 0x7);
@@ -839,7 +839,7 @@ int Client_read_udp()
 		Log_debug("Unknown UDP message type from %s port %d", inet_ntoa(from.sin_addr), ntohs(from.sin_port));
 		break;
 	}
-	
+
 out:
 	return 0;
 }
@@ -851,7 +851,7 @@ static inline void Client_send_voice(client_t *src, client_t *dst, uint8_t *data
 			src->context != NULL && dst->context != NULL && /* ...both source and destination has context */
 			strcmp(src->context, dst->context) == 0) /* ...and the contexts match */
 			Client_send_udp(dst, data, len);
-		else 
+		else
 			Client_send_udp(dst, data, len - poslen);
 	}
 }
@@ -867,21 +867,21 @@ int Client_voiceMsg(client_t *client, uint8_t *data, int len)
 	unsigned int poslen, counter, size;
 	int offset, packetsize;
 	voicetarget_t *vt;
-	
+
 	channel_t *ch = (channel_t *)client->channel;
 	struct dlist *itr;
-	
+
 	if (!client->authenticated || client->mute || client->self_mute || ch->silent)
 		goto out;
-	
+
 	packetsize = 20 + 8 + 4 + len;
 	if (client->availableBandwidth - packetsize < 0)
 		goto out; /* Discard */
 	client->availableBandwidth -= packetsize;
-	
+
 	Timer_restart(&client->idleTime);
 	Timer_restart(&client->lastActivity);
-	
+
 	counter = Pds_get_numval(pdi); /* step past session id */
 	if ((type >> 5) != UDPVoiceOpus) {
 		do {
@@ -892,22 +892,22 @@ int Client_voiceMsg(client_t *client, uint8_t *data, int len)
 		size = Pds_get_numval(pdi);
 		Pds_skip(pdi, size & 0x1fff);
 	}
-		
+
 	poslen = pdi->maxsize - pdi->offset; /* For stripping of positional info */
-	
+
 	Pds_add_numval(pds, client->sessionId);
 	Pds_append_data_nosize(pds, data + 1, len - 1);
-	
+
 	if (target == 0x1f) { /* Loopback */
 		buffer[0] = (uint8_t) type;
 		Client_send_udp(client, buffer, pds->offset + 1);
 	}
 	else if (target == 0) { /* regular channel speech */
 		buffer[0] = (uint8_t) type;
-		
+
 		if (ch == NULL)
 			goto out;
-		
+
 		list_iterate(itr, &ch->clients) {
 			client_t *c;
 			c = list_get_entry(itr, client_t, chan_node);
@@ -959,7 +959,7 @@ int Client_voiceMsg(client_t *client, uint8_t *data, int len)
 				}
 				Chan_freeTreeList(&chanlist);
 			}
-		}			
+		}
 		/* Sessions */
 		for (i = 0; i < TARGET_MAX_SESSIONS && vt->sessions[i] != -1; i++) {
 			client_t *c;
@@ -976,7 +976,7 @@ int Client_voiceMsg(client_t *client, uint8_t *data, int len)
 out:
 	Pds_free(pds);
 	Pds_free(pdi);
-	
+
 	return 0;
 }
 
@@ -995,11 +995,11 @@ static int Client_send_udp(client_t *client, uint8_t *data, int len)
 #endif
 		if (mbuf == NULL)
 			Log_fatal("Out of memory");
-		
+
 		CryptState_encrypt(&client->cryptState, data, buf, len);
-		
+
 		sendto(udpsock, buf, len + 4, 0, (struct sockaddr *)&client->remote_udp, sizeof(struct sockaddr_in));
-		
+
 		free(mbuf);
 	} else {
 		message_t *msg;
