@@ -1,7 +1,7 @@
 #ifndef TYPES_H_90878954
 #define TYPES_H_90878954
 
-#if __STDC_VERSION__ == 199901L
+#if __STDC_VERSION__ >= 199901L
 
 #include <stdbool.h>
 typedef bool bool_t;
