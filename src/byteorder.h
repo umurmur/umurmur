@@ -1,4 +1,6 @@
 /* Copyright (C) 2014, Felix Morgner <felix.morgner@gmail.com>
+   Copyright (C) 2009-2014, Martin Johansson <martin@fatbob.nu>
+   Copyright (C) 2005-2014, Thorvald Natvig <thorvald@natvig.com>
 
    All rights reserved.
 
