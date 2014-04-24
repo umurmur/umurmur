@@ -220,7 +220,7 @@ bool_t CryptState_decrypt(cryptState_t *cs, const unsigned char *source, unsigne
 #define SHIFTBITS 63
 typedef uint64_t subblock;
 
-#if __BYTE_ORDER == __BIG_ENDIAN
+#if CRYPT_BE
 #define SWAPPED(x) (x)
 #else
 #ifdef __x86_64__

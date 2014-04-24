@@ -31,6 +31,20 @@
 #ifndef CRYPTSTATE_H_34564356
 #define CRYPTSTATE_H_34564356
 
+#ifdef NETBSD
+#include <machine/endian.h>
+#if BYTE_ORDER == BIG_ENDIAN
+#define CRYPT_BE
+#endif
+#endif
+
+#ifdef LINUX
+#include <endian.h>
+#if __BYTE_ORDER == __BIG_ENDIAN
+#define CRYPT_BE
+#endif
+#endif
+
 #include "config.h"
 
 #ifdef USE_POLARSSL
