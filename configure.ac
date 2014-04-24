@@ -32,7 +32,7 @@
 AC_PREREQ([2.63])
 AC_INIT([umurmur], [0.2.14], [http://code.google.com/p/umurmur/issues/entry], [umurmur], [http://code.google.com/p/umurmur])
 AC_CONFIG_SRCDIR([src/client.h])
-AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_HEADERS([src/config.h])
 AM_INIT_AUTOMAKE
 AC_CANONICAL_HOST
 
@@ -85,6 +85,9 @@ AS_IF([test "x$with_ssl" = xopenssl], [
 	AC_CHECK_LIB([crypto], [BN_init], [], [AC_MSG_ERROR([could not find libcrypto])])
 	AC_CHECK_LIB([ssl], [SSL_library_init], [], [AC_MSG_ERROR([could not find libssl])])
 ])
+
+AM_CONDITIONAL(USE_OPENSSL, test x$with_ssl = xopenssl)
+AM_CONDITIONAL(USE_GNUTLS, test x$with_ssl = xgnutls)
 
 AC_DEFINE([DEFAULT_CONFIG], ["/etc/umurmur.conf"], [Default config])
 
