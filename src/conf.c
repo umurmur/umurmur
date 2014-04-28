@@ -152,6 +152,17 @@ const char *getStrConf(param_t param)
 				return "";
 		}
 		break;
+	case BINDADDR6:
+		setting = config_lookup(&configuration, "bindaddr6");
+		if (!setting)
+			return "";
+		else {
+			if ((strsetting = config_setting_get_string(setting)) != NULL)
+				return strsetting;
+			else
+				return "";
+		}
+		break;
 	case WELCOMETEXT:
 		setting = config_lookup(&configuration, "welcometext");
 		if (!setting)
@@ -232,6 +243,14 @@ int getIntConf(param_t param)
 	switch (param) {
 	case BINDPORT:
 		setting = config_lookup(&configuration, "bindport");
+		if (!setting)
+			return DEFAULT_BINDPORT;
+		else {
+			return config_setting_get_int(setting);
+		}
+		break;
+	case BINDPORT6:
+		setting = config_lookup(&configuration, "bindport6");
 		if (!setting)
 			return DEFAULT_BINDPORT;
 		else {

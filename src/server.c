@@ -51,11 +51,46 @@
 #define TCP_SOCK 0
 #define UDP_SOCK 1
 
+#define TCP6_SOCK 2
+#define UDP6_SOCK 3
+
 /* globals */
 int udpsock;
 bool_t shutdown_server;
 extern char *bindaddr;
+extern char *bindaddr6;
 extern int bindport;
+extern int bindport6;
+
+struct sockaddr_storage** Server_setupAddressesAndPorts()
+{
+  struct sockaddr_storage** addresses;
+
+  struct sockaddr_storage* v4address = calloc(1, sizeof(struct sockaddr_storage));
+  v4address->ss_family = AF_INET;
+  v4address->ss_len = sizeof(struct sockaddr_storage);
+  struct sockaddr_storage* v6address = calloc(1, sizeof(struct sockaddr_storage));
+  v6address->ss_family = AF_INET;
+  v6address->ss_len = sizeof(struct sockaddr_storage);
+
+  int error = 0;
+
+  error = inet_pton(AF_INET, (!bindaddr) ? ((getStrConf(BINDADDR)) ? getStrConf(BINDADDR) : "0.0.0.0")
+                                         : bindaddr, &(((struct sockaddr_in*)v4address)->sin_addr));
+  if (error == 0) Log_fatal("Invalid IPv4 address supplied!");
+
+  error = inet_pton(AF_INET, (!bindaddr6) ? ((getStrConf(BINDADDR6)) ? getStrConf(BINDADDR6) : "::")
+                                         : bindaddr6, &(((struct sockaddr_in6*)v6address)->sin6_addr));
+  if (error == 0) Log_fatal("Invalid IPv6 address supplied!");
+
+  ((struct sockaddr_in*)v4address)->sin_port = htons((bindport) ? bindport : getIntConf(BINDPORT));
+  ((struct sockaddr_in6*)v6address)->sin6_port = htons((bindport) ? bindport : getIntConf(BINDPORT));
+
+  addresses[0] = v4address;
+  addresses[1] = v6address;
+
+  return addresses;
+}
 
 void Server_run()
 {

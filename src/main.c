@@ -58,7 +58,9 @@
 
 char system_string[64], version_string[64];
 int bindport;
+int bindport6;
 char *bindaddr;
+char *bindaddr6;
 
 void lockfile(const char *pidfile)
 {
@@ -249,9 +251,9 @@ int main(int argc, char **argv)
 
 	/* Arguments */
 #ifdef POSIX_PRIORITY_SCHEDULING
-	while ((c = getopt(argc, argv, "drp:c:a:b:ht")) != EOF) {
+	while ((c = getopt(argc, argv, "drp:c:a:A:b:B:ht")) != EOF) {
 #else
-	while ((c = getopt(argc, argv, "dp:c:a:b:ht")) != EOF) {
+	while ((c = getopt(argc, argv, "dp:c:a:A:b:B:ht")) != EOF) {
 #endif
 		switch(c) {
 		case 'c':
@@ -263,9 +265,15 @@ int main(int argc, char **argv)
 		case 'a':
 			bindaddr = optarg;
 			break;
+    case 'A':
+      bindaddr6 = optarg;
+      break;
 		case 'b':
 			bindport = atoi(optarg);
 			break;
+    case 'B':
+      bindport6 = atoi(optarg);
+      break;
 		case 'd':
 			nodaemon = true;
 			break;
