@@ -64,7 +64,7 @@ extern int bindport6;
 
 struct sockaddr_storage** Server_setupAddressesAndPorts()
 {
-  struct sockaddr_storage** addresses;
+  struct sockaddr_storage** addresses = malloc(2 * sizeof(void*));
 
   struct sockaddr_storage* v4address = calloc(1, sizeof(struct sockaddr_storage));
   v4address->ss_family = AF_INET;
@@ -79,7 +79,7 @@ struct sockaddr_storage** Server_setupAddressesAndPorts()
                                          : bindaddr, &(((struct sockaddr_in*)v4address)->sin_addr));
   if (error == 0) Log_fatal("Invalid IPv4 address supplied!");
 
-  error = inet_pton(AF_INET, (!bindaddr6) ? ((getStrConf(BINDADDR6)) ? getStrConf(BINDADDR6) : "::")
+  error = inet_pton(AF_INET6, (!bindaddr6) ? ((getStrConf(BINDADDR6)) ? getStrConf(BINDADDR6) : "::")
                                          : bindaddr6, &(((struct sockaddr_in6*)v6address)->sin6_addr));
   if (error == 0) Log_fatal("Invalid IPv6 address supplied!");
 

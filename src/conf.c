@@ -144,23 +144,23 @@ const char *getStrConf(param_t param)
 	case BINDADDR:
 		setting = config_lookup(&configuration, "bindaddr");
 		if (!setting)
-			return "";
+			return NULL;
 		else {
 			if ((strsetting = config_setting_get_string(setting)) != NULL)
 				return strsetting;
 			else
-				return "";
+				return NULL;
 		}
 		break;
 	case BINDADDR6:
 		setting = config_lookup(&configuration, "bindaddr6");
 		if (!setting)
-			return "";
+			return NULL;
 		else {
 			if ((strsetting = config_setting_get_string(setting)) != NULL)
 				return strsetting;
 			else
-				return "";
+				return NULL;
 		}
 		break;
 	case WELCOMETEXT:
