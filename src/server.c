@@ -92,86 +92,13 @@ struct sockaddr_storage** Server_setupAddressesAndPorts()
   return addresses;
 }
 
-void Server_run()
-{
-	int timeout = 1000, rc;
-	struct pollfd *pollfds;
-	int tcpsock, sockopt = 1;
-	struct sockaddr_in sin;
-	int val, clientcount;
+void Server_runLoop(struct pollfd* pollfds)
+  {
+  int timeout = 1000, rc, clientcount;
 	etimer_t janitorTimer;
-	unsigned short port;
-	in_addr_t inet_address;
-
-	/* max clients + listen sock + udp sock + client connecting that will be disconnected */
-	pollfds = malloc((getIntConf(MAX_CLIENTS) + 3) * sizeof(struct pollfd));
-	if (pollfds == NULL)
-		Log_fatal("out of memory");
-
-	/* Figure out bind address and port */
-	if (bindport != 0)
-		port = htons(bindport);
-	else
-		port = htons(getIntConf(BINDPORT));
-
-	if (bindaddr != NULL && inet_addr(bindaddr) != -1)
-		inet_address = inet_addr(bindaddr);
-	else if (inet_addr(getStrConf(BINDADDR)) !=  -1)
-		inet_address = inet_addr(getStrConf(BINDADDR));
-	else
-		inet_address = inet_addr("0.0.0.0");
-	Log_info("Bind to %s:%hu", inet_address == 0 ? "*" : inet_ntoa(*((struct in_addr *)&inet_address)), ntohs(port));
-
-	/* Prepare TCP socket */
-	memset(&sin, 0, sizeof(sin));
-	tcpsock = socket(PF_INET, SOCK_STREAM, 0);
-	if (tcpsock < 0)
-		Log_fatal("socket");
-	if (setsockopt(tcpsock, SOL_SOCKET, SO_REUSEADDR, &sockopt, sizeof(int)) != 0)
-		Log_fatal("setsockopt: %s", strerror(errno));
-	sin.sin_family = AF_INET;
-	sin.sin_port = port;
-	sin.sin_addr.s_addr = inet_address;
-
-	rc = bind(tcpsock, (struct sockaddr *) &sin, sizeof (struct sockaddr_in));
-	if (rc < 0) Log_fatal("bind: %s", strerror(errno));
-	rc = listen(tcpsock, 3);
-	if (rc < 0) Log_fatal("listen");
-	fcntl(tcpsock, F_SETFL, O_NONBLOCK);
-
-	pollfds[LISTEN_SOCK].fd = tcpsock;
-	pollfds[LISTEN_SOCK].events = POLLIN;
-
-	/* Prepare UDP socket */
-	memset(&sin, 0, sizeof(sin));
-	udpsock = socket(PF_INET, SOCK_DGRAM, 0);
-	sin.sin_family = AF_INET;
-	sin.sin_port = port;
-	sin.sin_addr.s_addr = inet_address;
-
-	rc = bind(udpsock, (struct sockaddr *) &sin, sizeof (struct sockaddr_in));
-	if (rc < 0)
-		Log_fatal("bind %d %s: %s", getIntConf(BINDPORT), getStrConf(BINDADDR), strerror(errno));
-	val = 0xe0;
-	rc = setsockopt(udpsock, IPPROTO_IP, IP_TOS, &val, sizeof(val));
-	if (rc < 0)
-		Log_warn("Server: Failed to set TOS for UDP Socket");
-	val = 0x80;
-	rc = setsockopt(udpsock, IPPROTO_IP, IP_TOS, &val, sizeof(val));
-	if (rc < 0)
-		Log_warn("Server: Failed to set TOS for UDP Socket");
-
-	fcntl(udpsock, F_SETFL, O_NONBLOCK);
-	pollfds[UDP_SOCK].fd = udpsock;
-	pollfds[UDP_SOCK].events = POLLIN | POLLHUP | POLLERR;
 
 	Timer_init(&janitorTimer);
 
-	Log_info("uMurmur version %s ('%s') protocol version %d.%d.%d",
-	         UMURMUR_VERSION, UMURMUR_CODENAME, PROTVER_MAJOR, PROTVER_MINOR, PROTVER_PATCH);
-	Log_info("Visit http://code.google.com/p/umurmur/");
-
-	/* Main server loop */
 	while (!shutdown_server) {
 		struct sockaddr_in remote;
 		int i;
@@ -224,6 +151,75 @@ void Server_run()
 			}
 		}
 	}
+  }
+
+void Server_run()
+{
+	int rc;
+	struct pollfd *pollfds;
+	int tcpsock, sockopt = 1;
+	struct sockaddr_in sin;
+	int val;
+	unsigned short port;
+	in_addr_t inet_address;
+
+	/* max clients + listen sock + udp sock + client connecting that will be disconnected */
+	pollfds = malloc((getIntConf(MAX_CLIENTS) + 3) * sizeof(struct pollfd));
+	if (pollfds == NULL)
+		Log_fatal("out of memory");
+
+	/* Figure out bind address and port */
+  struct sockaddr_storage** addresses = Server_setupAddressesAndPorts();
+
+	/* Prepare TCP socket */
+	memset(&sin, 0, sizeof(sin));
+	tcpsock = socket(PF_INET, SOCK_STREAM, 0);
+	if (tcpsock < 0)
+		Log_fatal("socket");
+	if (setsockopt(tcpsock, SOL_SOCKET, SO_REUSEADDR, &sockopt, sizeof(int)) != 0)
+		Log_fatal("setsockopt: %s", strerror(errno));
+	sin.sin_family = AF_INET;
+	sin.sin_port = port;
+	sin.sin_addr.s_addr = inet_address;
+
+	rc = bind(tcpsock, (struct sockaddr *) &sin, sizeof (struct sockaddr_in));
+	if (rc < 0) Log_fatal("bind: %s", strerror(errno));
+	rc = listen(tcpsock, 3);
+	if (rc < 0) Log_fatal("listen");
+	fcntl(tcpsock, F_SETFL, O_NONBLOCK);
+
+	pollfds[LISTEN_SOCK].fd = tcpsock;
+	pollfds[LISTEN_SOCK].events = POLLIN;
+
+	/* Prepare UDP socket */
+	memset(&sin, 0, sizeof(sin));
+	udpsock = socket(PF_INET, SOCK_DGRAM, 0);
+	sin.sin_family = AF_INET;
+	sin.sin_port = port;
+	sin.sin_addr.s_addr = inet_address;
+
+	rc = bind(udpsock, (struct sockaddr *) &sin, sizeof (struct sockaddr_in));
+	if (rc < 0)
+		Log_fatal("bind %d %s: %s", getIntConf(BINDPORT), getStrConf(BINDADDR), strerror(errno));
+	val = 0xe0;
+	rc = setsockopt(udpsock, IPPROTO_IP, IP_TOS, &val, sizeof(val));
+	if (rc < 0)
+		Log_warn("Server: Failed to set TOS for UDP Socket");
+	val = 0x80;
+	rc = setsockopt(udpsock, IPPROTO_IP, IP_TOS, &val, sizeof(val));
+	if (rc < 0)
+		Log_warn("Server: Failed to set TOS for UDP Socket");
+
+	fcntl(udpsock, F_SETFL, O_NONBLOCK);
+	pollfds[UDP_SOCK].fd = udpsock;
+	pollfds[UDP_SOCK].events = POLLIN | POLLHUP | POLLERR;
+
+	Log_info("uMurmur version %s ('%s') protocol version %d.%d.%d",
+	         UMURMUR_VERSION, UMURMUR_CODENAME, PROTVER_MAJOR, PROTVER_MINOR, PROTVER_PATCH);
+	Log_info("Visit http://code.google.com/p/umurmur/");
+
+	/* Main server loop */
+  Server_runLoop(pollfds);
 
 	/* Disconnect clients */
 	Client_disconnect_all();
