@@ -47,21 +47,24 @@
 #include "timer.h"
 #include "version.h"
 
-#define LISTEN_SOCK 0
-#define TCP_SOCK 0
-#define UDP_SOCK 1
+#define LISTEN_SOCK  0
+#define LISTEN_SOCK6 1
 
-#define TCP6_SOCK 2
-#define UDP6_SOCK 3
+#define TCP_SOCK  0
+#define TCP_SOCK6 1
+
+#define UDP_SOCK  2
+#define UDP_SOCK6 3
 
 /* globals */
-int udpsock;
+int udpsock, udpsock6;
 bool_t shutdown_server;
 extern char *bindaddr;
 extern char *bindaddr6;
 extern int bindport;
 extern int bindport6;
 
+/* Initialize the address structures for IPv4 and IPv6 */
 struct sockaddr_storage** Server_setupAddressesAndPorts()
 {
   struct sockaddr_storage** addresses = malloc(2 * sizeof(void*));
@@ -70,11 +73,12 @@ struct sockaddr_storage** Server_setupAddressesAndPorts()
   v4address->ss_family = AF_INET;
   v4address->ss_len = sizeof(struct sockaddr_storage);
   struct sockaddr_storage* v6address = calloc(1, sizeof(struct sockaddr_storage));
-  v6address->ss_family = AF_INET;
+  v6address->ss_family = AF_INET6;
   v6address->ss_len = sizeof(struct sockaddr_storage);
 
   int error = 0;
 
+  const char* confadd = getStrConf(BINDADDR);
   error = inet_pton(AF_INET, (!bindaddr) ? ((getStrConf(BINDADDR)) ? getStrConf(BINDADDR) : "0.0.0.0")
                                          : bindaddr, &(((struct sockaddr_in*)v4address)->sin_addr));
   if (error == 0) Log_fatal("Invalid IPv4 address supplied!");
@@ -84,7 +88,7 @@ struct sockaddr_storage** Server_setupAddressesAndPorts()
   if (error == 0) Log_fatal("Invalid IPv6 address supplied!");
 
   ((struct sockaddr_in*)v4address)->sin_port = htons((bindport) ? bindport : getIntConf(BINDPORT));
-  ((struct sockaddr_in6*)v6address)->sin6_port = htons((bindport) ? bindport : getIntConf(BINDPORT));
+  ((struct sockaddr_in6*)v6address)->sin6_port = htons((bindport6) ? bindport6 : getIntConf(BINDPORT6));
 
   addresses[0] = v4address;
   addresses[1] = v6address;
@@ -95,8 +99,8 @@ struct sockaddr_storage** Server_setupAddressesAndPorts()
 void Server_runLoop(struct pollfd* pollfds)
   {
   int timeout = 1000, rc, clientcount;
-	etimer_t janitorTimer;
 
+	etimer_t janitorTimer;
 	Timer_init(&janitorTimer);
 
 	while (!shutdown_server) {
@@ -157,8 +161,7 @@ void Server_run()
 {
 	int rc;
 	struct pollfd *pollfds;
-	int tcpsock, sockopt = 1;
-	struct sockaddr_in sin;
+	int tcpsock, tcpsock6, sockopt = 1;
 	int val;
 	unsigned short port;
 	in_addr_t inet_address;
@@ -171,34 +174,44 @@ void Server_run()
 	/* Figure out bind address and port */
   struct sockaddr_storage** addresses = Server_setupAddressesAndPorts();
 
-	/* Prepare TCP socket */
-	memset(&sin, 0, sizeof(sin));
+	/* Prepare TCP sockets */
 	tcpsock = socket(PF_INET, SOCK_STREAM, 0);
 	if (tcpsock < 0)
-		Log_fatal("socket");
+		Log_fatal("socket IPv4");
 	if (setsockopt(tcpsock, SOL_SOCKET, SO_REUSEADDR, &sockopt, sizeof(int)) != 0)
-		Log_fatal("setsockopt: %s", strerror(errno));
-	sin.sin_family = AF_INET;
-	sin.sin_port = port;
-	sin.sin_addr.s_addr = inet_address;
+		Log_fatal("setsockopt IPv4: %s", strerror(errno));
 
-	rc = bind(tcpsock, (struct sockaddr *) &sin, sizeof (struct sockaddr_in));
-	if (rc < 0) Log_fatal("bind: %s", strerror(errno));
+	tcpsock6 = socket(PF_INET6, SOCK_STREAM, 0);
+	if (tcpsock6 < 0)
+		Log_fatal("socket IPv6");
+	if (setsockopt(tcpsock6, SOL_SOCKET, SO_REUSEADDR, &sockopt, sizeof(int)) != 0)
+		Log_fatal("setsockopt IPv6: %s", strerror(errno));
+	if (setsockopt(tcpsock6, IPPROTO_IPV6, IPV6_V6ONLY, &sockopt, sizeof(int)) != 0)
+		Log_fatal("setsockopt IPv6: %s", strerror(errno));
+
+	rc = bind(tcpsock, (struct sockaddr *)addresses[0], sizeof (struct sockaddr_in));
+	if (rc < 0) Log_fatal("bind IPv4: %s", strerror(errno));
 	rc = listen(tcpsock, 3);
-	if (rc < 0) Log_fatal("listen");
+	if (rc < 0) Log_fatal("listen IPv4");
 	fcntl(tcpsock, F_SETFL, O_NONBLOCK);
+
+	rc = bind(tcpsock6, (struct sockaddr *)addresses[1], sizeof (struct sockaddr_in6));
+	if (rc < 0) Log_fatal("bind IPv6: %s", strerror(errno));
+	rc = listen(tcpsock6, 3);
+	if (rc < 0) Log_fatal("listen IPv6");
+	fcntl(tcpsock6, F_SETFL, O_NONBLOCK);
 
 	pollfds[LISTEN_SOCK].fd = tcpsock;
 	pollfds[LISTEN_SOCK].events = POLLIN;
 
-	/* Prepare UDP socket */
-	memset(&sin, 0, sizeof(sin));
-	udpsock = socket(PF_INET, SOCK_DGRAM, 0);
-	sin.sin_family = AF_INET;
-	sin.sin_port = port;
-	sin.sin_addr.s_addr = inet_address;
+	pollfds[LISTEN_SOCK6].fd = tcpsock;
+	pollfds[LISTEN_SOCK6].events = POLLIN;
 
-	rc = bind(udpsock, (struct sockaddr *) &sin, sizeof (struct sockaddr_in));
+	/* Prepare UDP sockets */
+	udpsock = socket(PF_INET, SOCK_DGRAM, 0);
+	udpsock6 = socket(PF_INET6, SOCK_DGRAM, 0);
+
+	rc = bind(udpsock, (struct sockaddr *) addresses[0], sizeof (struct sockaddr_in));
 	if (rc < 0)
 		Log_fatal("bind %d %s: %s", getIntConf(BINDPORT), getStrConf(BINDADDR), strerror(errno));
 	val = 0xe0;
@@ -214,6 +227,26 @@ void Server_run()
 	pollfds[UDP_SOCK].fd = udpsock;
 	pollfds[UDP_SOCK].events = POLLIN | POLLHUP | POLLERR;
 
+
+	if (setsockopt(udpsock6, IPPROTO_IPV6, IPV6_V6ONLY, &sockopt, sizeof(int)) != 0)
+		Log_fatal("setsockopt IPv6: %s", strerror(errno));
+
+	rc = bind(udpsock6, (struct sockaddr *) addresses[1], sizeof (struct sockaddr_in6));
+	if (rc < 0)
+		Log_fatal("bind %d %s: %s", getIntConf(BINDPORT), getStrConf(BINDADDR), strerror(errno));
+	val = 0xe0;
+	rc = setsockopt(udpsock6, IPPROTO_IP, IP_TOS, &val, sizeof(val));
+	if (rc < 0)
+		Log_warn("Server: Failed to set TOS for UDP Socket");
+	val = 0x80;
+	rc = setsockopt(udpsock6, IPPROTO_IP, IP_TOS, &val, sizeof(val));
+	if (rc < 0)
+		Log_warn("Server: Failed to set TOS for UDP Socket");
+
+	fcntl(udpsock6, F_SETFL, O_NONBLOCK);
+	pollfds[UDP_SOCK6].fd = udpsock6;
+	pollfds[UDP_SOCK6].events = POLLIN | POLLHUP | POLLERR;
+
 	Log_info("uMurmur version %s ('%s') protocol version %d.%d.%d",
 	         UMURMUR_VERSION, UMURMUR_CODENAME, PROTVER_MAJOR, PROTVER_MINOR, PROTVER_PATCH);
 	Log_info("Visit http://code.google.com/p/umurmur/");
@@ -221,9 +254,12 @@ void Server_run()
 	/* Main server loop */
   Server_runLoop(pollfds);
 
-	/* Disconnect clients */
+	/* Disconnect clients and cleanup memory */
 	Client_disconnect_all();
 	free(pollfds);
+  free(addresses[0]);
+  free(addresses[1]);
+  free(addresses);
 }
 
 void Server_shutdown()
