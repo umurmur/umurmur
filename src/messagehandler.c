@@ -878,8 +878,11 @@ void Mh_handle_message(client_t *client, message_t *msg)
 				Log_fatal("Out of memory");
 			memset(sendmsg->payload.userStats->address.data, 0, 16);
 			/* ipv4 representation as ipv6 address. Supposedly correct. */
-			memcpy(&sendmsg->payload.userStats->address.data[12], &target->remote_tcp.sin_addr, 4);
 			memset(&sendmsg->payload.userStats->address.data[10], 0xff, 2); /* IPv4 */
+      if(target->remote_tcp.ss_family == AF_INET)
+        memcpy(&sendmsg->payload.userStats->address.data[12], &((struct sockaddr_in*)&target->remote_tcp)->sin_addr, 4);
+      else
+        memcpy(&sendmsg->payload.userStats->address.data[0], &((struct sockaddr_in6*)&target->remote_tcp)->sin6_addr, 16);
 			sendmsg->payload.userStats->address.len = 16;
 		}
 		/* BW */

@@ -74,8 +74,13 @@ void Ban_UserBan(client_t *client, char *reason)
 	memset(ban, 0, sizeof(ban_t));
 
 	memcpy(ban->hash, client->hash, 20);
-	memcpy(&ban->address, &client->remote_tcp.sin_addr, sizeof(in_addr_t));
-	ban->mask = 128;
+  if (client->remote_tcp.ss_family == AF_INET) {
+    memcpy(&ban->address, &(((struct sockaddr_in*)&client->remote_tcp)->sin_addr), sizeof(in_addr_t));
+    ban->mask = sizeof(in_addr_t);
+  } else {
+    memcpy(&ban->address, &(((struct sockaddr_in6*)&client->remote_tcp)->sin6_addr), 4 * sizeof(in_addr_t));
+    ban->mask = 4 * sizeof(in_addr_t);
+  }
 	ban->reason = strdup(reason);
 	ban->name = strdup(client->username);
 	ban->time = time(NULL);
@@ -88,8 +93,16 @@ void Ban_UserBan(client_t *client, char *reason)
 		Ban_saveBanFile();
 
 	SSLi_hash2hex(ban->hash, hexhash);
+
+  char addressPresentation[INET6_ADDRSTRLEN];
+
+  if(client->remote_tcp.ss_family == AF_INET)
+    inet_ntop(AF_INET, &((struct sockaddr_in*)&client->remote_tcp)->sin_addr, addressPresentation, INET6_ADDRSTRLEN);
+  else
+    inet_ntop(AF_INET6, &((struct sockaddr_in6*)&client->remote_tcp)->sin6_addr, addressPresentation, INET6_ADDRSTRLEN);
+
 	Log_info_client(client, "User kickbanned. Reason: '%s' Hash: %s IP: %s Banned for: %d seconds",
-	                ban->reason, hexhash, inet_ntoa(*((struct in_addr *)&ban->address)), ban->duration);
+	                ban->reason, hexhash, addressPresentation, ban->duration);
 }
 
 

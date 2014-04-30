@@ -38,7 +38,7 @@
 
 typedef struct {
 	uint8_t hash[20];
-	in_addr_t address;
+	uint8_t address[16];
 	uint32_t mask;
 	char *reason;
 	char *name;
