@@ -1,4 +1,5 @@
-/* Copyright (C) 2009-2014, Martin Johansson <martin@fatbob.nu>
+/* Copyright (C) 2014, Felix Morgner <felix.morgner@gmail.com>
+   Copyright (C) 2009-2014, Martin Johansson <martin@fatbob.nu>
    Copyright (C) 2005-2014, Thorvald Natvig <thorvald@natvig.com>
 
    All rights reserved.
@@ -28,59 +29,43 @@
    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#ifndef CRYPTSTATE_H_34564356
-#define CRYPTSTATE_H_34564356
 
-#include "byteorder.h"
-#include "config.h"
-
-#ifdef USE_POLARSSL
-#include <polarssl/havege.h>
-#include <polarssl/aes.h>
-#define AES_BLOCK_SIZE 16
-#else
-#include <openssl/rand.h>
-#include <openssl/aes.h>
-#endif
+#ifndef BYTEORDER_H_
+#define BYTEORDER_H_
 
 #include <stdint.h>
-#include "timer.h"
-#include "types.h"
 
-typedef struct CryptState {
-	uint8_t raw_key[AES_BLOCK_SIZE];
-	uint8_t encrypt_iv[AES_BLOCK_SIZE];
-	uint8_t decrypt_iv[AES_BLOCK_SIZE];
-	uint8_t decrypt_history[0x100];
+#if defined(NETBSD) || defined(FREEBSD) || defined(OPENBSD) || defined(MACOSX)
+#include <machine/endian.h>
+#if BYTE_ORDER == BIG_ENDIAN
+#define BYTE_ORDER_BIG_ENDIAN
+#endif // BYTE_ORDER == BIG_ENDIAN
+#elif defined(LINUX)
+#include <endian.h>
+#if __BYTE_ORDER == __BIG_ENDIAN
+#define BYTE_ORDER_BIG_ENDIAN
+#endif // __BYTE_ORDER == __BIG_ENDIAN
+#endif // defined(NETBSD) || defined(FREEBSD) || defined(OPENBSD)
 
-	unsigned int uiGood;
-	unsigned int uiLate;
-	unsigned int uiLost;
-	unsigned int uiResync;
-
-	unsigned int uiRemoteGood;
-	unsigned int uiRemoteLate;
-	unsigned int uiRemoteLost;
-	unsigned int uiRemoteResync;
-#ifndef USE_POLARSSL
-	AES_KEY	encrypt_key;
-	AES_KEY decrypt_key;
+#if defined(__LP64__)
+#define BLOCKSIZE 2
+#define SHIFTBITS 63
+typedef uint64_t subblock;
+#if defined(BYTE_ORDER_BIG_ENDIAN)
+#define SWAPPED(x) (x)
+#elif defined( __x86_64__)
+#define SWAPPED(x) ({register uint64_t __out, __in = (x); __asm__("bswap %q0" : "=r"(__out) : "0"(__in)); __out;})
 #else
-	aes_context aes_enc;
-	aes_context aes_dec;
-#endif
-	etimer_t tLastGood;
-	etimer_t tLastRequest;
-	bool_t bInit;
-} cryptState_t;
+#include <byteswap.h>
+#define SWAPPED(x) bswap_64(x)
+#endif // defined(BYTE_ORDER_BIG_ENDIAN)
+#else
+#define BLOCKSIZE 4
+#define SHIFTBITS 31
+typedef uint32_t subblock;
+#define SWAPPED(x) htonl(x)
+#endif // defined(__LP64__)
 
-void CryptState_init(cryptState_t *cs);
-bool_t CryptState_isValid(cryptState_t *cs);
-void CryptState_genKey(cryptState_t *cs);
-void CryptState_setKey(cryptState_t *cs, const unsigned char *rkey, const unsigned char *eiv, const unsigned char *div);
-void CryptState_setDecryptIV(cryptState_t *cs, const unsigned char *iv);
+#define HIGHBIT (1<<SHIFTBITS);
 
-bool_t CryptState_decrypt(cryptState_t *cs, const unsigned char *source, unsigned char *dst, unsigned int crypted_length);
-void CryptState_encrypt(cryptState_t *cs, const unsigned char *source, unsigned char *dst, unsigned int plain_length);
-
-#endif
+#endif // BYTEORDER_H_

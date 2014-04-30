@@ -215,34 +215,6 @@ bool_t CryptState_decrypt(cryptState_t *cs, const unsigned char *source, unsigne
 	return true;
 }
 
-#if defined(__LP64__)
-#define BLOCKSIZE 2
-#define SHIFTBITS 63
-typedef uint64_t subblock;
-
-#if __BYTE_ORDER == __BIG_ENDIAN
-#define SWAPPED(x) (x)
-#else
-#ifdef __x86_64__
-#define SWAPPED(x) ({register uint64_t __out, __in = (x); __asm__("bswap %q0" : "=r"(__out) : "0"(__in)); __out;})
-#else
-#include <byteswap.h>
-#define SWAPPED(x) bswap_64(x)
-#endif
-#endif
-
-#else
-
-#define BLOCKSIZE 4
-#define SHIFTBITS 31
-typedef uint32_t subblock;
-#define SWAPPED(x) htonl(x)
-
-#endif
-
-#define HIGHBIT (1<<SHIFTBITS);
-
-
 static void inline XOR(subblock *dst, const subblock *a, const subblock *b) {
 	int i;
 	for (i=0;i<BLOCKSIZE;i++) {
