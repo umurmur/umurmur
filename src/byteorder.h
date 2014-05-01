@@ -35,7 +35,7 @@
 
 #include <stdint.h>
 
-#if defined(NETBSD) || defined(FREEBSD) || defined(OPENBSD) || defined(MACOSX)
+#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
 #include <machine/endian.h>
 #if BYTE_ORDER == BIG_ENDIAN
 #define BYTE_ORDER_BIG_ENDIAN
@@ -45,7 +45,7 @@
 #if __BYTE_ORDER == __BIG_ENDIAN
 #define BYTE_ORDER_BIG_ENDIAN
 #endif // __BYTE_ORDER == __BIG_ENDIAN
-#endif // defined(NETBSD) || defined(FREEBSD) || defined(OPENBSD)
+#endif // defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
 
 #if defined(__LP64__)
 #define BLOCKSIZE 2

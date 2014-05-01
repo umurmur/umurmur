@@ -1046,7 +1046,7 @@ static int Client_send_udp(client_t *client, uint8_t *data, int len)
 
 		CryptState_encrypt(&client->cryptState, data, buf, len);
 
-#if defined(NETBSD) || defined(FREEBSD) || defined(OPENBSD) || defined(__APPLE__)
+#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
 			sendto(udpsock, buf, len + 4, 0, (struct sockaddr *)&client->remote_udp, client->remote_tcp.ss_len);
 #else
 			sendto(udpsock, buf, len + 4, 0, (struct sockaddr *)&client->remote_udp, sizeof(struct sockaddr_storage));
