@@ -1,33 +1,33 @@
 /* Copyright (C) 2009-2014, Martin Johansson <martin@fatbob.nu>
-	 Copyright (C) 2005-2014, Thorvald Natvig <thorvald@natvig.com>
+   Copyright (C) 2005-2014, Thorvald Natvig <thorvald@natvig.com>
 
-	 All rights reserved.
+   All rights reserved.
 
-	 Redistribution and use in source and binary forms, with or without
-	 modification, are permitted provided that the following conditions
-	 are met:
+   Redistribution and use in source and binary forms, with or without
+   modification, are permitted provided that the following conditions
+   are met:
 
-	 - Redistributions of source code must retain the above copyright notice,
-		 this list of conditions and the following disclaimer.
-	 - Redistributions in binary form must reproduce the above copyright notice,
-		 this list of conditions and the following disclaimer in the documentation
-		 and/or other materials provided with the distribution.
-	 - Neither the name of the Developers nor the names of its contributors may
-		 be used to endorse or promote products derived from this software without
-		 specific prior written permission.
+   - Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+   - Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+   - Neither the name of the Developers nor the names of its contributors may
+   be used to endorse or promote products derived from this software without
+   specific prior written permission.
 
-	 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-	 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-	 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-	 A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR
-	 CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-	 EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-	 PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-	 PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-	 LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-	 NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-	 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+   ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+   A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR
+   CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+   EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+   PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+   PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+   LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+   */
 #include <sys/poll.h>
 #include <sys/socket.h>
 #include <fcntl.h>
@@ -290,7 +290,7 @@ void recheckCodecVersions(client_t *connectingClient)
 		client_itr = NULL;
 		while (Client_iterate(&client_itr) != NULL) {
 			if ((client_itr->authenticated || client_itr == connectingClient) &&
-					!client_itr->bOpus) {
+				!client_itr->bOpus) {
 				Client_textmessage(client_itr, OPUS_WARN_SWITCHING);
 			}
 		}
@@ -506,8 +506,8 @@ int Client_read(client_t *client)
 				 * 1. A valid size. The only message that is this big is UserState message with a big texture
 				 * 2. An invalid size = protocol error, e.g. connecting with a 1.1.x client
 				 */
-//				Log_warn("Too big message received (%d bytes). Playing safe and disconnecting client %s:%d",
-//						 client->msgsize, inet_ntoa(client->remote_tcp.sin_addr), ntohs(client->remote_tcp.sin_port));
+				//		  Log_warn("Too big message received (%d bytes). Playing safe and disconnecting client %s:%d",
+				//			   client->msgsize, inet_ntoa(client->remote_tcp.sin_addr), ntohs(client->remote_tcp.sin_port));
 				Client_free(client);
 				return -1;
 				/* client->rxcount = client->msgsize = 0; */
@@ -528,7 +528,7 @@ int Client_read(client_t *client)
 				return 0;
 			}
 			else if (SSLi_get_error(client->ssl, rc) == SSLI_ERROR_ZERO_RETURN ||
-							 SSLi_get_error(client->ssl, rc) == 0) {
+				SSLi_get_error(client->ssl, rc) == 0) {
 				Log_info_client(client, "Connection closed by peer");
 				Client_close(client);
 			}
@@ -538,7 +538,7 @@ int Client_read(client_t *client)
 						Log_info_client(client, "Connection closed by peer");
 					else
 						Log_info_client(client,"Error: %s  - Closing connection (code %d)",
-														strerror(errno));
+							strerror(errno));
 				}
 				else if (SSLi_get_error(client->ssl, rc) == SSLI_ERROR_CONNRESET) {
 					Log_info_client(client, "Connection reset by peer");
@@ -636,7 +636,7 @@ int Client_send_message(client_t *client, message_t *msg)
 	}
 	if (client->txsize != 0 || !client->SSLready) {
 		/* Queue message */
-		if ((client->txQueueCount > 5 &&	msg->messageType == UDPTunnel) ||
+		if ((client->txQueueCount > 5 &&  msg->messageType == UDPTunnel) ||
 			client->txQueueCount > 30) {
 			Msg_free(msg);
 			return -1;
@@ -865,21 +865,21 @@ int Client_read_udp(int udpsock)
 	len -= 4; /* Adjust for crypt header */
 	msgType = (UDPMessageType_t)((buffer[0] >> 5) & 0x7);
 	switch (msgType) {
-	case UDPVoiceSpeex:
-	case UDPVoiceCELTAlpha:
-	case UDPVoiceCELTBeta:
-		if (bOpus)
+		case UDPVoiceSpeex:
+		case UDPVoiceCELTAlpha:
+		case UDPVoiceCELTBeta:
+			if (bOpus)
+				break;
+		case UDPVoiceOpus:
+			Client_voiceMsg(itr, buffer, len);
 			break;
-	case UDPVoiceOpus:
-		Client_voiceMsg(itr, buffer, len);
-		break;
-	case UDPPing:
-		Log_debug("UDP Ping reply len %d", len);
-		Client_send_udp(itr, buffer, len);
-		break;
-	default:
-		Log_debug("Unknown UDP message type from %s port %d", itr->addressString, fromport);
-		break;
+		case UDPPing:
+			Log_debug("UDP Ping reply len %d", len);
+			Client_send_udp(itr, buffer, len);
+			break;
+		default:
+			Log_debug("Unknown UDP message type from %s port %d", itr->addressString, fromport);
+			break;
 	}
 
 out:
@@ -955,7 +955,7 @@ int Client_voiceMsg(client_t *client, uint8_t *data, int len)
 			c = list_get_entry(itr, client_t, chan_node);
 			Client_send_voice(client, c, buffer, pds->offset + 1, poslen);
 		}
-	} else if ((vt = Voicetarget_get_id(client, target)) != NULL) {	/* Targeted whisper */
+	} else if ((vt = Voicetarget_get_id(client, target)) != NULL) { /* Targeted whisper */
 		int i;
 		channel_t *ch;
 		/* Channels */
@@ -1046,10 +1046,10 @@ static int Client_send_udp(client_t *client, uint8_t *data, int len)
 
 		CryptState_encrypt(&client->cryptState, data, buf, len);
 
-	if (client->remote_udp.ss_family == AF_INET)
-		sendto(udpsock, buf, len + 4, 0, (struct sockaddr *)&client->remote_udp, sizeof(struct sockaddr_in));
-	else
-		sendto(udpsock, buf, len + 4, 0, (struct sockaddr *)&client->remote_udp, sizeof(struct sockaddr_in6));
+		if (client->remote_udp.ss_family == AF_INET)
+			sendto(udpsock, buf, len + 4, 0, (struct sockaddr *)&client->remote_udp, sizeof(struct sockaddr_in));
+		else
+			sendto(udpsock, buf, len + 4, 0, (struct sockaddr *)&client->remote_udp, sizeof(struct sockaddr_in6));
 
 		free(mbuf);
 	} else {
