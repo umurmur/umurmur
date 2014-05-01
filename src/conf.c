@@ -56,7 +56,7 @@ void Conf_init(const char *conffile)
 		conffile = defaultconfig;
 	if (config_read_file(&configuration, conffile) != CONFIG_TRUE) {
 		Log_fatal("Error in config file %s line %d: %s", conffile,
-				  config_error_line(&configuration), config_error_text(&configuration));
+			config_error_line(&configuration), config_error_text(&configuration));
 	}
 }
 
@@ -68,7 +68,7 @@ bool_t Conf_ok(const char *conffile)
 		conffile = defaultconfig;
 	if (config_read_file(&configuration, conffile) != CONFIG_TRUE) {
 		fprintf(stderr, "Error in config file %s line %d: %s\n", conffile,
-		        config_error_line(&configuration), config_error_text(&configuration));
+			config_error_line(&configuration), config_error_text(&configuration));
 		rc = false;
 	}
 	config_destroy(&configuration);
@@ -86,152 +86,152 @@ const char *getStrConf(param_t param)
 	const char *strsetting = NULL;
 
 	switch (param) {
-	case CERTIFICATE:
-		setting = config_lookup(&configuration, "certificate");
-		if (!setting)
-			return "/etc/umurmur/certificate.crt";
-		else {
-			if ((strsetting = config_setting_get_string(setting)) != NULL)
-				return strsetting;
-			else
+		case CERTIFICATE:
+			setting = config_lookup(&configuration, "certificate");
+			if (!setting)
 				return "/etc/umurmur/certificate.crt";
-		}
-		break;
-	case KEY:
-		setting = config_lookup(&configuration, "private_key");
-		if (!setting)
-			return "/etc/umurmur/private_key.key";
-		else {
-			if ((strsetting = config_setting_get_string(setting)) != NULL)
-				return strsetting;
-			else
+			else {
+				if ((strsetting = config_setting_get_string(setting)) != NULL)
+					return strsetting;
+				else
+					return "/etc/umurmur/certificate.crt";
+			}
+			break;
+		case KEY:
+			setting = config_lookup(&configuration, "private_key");
+			if (!setting)
 				return "/etc/umurmur/private_key.key";
-		}
-		break;
-	case CAPATH:
-		setting = config_lookup(&configuration, "ca_path");
-		if (!setting)
-		  return NULL;
-		else {
-			if ((strsetting = config_setting_get_string(setting)) != NULL)
-				return strsetting;
-			else
+			else {
+				if ((strsetting = config_setting_get_string(setting)) != NULL)
+					return strsetting;
+				else
+					return "/etc/umurmur/private_key.key";
+			}
+			break;
+		case CAPATH:
+			setting = config_lookup(&configuration, "ca_path");
+			if (!setting)
 				return NULL;
-		}
-		break;
-	case PASSPHRASE:
-		setting = config_lookup(&configuration, "password");
-		if (!setting)
-			return "";
-		else {
-			if ((strsetting = config_setting_get_string(setting)) != NULL)
-				return strsetting;
-			else
+			else {
+				if ((strsetting = config_setting_get_string(setting)) != NULL)
+					return strsetting;
+				else
+					return NULL;
+			}
+			break;
+		case PASSPHRASE:
+			setting = config_lookup(&configuration, "password");
+			if (!setting)
 				return "";
-		}
-		break;
-	case ADMIN_PASSPHRASE:
-		setting = config_lookup(&configuration, "admin_password");
-		if (!setting)
-			return "";
-		else {
-			if ((strsetting = config_setting_get_string(setting)) != NULL)
-				return strsetting;
-			else
+			else {
+				if ((strsetting = config_setting_get_string(setting)) != NULL)
+					return strsetting;
+				else
+					return "";
+			}
+			break;
+		case ADMIN_PASSPHRASE:
+			setting = config_lookup(&configuration, "admin_password");
+			if (!setting)
 				return "";
-		}
-		break;
-	case BINDADDR:
-		setting = config_lookup(&configuration, "bindaddr");
-		if (!setting)
-			return NULL;
-		else {
-			if ((strsetting = config_setting_get_string(setting)) != NULL)
-				return strsetting;
-			else
+			else {
+				if ((strsetting = config_setting_get_string(setting)) != NULL)
+					return strsetting;
+				else
+					return "";
+			}
+			break;
+		case BINDADDR:
+			setting = config_lookup(&configuration, "bindaddr");
+			if (!setting)
 				return NULL;
-		}
-		break;
-	case BINDADDR6:
-		setting = config_lookup(&configuration, "bindaddr6");
-		if (!setting)
-			return NULL;
-		else {
-			if ((strsetting = config_setting_get_string(setting)) != NULL)
-				return strsetting;
-			else
+			else {
+				if ((strsetting = config_setting_get_string(setting)) != NULL)
+					return strsetting;
+				else
+					return NULL;
+			}
+			break;
+		case BINDADDR6:
+			setting = config_lookup(&configuration, "bindaddr6");
+			if (!setting)
 				return NULL;
-		}
-		break;
-	case WELCOMETEXT:
-		setting = config_lookup(&configuration, "welcometext");
-		if (!setting)
-			return DEFAULT_WELCOME;
-		else {
-			if ((strsetting = config_setting_get_string(setting)) != NULL)
-				return strsetting;
-			else
-			return DEFAULT_WELCOME;
-		}
-		break;
-	case DEFAULT_CHANNEL:
-		setting = config_lookup(&configuration, "default_channel");
-		if (!setting)
-			return "";
-		else {
-			if ((strsetting = config_setting_get_string(setting)) != NULL)
-				return strsetting;
-			else
-			return "";
-		}
-		break;
-	case USERNAME:
-		setting = config_lookup(&configuration, "username");
-		if (!setting)
-			return "";
-		else {
-			if ((strsetting = config_setting_get_string(setting)) != NULL)
-				return strsetting;
-			else
-			return "";
-		}
-		break;
-	case GROUPNAME:
-		setting = config_lookup(&configuration, "groupname");
-		if (!setting)
-			return "";
-		else {
-			if ((strsetting = config_setting_get_string(setting)) != NULL)
-				return strsetting;
-			else
-			return "";
-		}
-		break;
-	case LOGFILE:
-		setting = config_lookup(&configuration, "logfile");
-		if (!setting)
-			return NULL;
-		else {
-			if ((strsetting = config_setting_get_string(setting)) != NULL)
-				return strsetting;
-			else
-			return NULL;
-		}
-		break;
-	case BANFILE:
-		setting = config_lookup(&configuration, "banfile");
-		if (!setting)
-			return NULL;
-		else {
-			if ((strsetting = config_setting_get_string(setting)) != NULL)
-				return strsetting;
-			else
-			return NULL;
-		}
-		break;
-	default:
-		doAssert(false);
-		break;
+			else {
+				if ((strsetting = config_setting_get_string(setting)) != NULL)
+					return strsetting;
+				else
+					return NULL;
+			}
+			break;
+		case WELCOMETEXT:
+			setting = config_lookup(&configuration, "welcometext");
+			if (!setting)
+				return DEFAULT_WELCOME;
+			else {
+				if ((strsetting = config_setting_get_string(setting)) != NULL)
+					return strsetting;
+				else
+					return DEFAULT_WELCOME;
+			}
+			break;
+		case DEFAULT_CHANNEL:
+			setting = config_lookup(&configuration, "default_channel");
+			if (!setting)
+				return "";
+			else {
+				if ((strsetting = config_setting_get_string(setting)) != NULL)
+					return strsetting;
+				else
+					return "";
+			}
+			break;
+		case USERNAME:
+			setting = config_lookup(&configuration, "username");
+			if (!setting)
+				return "";
+			else {
+				if ((strsetting = config_setting_get_string(setting)) != NULL)
+					return strsetting;
+				else
+					return "";
+			}
+			break;
+		case GROUPNAME:
+			setting = config_lookup(&configuration, "groupname");
+			if (!setting)
+				return "";
+			else {
+				if ((strsetting = config_setting_get_string(setting)) != NULL)
+					return strsetting;
+				else
+					return "";
+			}
+			break;
+		case LOGFILE:
+			setting = config_lookup(&configuration, "logfile");
+			if (!setting)
+				return NULL;
+			else {
+				if ((strsetting = config_setting_get_string(setting)) != NULL)
+					return strsetting;
+				else
+					return NULL;
+			}
+			break;
+		case BANFILE:
+			setting = config_lookup(&configuration, "banfile");
+			if (!setting)
+				return NULL;
+			else {
+				if ((strsetting = config_setting_get_string(setting)) != NULL)
+					return strsetting;
+				else
+					return NULL;
+			}
+			break;
+		default:
+			doAssert(false);
+			break;
 	}
 	return NULL;
 }
@@ -241,56 +241,56 @@ int getIntConf(param_t param)
 	config_setting_t *setting = NULL;
 
 	switch (param) {
-	case BINDPORT:
-		setting = config_lookup(&configuration, "bindport");
-		if (!setting)
-			return DEFAULT_BINDPORT;
-		else {
-			return config_setting_get_int(setting);
-		}
-		break;
-	case BINDPORT6:
-		setting = config_lookup(&configuration, "bindport6");
-		if (!setting)
-			return DEFAULT_BINDPORT;
-		else {
-			return config_setting_get_int(setting);
-		}
-		break;
-	case BAN_LENGTH:
-		setting = config_lookup(&configuration, "ban_length");
-		if (!setting)
-			return DEFAULT_BAN_LENGTH;
-		else {
-			return config_setting_get_int(setting);
-		}
-		break;
-	case MAX_BANDWIDTH:
-		setting = config_lookup(&configuration, "max_bandwidth");
-		if (!setting)
-			return DEFAULT_MAX_BANDWIDTH;
-		else {
-			return config_setting_get_int(setting);
-		}
-		break;
-	case MAX_CLIENTS:
-		setting = config_lookup(&configuration, "max_users");
-		if (!setting)
-			return DEFAULT_MAX_CLIENTS;
-		else {
-			return config_setting_get_int(setting);
-		}
-		break;
-	case OPUS_THRESHOLD:
-		setting = config_lookup(&configuration, "opus_threshold");
-		if (!setting)
-			return DEFAULT_OPUS_THRESHOLD;
-		else {
-			return config_setting_get_int(setting);
-		}
-		break;
-	default:
-		doAssert(false);
+		case BINDPORT:
+			setting = config_lookup(&configuration, "bindport");
+			if (!setting)
+				return DEFAULT_BINDPORT;
+			else {
+				return config_setting_get_int(setting);
+			}
+			break;
+		case BINDPORT6:
+			setting = config_lookup(&configuration, "bindport6");
+			if (!setting)
+				return DEFAULT_BINDPORT;
+			else {
+				return config_setting_get_int(setting);
+			}
+			break;
+		case BAN_LENGTH:
+			setting = config_lookup(&configuration, "ban_length");
+			if (!setting)
+				return DEFAULT_BAN_LENGTH;
+			else {
+				return config_setting_get_int(setting);
+			}
+			break;
+		case MAX_BANDWIDTH:
+			setting = config_lookup(&configuration, "max_bandwidth");
+			if (!setting)
+				return DEFAULT_MAX_BANDWIDTH;
+			else {
+				return config_setting_get_int(setting);
+			}
+			break;
+		case MAX_CLIENTS:
+			setting = config_lookup(&configuration, "max_users");
+			if (!setting)
+				return DEFAULT_MAX_CLIENTS;
+			else {
+				return config_setting_get_int(setting);
+			}
+			break;
+		case OPUS_THRESHOLD:
+			setting = config_lookup(&configuration, "opus_threshold");
+			if (!setting)
+				return DEFAULT_OPUS_THRESHOLD;
+			else {
+				return config_setting_get_int(setting);
+			}
+			break;
+		default:
+			doAssert(false);
 	}
 }
 
@@ -299,29 +299,29 @@ bool_t getBoolConf(param_t param)
 	config_setting_t *setting = NULL;
 
 	switch (param) {
-	case ALLOW_TEXTMESSAGE:
-		setting = config_lookup(&configuration, "allow_textmessage");
-		if (!setting)
-			return true;
-		else
-			return config_setting_get_bool(setting);
-		break;
-	case ENABLE_BAN:
-		setting = config_lookup(&configuration, "enable_ban");
-		if (!setting)
-			return false;
-		else
-			return config_setting_get_bool(setting);
-		break;
-	case SYNC_BANFILE:
-		setting = config_lookup(&configuration, "sync_banfile");
-		if (!setting)
-			return false;
-		else
-			return config_setting_get_bool(setting);
-		break;
-	default:
-		doAssert(false);
+		case ALLOW_TEXTMESSAGE:
+			setting = config_lookup(&configuration, "allow_textmessage");
+			if (!setting)
+				return true;
+			else
+				return config_setting_get_bool(setting);
+			break;
+		case ENABLE_BAN:
+			setting = config_lookup(&configuration, "enable_ban");
+			if (!setting)
+				return false;
+			else
+				return config_setting_get_bool(setting);
+			break;
+		case SYNC_BANFILE:
+			setting = config_lookup(&configuration, "sync_banfile");
+			if (!setting)
+				return false;
+			else
+				return config_setting_get_bool(setting);
+			break;
+		default:
+			doAssert(false);
 	}
 }
 

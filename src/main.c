@@ -167,14 +167,14 @@ static void switch_user(void)
 void signal_handler(int sig)
 {
 	switch(sig) {
-	case SIGHUP:
-		Log_info("HUP signal received.");
-		Log_reset();
-		break;
-	case SIGTERM:
-		Log_info("TERM signal. Shutting down.");
-		Server_shutdown();
-		break;
+		case SIGHUP:
+			Log_info("HUP signal received.");
+			Log_reset();
+			break;
+		case SIGTERM:
+			Log_info("TERM signal. Shutting down.");
+			Server_shutdown();
+			break;
 	}
 }
 
@@ -223,7 +223,7 @@ void setscheduler()
 void printhelp()
 {
 	printf("uMurmur version %s ('%s'). Mumble protocol %d.%d.%d\n", UMURMUR_VERSION,
-	       UMURMUR_CODENAME, PROTVER_MAJOR, PROTVER_MINOR, PROTVER_PATCH);
+		UMURMUR_CODENAME, PROTVER_MAJOR, PROTVER_MINOR, PROTVER_PATCH);
 	printf("Usage: umurmurd [-d] [-r] [-h] [-p <pidfile>] [-t] [-c <conf file>] [-a <addr>] [-b <port>]\n");
 	printf("       -d             - Do not daemonize - run in foreground.\n");
 #ifdef POSIX_PRIORITY_SCHEDULING
@@ -233,7 +233,9 @@ void printhelp()
 	printf("       -c <conf file> - Specify configuration file (default %s)\n", DEFAULT_CONFIG);
 	printf("       -t             - Test config. Error message to stderr + non-zero exit code on error\n");
 	printf("       -a <address>   - Bind to IP address\n");
+	printf("       -A <address>   - Bind to IPv6 address\n");
 	printf("       -b <port>      - Bind to port\n");
+	printf("       -B <port>      - Bind to port (IPv6)\n");
 	printf("       -h             - Print this help\n");
 	exit(0);
 }
@@ -253,116 +255,116 @@ int main(int argc, char **argv)
 #ifdef POSIX_PRIORITY_SCHEDULING
 	while ((c = getopt(argc, argv, "drp:c:a:A:b:B:ht")) != EOF) {
 #else
-	while ((c = getopt(argc, argv, "dp:c:a:A:b:B:ht")) != EOF) {
+		while ((c = getopt(argc, argv, "dp:c:a:A:b:B:ht")) != EOF) {
 #endif
-		switch(c) {
-		case 'c':
-			conffile = optarg;
-			break;
-		case 'p':
-			pidfile = optarg;
-			break;
-		case 'a':
-			bindaddr = optarg;
-			break;
-    case 'A':
-      bindaddr6 = optarg;
-      break;
-		case 'b':
-			bindport = atoi(optarg);
-			break;
-    case 'B':
-      bindport6 = atoi(optarg);
-      break;
-		case 'd':
-			nodaemon = true;
-			break;
-		case 'h':
-			printhelp();
-			break;
-		case 't':
-			testconfig = true;
-			break;
+			switch(c) {
+				case 'c':
+					conffile = optarg;
+					break;
+				case 'p':
+					pidfile = optarg;
+					break;
+				case 'a':
+					bindaddr = optarg;
+					break;
+				case 'A':
+					bindaddr6 = optarg;
+					break;
+				case 'b':
+					bindport = atoi(optarg);
+					break;
+				case 'B':
+					bindport6 = atoi(optarg);
+					break;
+				case 'd':
+					nodaemon = true;
+					break;
+				case 'h':
+					printhelp();
+					break;
+				case 't':
+					testconfig = true;
+					break;
 #ifdef POSIX_PRIORITY_SCHEDULING
-		case 'r':
-			realtime = true;
-			break;
+				case 'r':
+					realtime = true;
+					break;
 #endif
-		default:
-			fprintf(stderr, "Unrecognized option\n");
-			printhelp();
-			break;
+				default:
+					fprintf(stderr, "Unrecognized option\n");
+					printhelp();
+					break;
+			}
 		}
-	}
 
-	if (testconfig) {
-		if (!Conf_ok(conffile))
-			exit(1);
-		else
-			exit(0);
-	}
+		if (testconfig) {
+			if (!Conf_ok(conffile))
+				exit(1);
+			else
+				exit(0);
+		}
 
-	/* Initialize the config subsystem early;
-	 * switch_user() will need to read some config variables as well as logging.
-	 */
-	Conf_init(conffile);
-
-	/* Logging to terminal if not daemonizing, otherwise to syslog or log file.
-	 */
-	if (!nodaemon) {
-		daemonize();
-		Log_init(false);
-		if (pidfile != NULL)
-			lockfile(pidfile);
-
-		switch_user();
-
-		/* Reopen log file. If user switch results in access denied, we catch
-		 * it early.
+		/* Initialize the config subsystem early;
+		 * switch_user() will need to read some config variables as well as logging.
 		 */
-		Log_reset();
-	}
-	else Log_init(true);
+		Conf_init(conffile);
 
-	signal(SIGCHLD, SIG_IGN); /* ignore child */
-	signal(SIGTSTP, SIG_IGN); /* ignore tty signals */
-	signal(SIGTTOU, SIG_IGN);
-	signal(SIGTTIN, SIG_IGN);
-	signal(SIGPIPE, SIG_IGN);
-	signal(SIGHUP, signal_handler); /* catch hangup signal */
-	signal(SIGTERM, signal_handler); /* catch kill signal */
+		/* Logging to terminal if not daemonizing, otherwise to syslog or log file.
+		*/
+		if (!nodaemon) {
+			daemonize();
+			Log_init(false);
+			if (pidfile != NULL)
+				lockfile(pidfile);
 
-	/* Build system string */
-	if (uname(&utsbuf) == 0) {
-		snprintf(system_string, 64, "%s %s", utsbuf.sysname, utsbuf.machine);
-		snprintf(version_string, 64, "%s", utsbuf.release);
-	}
-	else {
-		snprintf(system_string, 64, "unknown unknown");
-		snprintf(version_string, 64, "unknown");
-	}
+			switch_user();
 
-	/* Initializing */
-	SSLi_init();
-	Chan_init();
-	Client_init();
-	Ban_init();
+			/* Reopen log file. If user switch results in access denied, we catch
+			 * it early.
+			 */
+			Log_reset();
+		}
+		else Log_init(true);
+
+		signal(SIGCHLD, SIG_IGN); /* ignore child */
+		signal(SIGTSTP, SIG_IGN); /* ignore tty signals */
+		signal(SIGTTOU, SIG_IGN);
+		signal(SIGTTIN, SIG_IGN);
+		signal(SIGPIPE, SIG_IGN);
+		signal(SIGHUP, signal_handler); /* catch hangup signal */
+		signal(SIGTERM, signal_handler); /* catch kill signal */
+
+		/* Build system string */
+		if (uname(&utsbuf) == 0) {
+			snprintf(system_string, 64, "%s %s", utsbuf.sysname, utsbuf.machine);
+			snprintf(version_string, 64, "%s", utsbuf.release);
+		}
+		else {
+			snprintf(system_string, 64, "unknown unknown");
+			snprintf(version_string, 64, "unknown");
+		}
+
+		/* Initializing */
+		SSLi_init();
+		Chan_init();
+		Client_init();
+		Ban_init();
 
 #ifdef POSIX_PRIORITY_SCHEDULING
-	if (realtime)
-		setscheduler();
+		if (realtime)
+			setscheduler();
 #endif
 
-	Server_run();
+		Server_run();
 
-	Ban_deinit();
-	SSLi_deinit();
-	Chan_free();
-	Log_free();
-	Conf_deinit();
+		Ban_deinit();
+		SSLi_deinit();
+		Chan_free();
+		Log_free();
+		Conf_deinit();
 
-	if (pidfile != NULL)
-		unlink(pidfile);
+		if (pidfile != NULL)
+			unlink(pidfile);
 
-	return 0;
-}
+		return 0;
+	}

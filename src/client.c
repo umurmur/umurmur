@@ -1046,6 +1046,7 @@ static int Client_send_udp(client_t *client, uint8_t *data, int len)
 
 		CryptState_encrypt(&client->cryptState, data, buf, len);
 
+		// Maybe an OS X loopback quirk
 		if (client->remote_udp.ss_family == AF_INET)
 			sendto(udpsock, buf, len + 4, 0, (struct sockaddr *)&client->remote_udp, sizeof(struct sockaddr_in));
 		else

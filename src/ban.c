@@ -74,13 +74,13 @@ void Ban_UserBan(client_t *client, char *reason)
 	memset(ban, 0, sizeof(ban_t));
 
 	memcpy(ban->hash, client->hash, 20);
-  if (client->remote_tcp.ss_family == AF_INET) {
-    memcpy(&ban->address, &(((struct sockaddr_in*)&client->remote_tcp)->sin_addr), sizeof(in_addr_t));
-    ban->mask = sizeof(in_addr_t);
-  } else {
-    memcpy(&ban->address, &(((struct sockaddr_in6*)&client->remote_tcp)->sin6_addr), 4 * sizeof(in_addr_t));
-    ban->mask = 4 * sizeof(in_addr_t);
-  }
+	if (client->remote_tcp.ss_family == AF_INET) {
+		memcpy(&ban->address, &(((struct sockaddr_in*)&client->remote_tcp)->sin_addr), sizeof(in_addr_t));
+		ban->mask = sizeof(in_addr_t);
+	} else {
+		memcpy(&ban->address, &(((struct sockaddr_in6*)&client->remote_tcp)->sin6_addr), 4 * sizeof(in_addr_t));
+		ban->mask = 4 * sizeof(in_addr_t);
+	}
 	ban->reason = strdup(reason);
 	ban->name = strdup(client->username);
 	ban->time = time(NULL);
@@ -94,15 +94,8 @@ void Ban_UserBan(client_t *client, char *reason)
 
 	SSLi_hash2hex(ban->hash, hexhash);
 
-  char addressPresentation[INET6_ADDRSTRLEN];
-
-  if(client->remote_tcp.ss_family == AF_INET)
-    inet_ntop(AF_INET, &((struct sockaddr_in*)&client->remote_tcp)->sin_addr, addressPresentation, INET6_ADDRSTRLEN);
-  else
-    inet_ntop(AF_INET6, &((struct sockaddr_in6*)&client->remote_tcp)->sin6_addr, addressPresentation, INET6_ADDRSTRLEN);
-
 	Log_info_client(client, "User kickbanned. Reason: '%s' Hash: %s IP: %s Banned for: %d seconds",
-	                ban->reason, hexhash, addressPresentation, ban->duration);
+		ban->reason, hexhash, client->addressString, ban->duration);
 }
 
 
@@ -119,8 +112,8 @@ void Ban_pruneBanned()
 #ifdef DEBUG
 		SSLi_hash2hex(ban->hash, hexhash);
 		Log_debug("BL: User %s Reason: '%s' Hash: %s IP: %s Time left: %d",
-		          ban->name, ban->reason, hexhash, inet_ntoa(*((struct in_addr *)&ban->address)),
-		          bantime_long / 1000000LL - Timer_elapsed(&ban->startTime) / 1000000LL);
+			ban->name, ban->reason, hexhash, inet_ntoa(*((struct in_addr *)&ban->address)),
+			bantime_long / 1000000LL - Timer_elapsed(&ban->startTime) / 1000000LL);
 #endif
 		/* Duration of 0 = forever */
 		if (ban->duration != 0 && Timer_isElapsed(&ban->startTime, bantime_long)) {
@@ -198,7 +191,7 @@ message_t *Ban_getBanList(void)
 		memcpy(&address[12], &ban->address, 4);
 		memset(&address[10], 0xff, 2); /* IPv4 */
 		Msg_banList_addEntry(msg, i++, address, ban->mask, ban->name,
-		                     hexhash, ban->reason, timestr, ban->duration);
+			hexhash, ban->reason, timestr, ban->duration);
 	}
 	return msg;
 }
@@ -267,7 +260,7 @@ static void Ban_saveBanFile(void)
 		ban = list_get_entry(itr, ban_t, node);
 		SSLi_hash2hex(ban->hash, hexhash);
 		fprintf(file, "%s,%s,%d,%ld,%d,%s,%s\n", hexhash, inet_ntoa(*((struct in_addr *)&ban->address)),
-		        ban->mask, (long int)ban->time, ban->duration, ban->name, ban->reason);
+			ban->mask, (long int)ban->time, ban->duration, ban->name, ban->reason);
 	}
 	fclose(file);
 	banlist_changed = false;
