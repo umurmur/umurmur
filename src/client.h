@@ -121,7 +121,7 @@ int Client_count(void);
 void Client_close(client_t *client);
 client_t *Client_iterate(client_t **client);
 int Client_send_message_except(client_t *client, message_t *msg);
-int Client_read_udp(void);
+int Client_read_udp(int udpsock);
 void Client_disconnect_all();
 int Client_voiceMsg(client_t *client, uint8_t *data, int len);
 void recheckCodecVersions(client_t *connectingClient);
