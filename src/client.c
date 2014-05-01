@@ -1,32 +1,32 @@
 /* Copyright (C) 2009-2014, Martin Johansson <martin@fatbob.nu>
-   Copyright (C) 2005-2014, Thorvald Natvig <thorvald@natvig.com>
+	 Copyright (C) 2005-2014, Thorvald Natvig <thorvald@natvig.com>
 
-   All rights reserved.
+	 All rights reserved.
 
-   Redistribution and use in source and binary forms, with or without
-   modification, are permitted provided that the following conditions
-   are met:
+	 Redistribution and use in source and binary forms, with or without
+	 modification, are permitted provided that the following conditions
+	 are met:
 
-   - Redistributions of source code must retain the above copyright notice,
-     this list of conditions and the following disclaimer.
-   - Redistributions in binary form must reproduce the above copyright notice,
-     this list of conditions and the following disclaimer in the documentation
-     and/or other materials provided with the distribution.
-   - Neither the name of the Developers nor the names of its contributors may
-     be used to endorse or promote products derived from this software without
-     specific prior written permission.
+	 - Redistributions of source code must retain the above copyright notice,
+		 this list of conditions and the following disclaimer.
+	 - Redistributions in binary form must reproduce the above copyright notice,
+		 this list of conditions and the following disclaimer in the documentation
+		 and/or other materials provided with the distribution.
+	 - Neither the name of the Developers nor the names of its contributors may
+		 be used to endorse or promote products derived from this software without
+		 specific prior written permission.
 
-   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-   ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-   A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR
-   CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-   EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-   PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-   PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-   LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+	 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+	 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+	 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+	 A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR
+	 CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+	 EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+	 PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+	 PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+	 LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+	 NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+	 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include <sys/poll.h>
 #include <sys/socket.h>
@@ -290,7 +290,7 @@ void recheckCodecVersions(client_t *connectingClient)
 		client_itr = NULL;
 		while (Client_iterate(&client_itr) != NULL) {
 			if ((client_itr->authenticated || client_itr == connectingClient) &&
-			    !client_itr->bOpus) {
+					!client_itr->bOpus) {
 				Client_textmessage(client_itr, OPUS_WARN_SWITCHING);
 			}
 		}
@@ -319,10 +319,10 @@ static int findFreeSessionId()
 
 int Client_add(int fd, struct sockaddr_storage *remote)
 {
-  client_t* newclient;
+	client_t* newclient;
 	message_t *sendmsg;
-  char addressPresentation[INET6_ADDRSTRLEN];
-  int port;
+	char addressPresentation[INET6_ADDRSTRLEN];
+	int port;
 
 #warning FIX BANNING BEFORE RELEASE
 #if 0
@@ -335,15 +335,15 @@ int Client_add(int fd, struct sockaddr_storage *remote)
 	if ((newclient = calloc(1, sizeof(client_t))) == NULL)
 		Log_fatal("Out of memory (%s:%s)", __FILE__, __LINE__);
 
-  if(remote->ss_family == AF_INET) {
-    inet_ntop(AF_INET, &((struct sockaddr_in*)remote)->sin_addr, addressPresentation, INET6_ADDRSTRLEN);
-    port = ntohs(((struct sockaddr_in*)remote)->sin_port);
-  } else {
-    inet_ntop(AF_INET6, &((struct sockaddr_in6*)remote)->sin6_addr, addressPresentation, INET6_ADDRSTRLEN);
-    port = ntohs(((struct sockaddr_in6*)remote)->sin6_port);
-  }
+	if(remote->ss_family == AF_INET) {
+		inet_ntop(AF_INET, &((struct sockaddr_in*)remote)->sin_addr, addressPresentation, INET6_ADDRSTRLEN);
+		port = ntohs(((struct sockaddr_in*)remote)->sin_port);
+	} else {
+		inet_ntop(AF_INET6, &((struct sockaddr_in6*)remote)->sin6_addr, addressPresentation, INET6_ADDRSTRLEN);
+		port = ntohs(((struct sockaddr_in6*)remote)->sin6_port);
+	}
 
-  memcpy(newclient->addressString, addressPresentation, INET6_ADDRSTRLEN);
+	memcpy(newclient->addressString, addressPresentation, INET6_ADDRSTRLEN);
 
 	newclient->tcpfd = fd;
 	memcpy(&newclient->remote_tcp, remote, sizeof(struct sockaddr_storage));
@@ -528,7 +528,7 @@ int Client_read(client_t *client)
 				return 0;
 			}
 			else if (SSLi_get_error(client->ssl, rc) == SSLI_ERROR_ZERO_RETURN ||
-			         SSLi_get_error(client->ssl, rc) == 0) {
+							 SSLi_get_error(client->ssl, rc) == 0) {
 				Log_info_client(client, "Connection closed by peer");
 				Client_close(client);
 			}
@@ -538,7 +538,7 @@ int Client_read(client_t *client)
 						Log_info_client(client, "Connection closed by peer");
 					else
 						Log_info_client(client,"Error: %s  - Closing connection (code %d)",
-						                strerror(errno));
+														strerror(errno));
 				}
 				else if (SSLi_get_error(client->ssl, rc) == SSLI_ERROR_CONNRESET) {
 					Log_info_client(client, "Connection reset by peer");
@@ -597,7 +597,7 @@ int Client_write(client_t *client)
 		}
 		else {
 			if (SSLi_get_error(client->ssl, rc) == SSLI_ERROR_SYSCALL) {
-				Log_info_client(client, "Error: %s  - Closing connection", strerror(errno));
+				Log_info_client(client, "Error: %s	- Closing connection", strerror(errno));
 			}
 			else if (SSLi_get_error(client->ssl, rc) == SSLI_ERROR_CONNRESET) {
 				Log_info_client(client, "Connection reset by peer");
@@ -636,7 +636,7 @@ int Client_send_message(client_t *client, message_t *msg)
 	}
 	if (client->txsize != 0 || !client->SSLready) {
 		/* Queue message */
-		if ((client->txQueueCount > 5 &&  msg->messageType == UDPTunnel) ||
+		if ((client->txQueueCount > 5 &&	msg->messageType == UDPTunnel) ||
 			client->txQueueCount > 30) {
 			Msg_free(msg);
 			return -1;
@@ -772,8 +772,8 @@ int Client_read_udp(int udpsock)
 	uint8_t key[KEY_LENGTH];
 	client_t *itr;
 	UDPMessageType_t msgType;
-  uint8_t fromaddress[4 * sizeof(in_addr_t)];
-  uint16_t fromport;
+	uint8_t fromaddress[4 * sizeof(in_addr_t)];
+	uint16_t fromport;
 
 #if defined(__LP64__)
 	uint8_t encbuff[UDP_PACKET_SIZE + 8];
@@ -785,19 +785,19 @@ int Client_read_udp(int udpsock)
 
 	len = recvfrom(udpsock, encrypted, UDP_PACKET_SIZE, MSG_TRUNC, (struct sockaddr *)&from, &fromlen);
 
-  memset(key, 0, KEY_LENGTH);
+	memset(key, 0, KEY_LENGTH);
 
-  if(from.ss_family == AF_INET) {
-    memcpy(fromaddress, &((struct sockaddr_in*)&from)->sin_addr, sizeof(in_addr_t));
-    fromport = ntohs(((struct sockaddr_in*)&from)->sin_port);
-    memcpy(&key[0], &fromport, 2);
-    memcpy(&key[2], fromaddress, sizeof(in_addr_t));
-  } else {
-    memcpy(fromaddress, &((struct sockaddr_in6*)&from)->sin6_addr, 4 * sizeof(in_addr_t));
-    fromport = ntohs(((struct sockaddr_in6*)&from)->sin6_port);
-    memcpy(&key[0], &fromport, 2);
-    memcpy(&key[2], fromaddress, 4 * sizeof(in_addr_t));
-  }
+	if(from.ss_family == AF_INET) {
+		memcpy(fromaddress, &((struct sockaddr_in*)&from)->sin_addr, sizeof(in_addr_t));
+		fromport = ntohs(((struct sockaddr_in*)&from)->sin_port);
+		memcpy(&key[0], &fromport, 2);
+		memcpy(&key[2], fromaddress, sizeof(in_addr_t));
+	} else {
+		memcpy(fromaddress, &((struct sockaddr_in6*)&from)->sin6_addr, 4 * sizeof(in_addr_t));
+		fromport = ntohs(((struct sockaddr_in6*)&from)->sin6_port);
+		memcpy(&key[0], &fromport, 2);
+		memcpy(&key[2], fromaddress, 4 * sizeof(in_addr_t));
+	}
 
 	if (len == 0) {
 		return -1;
@@ -833,19 +833,19 @@ int Client_read_udp(int udpsock)
 		}
 	}
 	if (itr == NULL) { /* Unknown peer */
-    struct sockaddr_storage itraddressstorage;
-    uint8_t itraddress[4 * sizeof(in_addr_t)];
-    int addresslength;
+		struct sockaddr_storage itraddressstorage;
+		uint8_t itraddress[4 * sizeof(in_addr_t)];
+		int addresslength;
 
 		while (Client_iterate(&itr) != NULL) {
-      itraddressstorage = itr->remote_tcp;
-      if(itraddressstorage.ss_family == AF_INET) {
-        memcpy(itraddress, &((struct sockaddr_in*)&from)->sin_addr, sizeof(in_addr_t));
-        addresslength = sizeof(in_addr_t);
-      } else {
-        memcpy(itraddress, &((struct sockaddr_in6*)&from)->sin6_addr, 4 * sizeof(in_addr_t));
-        addresslength = 4 * sizeof(in_addr_t);
-      }
+			itraddressstorage = itr->remote_tcp;
+			if(itraddressstorage.ss_family == AF_INET) {
+				memcpy(itraddress, &((struct sockaddr_in*)&from)->sin_addr, sizeof(in_addr_t));
+				addresslength = sizeof(in_addr_t);
+			} else {
+				memcpy(itraddress, &((struct sockaddr_in6*)&from)->sin6_addr, 4 * sizeof(in_addr_t));
+				addresslength = 4 * sizeof(in_addr_t);
+			}
 
 			if (memcmp(itraddress, fromaddress, addresslength) == 0) {
 				if (checkDecrypt(itr, encrypted, buffer, len)) {
@@ -1025,13 +1025,13 @@ out:
 static int Client_send_udp(client_t *client, uint8_t *data, int len)
 {
 	uint8_t *buf, *mbuf;
-  uint16_t clientport;
-  int udpsock = (client->remote_udp.ss_family == AF_INET) ? udpsocks[0] : udpsocks[1];
+	uint16_t clientport;
+	int udpsock = (client->remote_udp.ss_family == AF_INET) ? udpsocks[0] : udpsocks[1];
 
-  if (client->remote_udp.ss_family == AF_INET)
-    clientport = ntohs(((struct sockaddr_in*)&client->remote_udp)->sin_port);
-  else
-    clientport = ntohs(((struct sockaddr_in6*)&client->remote_udp)->sin6_port);
+	if (client->remote_udp.ss_family == AF_INET)
+		clientport = ntohs(((struct sockaddr_in*)&client->remote_udp)->sin_port);
+	else
+		clientport = ntohs(((struct sockaddr_in6*)&client->remote_udp)->sin6_port);
 
 	if (clientport != 0 && CryptState_isValid(&client->cryptState) &&
 		client->bUDP) {
@@ -1046,7 +1046,10 @@ static int Client_send_udp(client_t *client, uint8_t *data, int len)
 
 		CryptState_encrypt(&client->cryptState, data, buf, len);
 
+	if (client->remote_udp.ss_family == AF_INET)
 		sendto(udpsock, buf, len + 4, 0, (struct sockaddr *)&client->remote_udp, sizeof(struct sockaddr_in));
+	else
+		sendto(udpsock, buf, len + 4, 0, (struct sockaddr *)&client->remote_udp, sizeof(struct sockaddr_in6));
 
 		free(mbuf);
 	} else {
