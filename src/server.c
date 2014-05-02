@@ -72,7 +72,7 @@ struct sockaddr_storage** Server_setupAddressesAndPorts()
 	struct sockaddr_storage* v6address = calloc(1, sizeof(struct sockaddr_storage));
 	v6address->ss_family = AF_INET6;
 
-#if defined(NETBSD) || defined(FREEBSD) || defined(OPENBSD) || defined(__APPLE__)
+#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
 	v4address->ss_len = sizeof(struct sockaddr_storage);
 	v6address->ss_len = sizeof(struct sockaddr_storage);
 #endif
