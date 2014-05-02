@@ -142,24 +142,23 @@ bool_t Ban_isBanned(client_t *client)
 
 }
 
-bool_t Ban_isBannedAddr(in_addr_t *addr)
+bool_t Ban_isBannedAddr(struct sockaddr_storage *address)
 {
 	struct dlist *itr;
 	ban_t *ban;
-	int mask;
 	in_addr_t tempaddr1, tempaddr2;
 
 	list_iterate(itr, &banlist) {
 		ban = list_get_entry(itr, ban_t, node);
-		mask = ban->mask - 96;
-		if (mask < 32) { /* XXX - only ipv4 support */
-			memcpy(&tempaddr1, addr, sizeof(in_addr_t));
-			memcpy(&tempaddr2, &ban->address, sizeof(in_addr_t));
-			tempaddr1 &= (2 ^ mask) - 1;
-			tempaddr2 &= (2 ^ mask) - 1;
+
+		if(ban->mask == sizeof(in_addr_t)) {
+			if(memcmp(ban->address, &((struct sockaddr_in *)address)->sin_addr, ban->mask) == 0)
+				return true;
 		}
-		if (memcmp(&tempaddr1, &tempaddr2, sizeof(in_addr_t)) == 0)
-			return true;
+		else {
+			if(memcmp(ban->address, &((struct sockaddr_in6 *)address)->sin6_addr, ban->mask) == 0)
+				return true;
+		}
 	}
 	return false;
 }

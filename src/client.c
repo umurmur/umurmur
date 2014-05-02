@@ -324,17 +324,6 @@ int Client_add(int fd, struct sockaddr_storage *remote)
 	char addressPresentation[INET6_ADDRSTRLEN];
 	int port;
 
-#warning FIX BANNING BEFORE RELEASE
-#if 0
-	if (Ban_isBannedAddr((in_addr_t *)&remote->sin_addr)) {
-		Log_info("Address %s banned. Disconnecting", inet_ntoa(remote->sin_addr));
-		return -1;
-	}
-#endif
-
-	if ((newclient = calloc(1, sizeof(client_t))) == NULL)
-		Log_fatal("Out of memory (%s:%s)", __FILE__, __LINE__);
-
 	if(remote->ss_family == AF_INET) {
 		inet_ntop(AF_INET, &((struct sockaddr_in*)remote)->sin_addr, addressPresentation, INET6_ADDRSTRLEN);
 		port = ntohs(((struct sockaddr_in*)remote)->sin_port);
@@ -342,6 +331,14 @@ int Client_add(int fd, struct sockaddr_storage *remote)
 		inet_ntop(AF_INET6, &((struct sockaddr_in6*)remote)->sin6_addr, addressPresentation, INET6_ADDRSTRLEN);
 		port = ntohs(((struct sockaddr_in6*)remote)->sin6_port);
 	}
+
+	if (Ban_isBannedAddr(remote)) {
+		Log_info("Address %s banned. Disconnecting", addressPresentation);
+		return -1;
+	}
+
+	if ((newclient = calloc(1, sizeof(client_t))) == NULL)
+		Log_fatal("Out of memory (%s:%s)", __FILE__, __LINE__);
 
 	memcpy(newclient->addressString, addressPresentation, INET6_ADDRSTRLEN);
 
