@@ -46,6 +46,7 @@
 #include "version.h"
 #include "voicetarget.h"
 #include "ban.h"
+#include "util.h"
 
 extern char system_string[], version_string[];
 
@@ -321,32 +322,20 @@ int Client_add(int fd, struct sockaddr_storage *remote)
 {
 	client_t* newclient;
 	message_t *sendmsg;
-	char addressPresentation[INET6_ADDRSTRLEN];
-	int port;
-
-	if(remote->ss_family == AF_INET) {
-		inet_ntop(AF_INET, &((struct sockaddr_in*)remote)->sin_addr, addressPresentation, INET6_ADDRSTRLEN);
-		port = ntohs(((struct sockaddr_in*)remote)->sin_port);
-	} else {
-		inet_ntop(AF_INET6, &((struct sockaddr_in6*)remote)->sin6_addr, addressPresentation, INET6_ADDRSTRLEN);
-		port = ntohs(((struct sockaddr_in6*)remote)->sin6_port);
-	}
 
 	if (Ban_isBannedAddr(remote)) {
-		Log_info("Address %s banned. Disconnecting", addressPresentation);
+		Log_info("Address %s banned. Disconnecting", Util_addressToString(remote));
 		return -1;
 	}
 
 	if ((newclient = calloc(1, sizeof(client_t))) == NULL)
-		Log_fatal("Out of memory (%s:%s)", __FILE__, __LINE__);
-
-	memcpy(newclient->addressString, addressPresentation, INET6_ADDRSTRLEN);
+		Log_fatal("(%s:%s): Out of memory while allocating %d bytes.", __FILE__, __LINE__, sizeof(client_t));
 
 	newclient->tcpfd = fd;
 	memcpy(&newclient->remote_tcp, remote, sizeof(struct sockaddr_storage));
 	newclient->ssl = SSLi_newconnection(&newclient->tcpfd, &newclient->SSLready);
 	if (newclient->ssl == NULL) {
-		Log_warn("SSL negotiation failed with %s on port %d", addressPresentation, port);
+		Log_warn("SSL negotiation failed with %s on port %d", Util_addressToString(remote), Util_addressToPort(remote));
 		free(newclient);
 		return -1;
 	}
@@ -623,6 +612,7 @@ int Client_send_message_ver(client_t *client, message_t *msg, uint32_t version)
 		return Client_send_message(client, msg);
 	else
 		Msg_free(msg);
+	return -1;
 }
 
 int Client_send_message(client_t *client, message_t *msg)
@@ -784,34 +774,30 @@ int Client_read_udp(int udpsock)
 
 	memset(key, 0, KEY_LENGTH);
 
+	fromport = Util_addressToPort(&from);
+
 	if(from.ss_family == AF_INET) {
 		memcpy(fromaddress, &((struct sockaddr_in*)&from)->sin_addr, sizeof(in_addr_t));
-		fromport = ntohs(((struct sockaddr_in*)&from)->sin_port);
 		memcpy(&key[0], &fromport, 2);
 		memcpy(&key[2], fromaddress, sizeof(in_addr_t));
 	} else {
 		memcpy(fromaddress, &((struct sockaddr_in6*)&from)->sin6_addr, 4 * sizeof(in_addr_t));
-		fromport = ntohs(((struct sockaddr_in6*)&from)->sin6_port);
 		memcpy(&key[0], &fromport, 2);
 		memcpy(&key[2], fromaddress, 4 * sizeof(in_addr_t));
 	}
 
-	if (len == 0) {
+	if (len <= 0)
 		return -1;
-	} else if (len < 0) {
-		return -1;
-	} else if (len < 5) {
-		// 4 bytes crypt header + type + session
+	else if (len < 5 || len > UDP_PACKET_SIZE) /* 4 bytes crypt header + type + session */
 		return 0;
-	} else if (len > UDP_PACKET_SIZE) {
-		return 0;
-	}
 
-	/* Ping packet */
+	/*
+	 * Reply to ping packet
+	 * The second and third uint32_t are the timestamp, which will be returned unmodified
+	 */
 	if (len == 12 && *encrypted == 0) {
 		uint32_t *ping = (uint32_t *)encrypted;
 		ping[0] = htonl((uint32_t)PROTOCOL_VERSION);
-		// 1 and 2 will be the timestamp, which we return unmodified.
 		ping[3] = htonl((uint32_t)clientcount);
 		ping[4] = htonl((uint32_t)getIntConf(MAX_CLIENTS));
 		ping[5] = htonl((uint32_t)getIntConf(MAX_BANDWIDTH));
@@ -847,7 +833,7 @@ int Client_read_udp(int udpsock)
 			if (memcmp(itraddress, fromaddress, addresslength) == 0) {
 				if (checkDecrypt(itr, encrypted, buffer, len)) {
 					memcpy(itr->key, key, KEY_LENGTH);
-					Log_info_client(itr, "New UDP connection from %s on port %d", itr->addressString, fromport);
+					Log_info_client(itr, "New UDP connection from %s on port %d", Util_clientAddressToString(itr), fromport);
 					memcpy(&itr->remote_udp, &from, sizeof(struct sockaddr_storage));
 					break;
 				}
@@ -875,7 +861,7 @@ int Client_read_udp(int udpsock)
 			Client_send_udp(itr, buffer, len);
 			break;
 		default:
-			Log_debug("Unknown UDP message type from %s port %d", itr->addressString, fromport);
+			Log_debug("Unknown UDP message type from %s port %d", Util_clientAddressToString(itr), fromport);
 			break;
 	}
 
@@ -1022,15 +1008,10 @@ out:
 static int Client_send_udp(client_t *client, uint8_t *data, int len)
 {
 	uint8_t *buf, *mbuf;
-	uint16_t clientport;
 	int udpsock = (client->remote_udp.ss_family == AF_INET) ? udpsocks[0] : udpsocks[1];
 
-	if (client->remote_udp.ss_family == AF_INET)
-		clientport = ntohs(((struct sockaddr_in*)&client->remote_udp)->sin_port);
-	else
-		clientport = ntohs(((struct sockaddr_in6*)&client->remote_udp)->sin6_port);
 
-	if (clientport != 0 && CryptState_isValid(&client->cryptState) &&
+	if (Util_clientAddressToPortUDP(client) != 0 && CryptState_isValid(&client->cryptState) &&
 		client->bUDP) {
 #if defined(__LP64__)
 		buf = mbuf = malloc(len + 4 + 16);

@@ -46,12 +46,15 @@
 #include "log.h"
 #include "timer.h"
 #include "version.h"
+#include "util.h"
 
 #define TCP_SOCK  0
 #define TCP_SOCK6 1
-
+#define TCP_SOCKS 2
 #define UDP_SOCK  2
 #define UDP_SOCK6 3
+#define UDP_SOCKS 2
+#define SERVER_SOCKS UDP_SOCKS + TCP_SOCKS
 
 /* globals */
 bool_t shutdown_server;
@@ -59,8 +62,9 @@ extern char *bindaddr;
 extern char *bindaddr6;
 extern int bindport;
 extern int bindport6;
-
 int* udpsocks;
+
+const int on = 1;
 
 /* Initialize the address structures for IPv4 and IPv6 */
 struct sockaddr_storage** Server_setupAddressesAndPorts()
@@ -99,7 +103,7 @@ struct sockaddr_storage** Server_setupAddressesAndPorts()
 
 void Server_runLoop(struct pollfd* pollfds)
 {
-	int timeout = 1000, rc, clientcount;
+	int timeout, rc, clientcount;
 
 	etimer_t janitorTimer;
 	Timer_init(&janitorTimer);
@@ -112,7 +116,7 @@ void Server_runLoop(struct pollfd* pollfds)
 		pollfds[UDP_SOCK6].revents = 0;
 		pollfds[TCP_SOCK].revents = 0;
 		pollfds[TCP_SOCK6].revents = 0;
-		clientcount = Client_getfds(&pollfds[4]);
+		clientcount = Client_getfds(&pollfds[SERVER_SOCKS]);
 
 		timeout = (int)(1000000LL - (int64_t)Timer_elapsed(&janitorTimer)) / 1000LL;
 		if (timeout <= 0) {
@@ -120,9 +124,9 @@ void Server_runLoop(struct pollfd* pollfds)
 			Timer_restart(&janitorTimer);
 			timeout = (int)(1000000LL - (int64_t)Timer_elapsed(&janitorTimer)) / 1000LL;
 		}
-		rc = poll(pollfds, clientcount + 4, timeout);
-		if (rc == 0) { /* Timeout */
-			/* Do maintenance */
+		rc = poll(pollfds, clientcount + SERVER_SOCKS, timeout);
+		if (rc == 0) {
+			/* Poll timed out, do maintenance */
 			Timer_restart(&janitorTimer);
 			Client_janitor();
 			continue;
@@ -131,38 +135,29 @@ void Server_runLoop(struct pollfd* pollfds)
 			if (errno == EINTR) /* signal */
 				continue;
 			else
-				Log_fatal("poll: error %d", errno);
-		}
-		if (pollfds[TCP_SOCK].revents) { /* New tcp connection */
-			int tcpfd, flag = 1;
-			uint32_t addrlen;
-			addrlen = sizeof(struct sockaddr_in);
-			tcpfd = accept(pollfds[TCP_SOCK].fd, (struct sockaddr*)&remote, &addrlen);
-			fcntl(tcpfd, F_SETFL, O_NONBLOCK);
-			setsockopt(tcpfd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
-			Log_debug("Connection from %s port %d\n", inet_ntoa(((struct sockaddr_in*)&remote)->sin_addr),
-				ntohs(((struct sockaddr_in*)&remote)->sin_port));
-			if (Client_add(tcpfd, &remote) < 0)
-				close(tcpfd);
+				Log_fatal("poll: error %d (%s)", errno, strerror(errno));
 		}
 
-		if (pollfds[TCP_SOCK6].revents) { /* New tcp connection */
-			int tcpfd, flag = 1;
-			uint32_t addrlen;
-			addrlen = sizeof(struct sockaddr_in6);
-			tcpfd = accept(pollfds[TCP_SOCK6].fd, (struct sockaddr*)&remote, &addrlen);
-			fcntl(tcpfd, F_SETFL, O_NONBLOCK);
-			setsockopt(tcpfd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
-			if (Client_add(tcpfd, &remote) < 0)
-				close(tcpfd);
+		/* Check for new connection */
+		for (i = 0; i < TCP_SOCKS; i++) {
+			if (pollfds[i].revents) {
+				static int tcpfd;
+				static uint32_t addrlen = sizeof(struct sockaddr_storage);
+				tcpfd = accept(pollfds[i].fd, (struct sockaddr *)&remote, &addrlen);
+				fcntl(tcpfd, F_SETFL, O_NONBLOCK);
+				setsockopt(tcpfd, IPPROTO_TCP, TCP_NODELAY, (char *) &on, sizeof(int));
+				Log_debug("Connection from %s port %d\n", Util_addressToString(&remote), Util_addressToPort(&remote));
+				if (Client_add(tcpfd, &remote) < 0)
+					close(tcpfd);
+			}
 		}
 
-		if (pollfds[UDP_SOCK].revents) {
-			Client_read_udp(udpsocks[0]);
+		for (i = 2; i < SERVER_SOCKS; i++) {
+			if (pollfds[i].revents) {
+				Client_read_udp(udpsocks[i - UDP_SOCKS]);
+			}
 		}
-		if (pollfds[UDP_SOCK6].revents) {
-			Client_read_udp(udpsocks[1]);
-		}
+
 		for (i = 0; i < clientcount; i++) {
 			if (pollfds[i + 4].revents & POLLIN) {
 				Client_read_fd(pollfds[i + 4].fd);
@@ -187,7 +182,7 @@ void Server_setupTCPSockets(struct sockaddr_storage* addresses[2], struct pollfd
 	if (setsockopt(sockets[0], SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) != 0)
 		Log_fatal("setsockopt IPv4: %s", strerror(errno));
 	if (bind(sockets[0], (struct sockaddr *)addresses[0], sizeof (struct sockaddr_in)) < 0)
-		Log_fatal("bind IPv4: %s", strerror(errno));
+		Log_fatal("bind %s %d: %s", Util_addressToString(addresses[0]), Util_addressToPort(addresses[0]), strerror(errno));
 	if (listen(sockets[0], 3) < 0)
 		Log_fatal("listen IPv4");
 	fcntl(sockets[0], F_SETFL, O_NONBLOCK);
@@ -204,7 +199,7 @@ void Server_setupTCPSockets(struct sockaddr_storage* addresses[2], struct pollfd
 	if (setsockopt(sockets[1], IPPROTO_IPV6, IPV6_V6ONLY, &yes, sizeof(int)) != 0)
 		Log_fatal("setsockopt IPv6: %s", strerror(errno));
 	if (bind(sockets[1], (struct sockaddr *)addresses[1], sizeof (struct sockaddr_in6)) < 0)
-		Log_fatal("bind IPv6: %s", strerror(errno));
+		Log_fatal("bind %s %d: %s", Util_addressToString(addresses[1]), Util_addressToPort(addresses[1]), strerror(errno));
 	if (listen(sockets[1], 3) < 0)
 		Log_fatal("listen IPv6");
 	fcntl(sockets[1], F_SETFL, O_NONBLOCK);
@@ -215,21 +210,16 @@ void Server_setupTCPSockets(struct sockaddr_storage* addresses[2], struct pollfd
 
 void Server_setupUDPSockets(struct sockaddr_storage* addresses[2], struct pollfd* pollfds)
 {
-	uint8_t yes = 1;
 	int val = 0;
 	int error = 0;
 	int sockets[2];
-	char ipv6Representation[INET6_ADDRSTRLEN];
 
 	if((udpsocks = malloc(2 * sizeof(int))) == NULL)
 		Log_fatal("Out of memory (%s:%s)", __FILE__, __LINE__);
 
-	inet_ntop(AF_INET6, &((struct sockaddr_in6*)addresses[1])->sin6_addr, ipv6Representation, sizeof(INET6_ADDRSTRLEN));
-
 	sockets[0] = socket(PF_INET, SOCK_DGRAM, 0);
 	if (bind(sockets[0], (struct sockaddr *) addresses[0], sizeof (struct sockaddr_in)) < 0)
-		Log_fatal("bind %d %s: %s", ((struct sockaddr_in*)addresses[0])->sin_port,
-			inet_ntoa(((struct sockaddr_in*)addresses[0])->sin_addr), strerror(errno));
+		Log_fatal("bind %s %d: %s", Util_addressToString(addresses[0]), Util_addressToPort(addresses[0]), strerror(errno));
 	val = 0xe0;
 	if (setsockopt(sockets[0], IPPROTO_IP, IP_TOS, &val, sizeof(val)) < 0)
 		Log_warn("Server: Failed to set TOS for UDP Socket");
@@ -242,10 +232,10 @@ void Server_setupUDPSockets(struct sockaddr_storage* addresses[2], struct pollfd
 	pollfds[UDP_SOCK].events = POLLIN | POLLHUP | POLLERR;
 
 	sockets[1] = socket(PF_INET6, SOCK_DGRAM, 0);
-	if (setsockopt(sockets[1], IPPROTO_IPV6, IPV6_V6ONLY, &yes, sizeof(int)) != 0)
+	if (setsockopt(sockets[1], IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof(int)) != 0)
 		Log_fatal("setsockopt IPv6: %s", strerror(errno));
 	if (bind(sockets[1], (struct sockaddr *) addresses[1], sizeof (struct sockaddr_in6)) < 0)
-		Log_fatal("bind %d %s: %s", ((struct sockaddr_in*)addresses[1])->sin_port, ipv6Representation, strerror(errno));
+		Log_fatal("bind %s %d: %s", Util_addressToString(addresses[1]), Util_addressToPort(addresses[1]), strerror(errno));
 	val = 0xe0;
 	if (setsockopt(sockets[1], IPPROTO_IPV6, IPV6_TCLASS, &val, sizeof(val)) < 0)
 		Log_warn("Server: Failed to set TOS for UDP Socket");
@@ -256,8 +246,8 @@ void Server_setupUDPSockets(struct sockaddr_storage* addresses[2], struct pollfd
 	fcntl(sockets[1], F_SETFL, O_NONBLOCK);
 	pollfds[UDP_SOCK6].fd = sockets[1];
 	pollfds[UDP_SOCK6].events = POLLIN | POLLHUP | POLLERR;
-	udpsocks[0] = sockets[0];
-	udpsocks[1] = sockets[1];
+	udpsocks[UDP_SOCK - UDP_SOCKS] = sockets[0];
+	udpsocks[UDP_SOCK6 - UDP_SOCKS] = sockets[1];
 }
 
 void Server_run()

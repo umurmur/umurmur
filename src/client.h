@@ -66,10 +66,8 @@ typedef struct {
 	bool_t shutdown_wait;
 	cryptState_t cryptState;
 	bool_t readBlockedOnWrite, writeBlockedOnRead;
-
 	struct sockaddr_storage remote_tcp;
 	struct sockaddr_storage remote_udp;
-	char addressString[INET6_ADDRSTRLEN];
 	uint8_t rxbuf[BUFSIZE], txbuf[BUFSIZE];
 	uint32_t rxcount, msgsize, drainleft, txcount, txsize;
 	int sessionId;

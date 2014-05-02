@@ -36,6 +36,7 @@
 #include "ban.h"
 #include "conf.h"
 #include "ssl.h"
+#include "util.h"
 
 static void Ban_saveBanFile(void);
 static void Ban_readBanFile(void);
@@ -95,7 +96,7 @@ void Ban_UserBan(client_t *client, char *reason)
 	SSLi_hash2hex(ban->hash, hexhash);
 
 	Log_info_client(client, "User kickbanned. Reason: '%s' Hash: %s IP: %s Banned for: %d seconds",
-		ban->reason, hexhash, client->addressString, ban->duration);
+		ban->reason, hexhash, Util_clientAddressToString(client), ban->duration);
 }
 
 
