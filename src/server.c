@@ -83,7 +83,6 @@ struct sockaddr_storage** Server_setupAddressesAndPorts()
 
 	int error = 0;
 
-	const char* confadd = getStrConf(BINDADDR);
 	error = inet_pton(AF_INET, (!bindaddr) ? ((getStrConf(BINDADDR)) ? getStrConf(BINDADDR) : "0.0.0.0")
 		: bindaddr, &(((struct sockaddr_in*)v4address)->sin_addr));
 	if (error == 0) Log_fatal("Invalid IPv4 address supplied!");
@@ -172,7 +171,6 @@ void Server_runLoop(struct pollfd* pollfds)
 void Server_setupTCPSockets(struct sockaddr_storage* addresses[2], struct pollfd* pollfds)
 {
 	uint8_t yes = 1;
-	int error = 0;
 	int sockets[2];
 
 	/* IPv4 socket setup */
@@ -211,7 +209,6 @@ void Server_setupTCPSockets(struct sockaddr_storage* addresses[2], struct pollfd
 void Server_setupUDPSockets(struct sockaddr_storage* addresses[2], struct pollfd* pollfds)
 {
 	int val = 0;
-	int error = 0;
 	int sockets[2];
 
 	if((udpsocks = malloc(2 * sizeof(int))) == NULL)
