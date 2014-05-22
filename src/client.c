@@ -64,6 +64,7 @@ int iCodecAlpha, iCodecBeta;
 bool_t bPreferAlpha;
 
 extern int* udpsocks;
+extern bool hasv4;
 
 void Client_init()
 {
@@ -1008,8 +1009,8 @@ out:
 static int Client_send_udp(client_t *client, uint8_t *data, int len)
 {
 	uint8_t *buf, *mbuf;
-	int udpsock = (client->remote_udp.ss_family == AF_INET) ? udpsocks[0] : udpsocks[1];
 
+	int udpsock = (client->remote_udp.ss_family == AF_INET) ? udpsocks[0] : udpsocks[(hasv4) ? 1 : 0];
 
 	if (Util_clientAddressToPortUDP(client) != 0 && CryptState_isValid(&client->cryptState) &&
 		client->bUDP) {
