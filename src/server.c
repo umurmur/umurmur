@@ -120,14 +120,8 @@ void Server_runLoop(struct pollfd* pollfds)
 		struct sockaddr_storage remote;
 		int i;
 
-		if (nofServerSocks == 4) {
-			pollfds[0].revents = 0;
-			pollfds[1].revents = 0;
-			pollfds[2].revents = 0;
-			pollfds[3].revents = 0;
-		} else {
-			pollfds[0].revents = 0;
-			pollfds[1].revents = 0;
+		for(i = 0; i < nofServerSocks; i++) {
+			pollfds[i].revents = 0;
 		}
 
 		clientcount = Client_getfds(&pollfds[nofServerSocks]);
@@ -275,12 +269,12 @@ void Server_run()
 {
 	struct pollfd *pollfds;
 
-	/* max clients + listen sock + udp sock + client connecting that will be disconnected */
-	if ((pollfds = calloc((getIntConf(MAX_CLIENTS) + 5) , sizeof(struct pollfd))) == NULL)
-		Log_fatal("out of memory");
-
 	/* Figure out bind address and port */
 	struct sockaddr_storage** addresses = Server_setupAddressesAndPorts();
+
+	/* max clients + server sokets + client connecting that will be disconnected */
+	if ((pollfds = calloc((getIntConf(MAX_CLIENTS) + nofServerSocks + 1) , sizeof(struct pollfd))) == NULL)
+		Log_fatal("out of memory");
 
 	/* Prepare TCP sockets */
 	Server_setupTCPSockets(addresses, pollfds);
