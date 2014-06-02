@@ -60,6 +60,37 @@ bool_t hasv4 = true, hasv6 = true;
 const int on = 1;
 int nofServerSocks = 4;
 
+/* Check which IP versions are supported by the system. */
+void checkIPversions()
+{
+	int testsocket = -1;
+
+	testsocket = socket(PF_INET, SOCK_STREAM, 0);
+	hasv4 = (errno == EAFNOSUPPORT) ? false : true;
+	if (!(testsocket < 0)) close(testsocket);
+
+	testsocket = socket(PF_INET6, SOCK_STREAM, 0);
+	hasv6 = (errno == EAFNOSUPPORT) ? false : true;
+	if (!(testsocket < 0)) close(testsocket);
+
+	if(!hasv4)
+	{
+		Log_info("IPv4 is not supported by this system");
+		nofServerSocks -= 2;
+	}
+
+	if(!hasv6)
+	{
+		Log_info("IPv6 is not supported by this system");
+		nofServerSocks -= 2;
+	}
+
+	if(nofServerSocks == 0)
+	{
+		Log_fatal("Neither IPv4 nor IPv6 are supported by this system");
+	}
+}
+
 /* Initialize the address structures for IPv4 and IPv6 */
 struct sockaddr_storage** Server_setupAddressesAndPorts()
 {
@@ -81,24 +112,15 @@ struct sockaddr_storage** Server_setupAddressesAndPorts()
 		: bindaddr, &(((struct sockaddr_in*)v4address)->sin_addr));
 	if (error == 0)
 		Log_fatal("Invalid IPv4 address supplied!");
-	else if (error == -1) {
+	else if (error == -1)
 		Log_warn("Could not allocate IPv4 address");
-		hasv4 = false;
-		nofServerSocks -= 2;
-	}
 
 	error = inet_pton(AF_INET6, (!bindaddr6) ? ((getStrConf(BINDADDR6)) ? getStrConf(BINDADDR6) : "::")
 		: bindaddr6, &(((struct sockaddr_in6*)v6address)->sin6_addr));
 	if (error == 0)
 		Log_fatal("Invalid IPv6 address supplied!");
-	else if (error == -1) {
+	else if (error == -1)
 		Log_warn("Could not allocate IPv6 address");
-		hasv6 = false;
-		nofServerSocks -= 2;
-	}
-
-	if (!hasv4 && !hasv6)
-		Log_fatal("Could not allocate IPv4 nor IPv6 address!");
 
 	((struct sockaddr_in*)v4address)->sin_port = htons((bindport) ? bindport : getIntConf(BINDPORT));
 	((struct sockaddr_in6*)v6address)->sin6_port = htons((bindport6) ? bindport6 : getIntConf(BINDPORT6));
@@ -201,7 +223,7 @@ void Server_setupTCPSockets(struct sockaddr_storage* addresses[2], struct pollfd
 		/* IPv6 socket setup */
 		sockets[1] = socket(PF_INET6, SOCK_STREAM, 0);
 		if (sockets[1] < 0)
-			Log_fatal("socket IPv6");
+			Log_fatal("socket IPv6: %s", strerror(errno));
 		if (setsockopt(sockets[1], SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) != 0)
 			Log_fatal("setsockopt IPv6: %s", strerror(errno));
 		if (setsockopt(sockets[1], IPPROTO_IPV6, IPV6_V6ONLY, &yes, sizeof(int)) != 0)
@@ -269,12 +291,14 @@ void Server_run()
 {
 	struct pollfd *pollfds;
 
-	/* Figure out bind address and port */
-	struct sockaddr_storage** addresses = Server_setupAddressesAndPorts();
+	checkIPversions();
 
 	/* max clients + server sokets + client connecting that will be disconnected */
 	if ((pollfds = calloc((getIntConf(MAX_CLIENTS) + nofServerSocks + 1) , sizeof(struct pollfd))) == NULL)
 		Log_fatal("out of memory");
+
+	/* Figure out bind address and port */
+	struct sockaddr_storage** addresses = Server_setupAddressesAndPorts();
 
 	/* Prepare TCP sockets */
 	Server_setupTCPSockets(addresses, pollfds);
