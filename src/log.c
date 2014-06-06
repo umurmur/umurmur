@@ -39,6 +39,7 @@
 
 #include "log.h"
 #include "conf.h"
+#include "util.h"
 
 #define STRSIZE 254
 
@@ -191,10 +192,11 @@ void Log_info_client(client_t *client, const char *logstring, ...)
 	va_end(argp);
 
 	offset += snprintf(&buf[offset], STRSIZE - offset, " - [%d] %s@%s:%d",
-					   client->sessionId,
-					   client->username == NULL ? "" : client->username,
-					   inet_ntoa(client->remote_tcp.sin_addr),
-					   ntohs(client->remote_tcp.sin_port));
+		client->sessionId,
+		client->username == NULL ? "" : client->username,
+		Util_clientAddressToString(client),
+		Util_clientAddressToPortTCP(client));
+
 	if (termprint)
 		fprintf(stderr, "%s\n", buf);
 	else if (logfile)

@@ -1,5 +1,4 @@
-/* Copyright (C) 2009-2014, Martin Johansson <martin@fatbob.nu>
-   Copyright (C) 2005-2014, Thorvald Natvig <thorvald@natvig.com>
+/* Copyright (C) 2014, Felix Morgner <felix.morgner@gmail.com>
 
    All rights reserved.
 
@@ -28,59 +27,17 @@
    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#ifndef CONF_H_24564356
-#define CONF_H_24564356
+#ifndef __UTIL_H
+#define __UTIL_H
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <stdlib.h>
+#include "client.h"
 
-#include "messages.h"
-#include "config.h"
+char* Util_addressToString(struct sockaddr_storage *address);
+int Util_addressToPort(struct sockaddr_storage *address);
+char* Util_clientAddressToString(client_t *client);
+int Util_clientAddressToPortTCP(client_t *client);
+int Util_clientAddressToPortUDP(client_t *client);
 
-typedef enum param {
-	CERTIFICATE,
-	KEY,
-	PASSPHRASE,
-	CAPATH,
-	BINDPORT,
-	BINDPORT6,
-	BINDADDR,
-	BINDADDR6,
-	WELCOMETEXT,
-	MAX_BANDWIDTH,
-	MAX_CLIENTS,
-	DEFAULT_CHANNEL,
-	USERNAME,
-	GROUPNAME,
-	LOGFILE,
-	ADMIN_PASSPHRASE,
-	BAN_LENGTH,
-	ALLOW_TEXTMESSAGE,
-	ENABLE_BAN,
-	BANFILE,
-	SYNC_BANFILE,
-	OPUS_THRESHOLD,
-} param_t;
-
-typedef struct {
-	const char *parent;
-	const char *name;
-	const char *description;
-	const char *password;
-	bool_t noenter, silent;
-	int position;
-} conf_channel_t;
-
-typedef struct {
-	const char *source;
-	const char *destination;
-} conf_channel_link_t;
-
-void Conf_init(const char *conffile);
-void Conf_deinit();
-bool_t Conf_ok(const char *conffile);
-
-const char *getStrConf(param_t param);
-int getIntConf(param_t param);
-bool_t getBoolConf(param_t param);
-int Conf_getNextChannel(conf_channel_t *chdesc, int index);
-int Conf_getNextChannelLink(conf_channel_link_t *chlink, int index);
-
-#endif
+#endif // __UTIL_H
