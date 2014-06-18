@@ -36,6 +36,7 @@
 #include "ban.h"
 #include "conf.h"
 #include "ssl.h"
+#include "util.h"
 
 static void Ban_saveBanFile(void);
 static void Ban_readBanFile(void);
@@ -74,8 +75,13 @@ void Ban_UserBan(client_t *client, char *reason)
 	memset(ban, 0, sizeof(ban_t));
 
 	memcpy(ban->hash, client->hash, 20);
-	memcpy(&ban->address, &client->remote_tcp.sin_addr, sizeof(in_addr_t));
-	ban->mask = 128;
+	if (client->remote_tcp.ss_family == AF_INET) {
+		memcpy(&ban->address, &(((struct sockaddr_in*)&client->remote_tcp)->sin_addr), sizeof(in_addr_t));
+		ban->mask = sizeof(in_addr_t);
+	} else {
+		memcpy(&ban->address, &(((struct sockaddr_in6*)&client->remote_tcp)->sin6_addr), 4 * sizeof(in_addr_t));
+		ban->mask = 4 * sizeof(in_addr_t);
+	}
 	ban->reason = strdup(reason);
 	ban->name = strdup(client->username);
 	ban->time = time(NULL);
@@ -88,8 +94,9 @@ void Ban_UserBan(client_t *client, char *reason)
 		Ban_saveBanFile();
 
 	SSLi_hash2hex(ban->hash, hexhash);
+
 	Log_info_client(client, "User kickbanned. Reason: '%s' Hash: %s IP: %s Banned for: %d seconds",
-	                ban->reason, hexhash, inet_ntoa(*((struct in_addr *)&ban->address)), ban->duration);
+		ban->reason, hexhash, Util_clientAddressToString(client), ban->duration);
 }
 
 
@@ -106,8 +113,8 @@ void Ban_pruneBanned()
 #ifdef DEBUG
 		SSLi_hash2hex(ban->hash, hexhash);
 		Log_debug("BL: User %s Reason: '%s' Hash: %s IP: %s Time left: %d",
-		          ban->name, ban->reason, hexhash, inet_ntoa(*((struct in_addr *)&ban->address)),
-		          bantime_long / 1000000LL - Timer_elapsed(&ban->startTime) / 1000000LL);
+			ban->name, ban->reason, hexhash, inet_ntoa(*((struct in_addr *)&ban->address)),
+			bantime_long / 1000000LL - Timer_elapsed(&ban->startTime) / 1000000LL);
 #endif
 		/* Duration of 0 = forever */
 		if (ban->duration != 0 && Timer_isElapsed(&ban->startTime, bantime_long)) {
@@ -136,24 +143,23 @@ bool_t Ban_isBanned(client_t *client)
 
 }
 
-bool_t Ban_isBannedAddr(in_addr_t *addr)
+bool_t Ban_isBannedAddr(struct sockaddr_storage *address)
 {
 	struct dlist *itr;
 	ban_t *ban;
-	int mask;
 	in_addr_t tempaddr1, tempaddr2;
 
 	list_iterate(itr, &banlist) {
 		ban = list_get_entry(itr, ban_t, node);
-		mask = ban->mask - 96;
-		if (mask < 32) { /* XXX - only ipv4 support */
-			memcpy(&tempaddr1, addr, sizeof(in_addr_t));
-			memcpy(&tempaddr2, &ban->address, sizeof(in_addr_t));
-			tempaddr1 &= (2 ^ mask) - 1;
-			tempaddr2 &= (2 ^ mask) - 1;
+
+		if(ban->mask == sizeof(in_addr_t)) {
+			if(memcmp(ban->address, &((struct sockaddr_in *)address)->sin_addr, ban->mask) == 0)
+				return true;
 		}
-		if (memcmp(&tempaddr1, &tempaddr2, sizeof(in_addr_t)) == 0)
-			return true;
+		else {
+			if(memcmp(ban->address, &((struct sockaddr_in6 *)address)->sin6_addr, ban->mask) == 0)
+				return true;
+		}
 	}
 	return false;
 }
@@ -185,7 +191,7 @@ message_t *Ban_getBanList(void)
 		memcpy(&address[12], &ban->address, 4);
 		memset(&address[10], 0xff, 2); /* IPv4 */
 		Msg_banList_addEntry(msg, i++, address, ban->mask, ban->name,
-		                     hexhash, ban->reason, timestr, ban->duration);
+			hexhash, ban->reason, timestr, ban->duration);
 	}
 	return msg;
 }
@@ -254,7 +260,7 @@ static void Ban_saveBanFile(void)
 		ban = list_get_entry(itr, ban_t, node);
 		SSLi_hash2hex(ban->hash, hexhash);
 		fprintf(file, "%s,%s,%d,%ld,%d,%s,%s\n", hexhash, inet_ntoa(*((struct in_addr *)&ban->address)),
-		        ban->mask, (long int)ban->time, ban->duration, ban->name, ban->reason);
+			ban->mask, (long int)ban->time, ban->duration, ban->name, ban->reason);
 	}
 	fclose(file);
 	banlist_changed = false;

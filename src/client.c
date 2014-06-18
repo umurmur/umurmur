@@ -8,13 +8,13 @@
    are met:
 
    - Redistributions of source code must retain the above copyright notice,
-     this list of conditions and the following disclaimer.
+   this list of conditions and the following disclaimer.
    - Redistributions in binary form must reproduce the above copyright notice,
-     this list of conditions and the following disclaimer in the documentation
-     and/or other materials provided with the distribution.
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
    - Neither the name of the Developers nor the names of its contributors may
-     be used to endorse or promote products derived from this software without
-     specific prior written permission.
+   be used to endorse or promote products derived from this software without
+   specific prior written permission.
 
    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
    ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -27,7 +27,7 @@
    LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+   */
 #include <sys/poll.h>
 #include <sys/socket.h>
 #include <fcntl.h>
@@ -46,6 +46,7 @@
 #include "version.h"
 #include "voicetarget.h"
 #include "ban.h"
+#include "util.h"
 
 extern char system_string[], version_string[];
 
@@ -62,7 +63,8 @@ bool_t bOpus = true;
 int iCodecAlpha, iCodecBeta;
 bool_t bPreferAlpha;
 
-extern int udpsock;
+extern int* udpsocks;
+extern bool_t hasv4;
 
 void Client_init()
 {
@@ -290,7 +292,7 @@ void recheckCodecVersions(client_t *connectingClient)
 		client_itr = NULL;
 		while (Client_iterate(&client_itr) != NULL) {
 			if ((client_itr->authenticated || client_itr == connectingClient) &&
-			    !client_itr->bOpus) {
+				!client_itr->bOpus) {
 				Client_textmessage(client_itr, OPUS_WARN_SWITCHING);
 			}
 		}
@@ -317,26 +319,24 @@ static int findFreeSessionId()
 	return -1;
 }
 
-int Client_add(int fd, struct sockaddr_in *remote)
+int Client_add(int fd, struct sockaddr_storage *remote)
 {
-	client_t *newclient;
+	client_t* newclient;
 	message_t *sendmsg;
 
-	if (Ban_isBannedAddr((in_addr_t *)&remote->sin_addr)) {
-		Log_info("Address %s banned. Disconnecting", inet_ntoa(remote->sin_addr));
+	if (Ban_isBannedAddr(remote)) {
+		Log_info("Address %s banned. Disconnecting", Util_addressToString(remote));
 		return -1;
 	}
-	newclient = malloc(sizeof(client_t));
-	if (newclient == NULL)
-		Log_fatal("Out of memory");
-	memset(newclient, 0, sizeof(client_t));
+
+	if ((newclient = calloc(1, sizeof(client_t))) == NULL)
+		Log_fatal("(%s:%s): Out of memory while allocating %d bytes.", __FILE__, __LINE__, sizeof(client_t));
 
 	newclient->tcpfd = fd;
-	memcpy(&newclient->remote_tcp, remote, sizeof(struct sockaddr_in));
+	memcpy(&newclient->remote_tcp, remote, sizeof(struct sockaddr_storage));
 	newclient->ssl = SSLi_newconnection(&newclient->tcpfd, &newclient->SSLready);
 	if (newclient->ssl == NULL) {
-		Log_warn("SSL negotiation failed with %s:%d", inet_ntoa(remote->sin_addr),
-				 ntohs(remote->sin_port));
+		Log_warn("SSL negotiation failed with %s on port %d", Util_addressToString(remote), Util_addressToPort(remote));
 		free(newclient);
 		return -1;
 	}
@@ -493,8 +493,8 @@ int Client_read(client_t *client)
 				 * 1. A valid size. The only message that is this big is UserState message with a big texture
 				 * 2. An invalid size = protocol error, e.g. connecting with a 1.1.x client
 				 */
-				Log_warn("Too big message received (%d bytes). Playing safe and disconnecting client %s:%d",
-						 client->msgsize, inet_ntoa(client->remote_tcp.sin_addr), ntohs(client->remote_tcp.sin_port));
+				//		  Log_warn("Too big message received (%d bytes). Playing safe and disconnecting client %s:%d",
+				//			   client->msgsize, inet_ntoa(client->remote_tcp.sin_addr), ntohs(client->remote_tcp.sin_port));
 				Client_free(client);
 				return -1;
 				/* client->rxcount = client->msgsize = 0; */
@@ -515,7 +515,7 @@ int Client_read(client_t *client)
 				return 0;
 			}
 			else if (SSLi_get_error(client->ssl, rc) == SSLI_ERROR_ZERO_RETURN ||
-			         SSLi_get_error(client->ssl, rc) == 0) {
+				SSLi_get_error(client->ssl, rc) == 0) {
 				Log_info_client(client, "Connection closed by peer");
 				Client_close(client);
 			}
@@ -525,7 +525,7 @@ int Client_read(client_t *client)
 						Log_info_client(client, "Connection closed by peer");
 					else
 						Log_info_client(client,"Error: %s  - Closing connection (code %d)",
-						                strerror(errno));
+							strerror(errno));
 				}
 				else if (SSLi_get_error(client->ssl, rc) == SSLI_ERROR_CONNRESET) {
 					Log_info_client(client, "Connection reset by peer");
@@ -584,7 +584,7 @@ int Client_write(client_t *client)
 		}
 		else {
 			if (SSLi_get_error(client->ssl, rc) == SSLI_ERROR_SYSCALL) {
-				Log_info_client(client, "Error: %s  - Closing connection", strerror(errno));
+				Log_info_client(client, "Error: %s	- Closing connection", strerror(errno));
 			}
 			else if (SSLi_get_error(client->ssl, rc) == SSLI_ERROR_CONNRESET) {
 				Log_info_client(client, "Connection reset by peer");
@@ -613,6 +613,7 @@ int Client_send_message_ver(client_t *client, message_t *msg, uint32_t version)
 		return Client_send_message(client, msg);
 	else
 		Msg_free(msg);
+	return -1;
 }
 
 int Client_send_message(client_t *client, message_t *msg)
@@ -751,14 +752,16 @@ static bool_t checkDecrypt(client_t *client, const uint8_t *encrypted, uint8_t *
 }
 
 #define UDP_PACKET_SIZE 1024
-int Client_read_udp()
+int Client_read_udp(int udpsock)
 {
 	int len;
-	struct sockaddr_in from;
-	socklen_t fromlen = sizeof(struct sockaddr_in);
-	uint64_t key;
+	struct sockaddr_storage from;
+	socklen_t fromlen = sizeof(struct sockaddr_storage);
+	uint8_t key[KEY_LENGTH];
 	client_t *itr;
 	UDPMessageType_t msgType;
+	uint8_t fromaddress[4 * sizeof(in_addr_t)];
+	uint16_t fromport;
 
 #if defined(__LP64__)
 	uint8_t encbuff[UDP_PACKET_SIZE + 8];
@@ -769,22 +772,33 @@ int Client_read_udp()
 	uint8_t buffer[UDP_PACKET_SIZE];
 
 	len = recvfrom(udpsock, encrypted, UDP_PACKET_SIZE, MSG_TRUNC, (struct sockaddr *)&from, &fromlen);
-	if (len == 0) {
-		return -1;
-	} else if (len < 0) {
-		return -1;
-	} else if (len < 5) {
-		// 4 bytes crypt header + type + session
-		return 0;
-	} else if (len > UDP_PACKET_SIZE) {
-		return 0;
+
+	memset(key, 0, KEY_LENGTH);
+
+	fromport = Util_addressToPort(&from);
+
+	if(from.ss_family == AF_INET) {
+		memcpy(fromaddress, &((struct sockaddr_in*)&from)->sin_addr, sizeof(in_addr_t));
+		memcpy(&key[0], &fromport, 2);
+		memcpy(&key[2], fromaddress, sizeof(in_addr_t));
+	} else {
+		memcpy(fromaddress, &((struct sockaddr_in6*)&from)->sin6_addr, 4 * sizeof(in_addr_t));
+		memcpy(&key[0], &fromport, 2);
+		memcpy(&key[2], fromaddress, 4 * sizeof(in_addr_t));
 	}
 
-	/* Ping packet */
+	if (len <= 0)
+		return -1;
+	else if (len < 5 || len > UDP_PACKET_SIZE) /* 4 bytes crypt header + type + session */
+		return 0;
+
+	/*
+	 * Reply to ping packet
+	 * The second and third uint32_t are the timestamp, which will be returned unmodified
+	 */
 	if (len == 12 && *encrypted == 0) {
 		uint32_t *ping = (uint32_t *)encrypted;
 		ping[0] = htonl((uint32_t)PROTOCOL_VERSION);
-		// 1 and 2 will be the timestamp, which we return unmodified.
 		ping[3] = htonl((uint32_t)clientcount);
 		ping[4] = htonl((uint32_t)getIntConf(MAX_CLIENTS));
 		ping[5] = htonl((uint32_t)getIntConf(MAX_BANDWIDTH));
@@ -793,23 +807,35 @@ int Client_read_udp()
 		return 0;
 	}
 
-	key = (((uint64_t)from.sin_addr.s_addr) << 16) ^ from.sin_port;
 	itr = NULL;
 
 	while (Client_iterate(&itr) != NULL) {
-		if (itr->key == key) {
+		if (memcmp(itr->key, key, KEY_LENGTH) == 0) {
 			if (!checkDecrypt(itr, encrypted, buffer, len))
 				goto out;
 			break;
 		}
 	}
 	if (itr == NULL) { /* Unknown peer */
+		struct sockaddr_storage itraddressstorage;
+		uint8_t itraddress[4 * sizeof(in_addr_t)];
+		int addresslength;
+
 		while (Client_iterate(&itr) != NULL) {
-			if (itr->remote_tcp.sin_addr.s_addr == from.sin_addr.s_addr) {
+			itraddressstorage = itr->remote_tcp;
+			if(itraddressstorage.ss_family == AF_INET) {
+				memcpy(itraddress, &((struct sockaddr_in*)&from)->sin_addr, sizeof(in_addr_t));
+				addresslength = sizeof(in_addr_t);
+			} else {
+				memcpy(itraddress, &((struct sockaddr_in6*)&from)->sin6_addr, 4 * sizeof(in_addr_t));
+				addresslength = 4 * sizeof(in_addr_t);
+			}
+
+			if (memcmp(itraddress, fromaddress, addresslength) == 0) {
 				if (checkDecrypt(itr, encrypted, buffer, len)) {
-					itr->key = key;
-					Log_info_client(itr, "New UDP connection port %d", ntohs(from.sin_port));
-					memcpy(&itr->remote_udp, &from, sizeof(struct sockaddr_in));
+					memcpy(itr->key, key, KEY_LENGTH);
+					Log_info_client(itr, "New UDP connection from %s on port %d", Util_clientAddressToString(itr), fromport);
+					memcpy(&itr->remote_udp, &from, sizeof(struct sockaddr_storage));
 					break;
 				}
 			}
@@ -823,21 +849,21 @@ int Client_read_udp()
 	len -= 4; /* Adjust for crypt header */
 	msgType = (UDPMessageType_t)((buffer[0] >> 5) & 0x7);
 	switch (msgType) {
-	case UDPVoiceSpeex:
-	case UDPVoiceCELTAlpha:
-	case UDPVoiceCELTBeta:
-		if (bOpus)
+		case UDPVoiceSpeex:
+		case UDPVoiceCELTAlpha:
+		case UDPVoiceCELTBeta:
+			if (bOpus)
+				break;
+		case UDPVoiceOpus:
+			Client_voiceMsg(itr, buffer, len);
 			break;
-	case UDPVoiceOpus:
-		Client_voiceMsg(itr, buffer, len);
-		break;
-	case UDPPing:
-		Log_debug("UDP Ping reply len %d", len);
-		Client_send_udp(itr, buffer, len);
-		break;
-	default:
-		Log_debug("Unknown UDP message type from %s port %d", inet_ntoa(from.sin_addr), ntohs(from.sin_port));
-		break;
+		case UDPPing:
+			Log_debug("UDP Ping reply len %d", len);
+			Client_send_udp(itr, buffer, len);
+			break;
+		default:
+			Log_debug("Unknown UDP message type from %s port %d", Util_clientAddressToString(itr), fromport);
+			break;
 	}
 
 out:
@@ -913,7 +939,7 @@ int Client_voiceMsg(client_t *client, uint8_t *data, int len)
 			c = list_get_entry(itr, client_t, chan_node);
 			Client_send_voice(client, c, buffer, pds->offset + 1, poslen);
 		}
-	} else if ((vt = Voicetarget_get_id(client, target)) != NULL) {	/* Targeted whisper */
+	} else if ((vt = Voicetarget_get_id(client, target)) != NULL) { /* Targeted whisper */
 		int i;
 		channel_t *ch;
 		/* Channels */
@@ -980,12 +1006,13 @@ out:
 	return 0;
 }
 
-
 static int Client_send_udp(client_t *client, uint8_t *data, int len)
 {
 	uint8_t *buf, *mbuf;
 
-	if (client->remote_udp.sin_port != 0 && CryptState_isValid(&client->cryptState) &&
+	int udpsock = (client->remote_udp.ss_family == AF_INET) ? udpsocks[0] : udpsocks[(hasv4) ? 1 : 0];
+
+	if (Util_clientAddressToPortUDP(client) != 0 && CryptState_isValid(&client->cryptState) &&
 		client->bUDP) {
 #if defined(__LP64__)
 		buf = mbuf = malloc(len + 4 + 16);
@@ -998,7 +1025,11 @@ static int Client_send_udp(client_t *client, uint8_t *data, int len)
 
 		CryptState_encrypt(&client->cryptState, data, buf, len);
 
-		sendto(udpsock, buf, len + 4, 0, (struct sockaddr *)&client->remote_udp, sizeof(struct sockaddr_in));
+#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
+			sendto(udpsock, buf, len + 4, 0, (struct sockaddr *)&client->remote_udp, client->remote_tcp.ss_len);
+#else
+			sendto(udpsock, buf, len + 4, 0, (struct sockaddr *)&client->remote_udp, sizeof(struct sockaddr_storage));
+#endif
 
 		free(mbuf);
 	} else {

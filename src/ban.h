@@ -38,7 +38,7 @@
 
 typedef struct {
 	uint8_t hash[20];
-	in_addr_t address;
+	uint8_t address[16];
 	uint32_t mask;
 	char *reason;
 	char *name;
@@ -51,7 +51,7 @@ typedef struct {
 void Ban_UserBan(client_t *client, char *reason);
 void Ban_pruneBanned();
 bool_t Ban_isBanned(client_t *client);
-bool_t Ban_isBannedAddr(in_addr_t *addr);
+bool_t Ban_isBannedAddr(struct sockaddr_storage *address);
 int Ban_getBanCount(void);
 message_t *Ban_getBanList(void);
 void Ban_putBanList(message_t *msg, int n_bans);

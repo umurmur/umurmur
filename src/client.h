@@ -55,6 +55,7 @@
 #define MAX_CODECS 10
 #define MAX_TOKENSIZE 64
 #define MAX_TOKENS 32
+#define KEY_LENGTH sizeof(uint16_t) + 4 * sizeof(in_addr_t)
 
 #define IS_AUTH(_a_) ((_a_)->authenticated)
 
@@ -65,13 +66,12 @@ typedef struct {
 	bool_t shutdown_wait;
 	cryptState_t cryptState;
 	bool_t readBlockedOnWrite, writeBlockedOnRead;
-
-	struct sockaddr_in remote_tcp;
-	struct sockaddr_in remote_udp;
+	struct sockaddr_storage remote_tcp;
+	struct sockaddr_storage remote_udp;
 	uint8_t rxbuf[BUFSIZE], txbuf[BUFSIZE];
 	uint32_t rxcount, msgsize, drainleft, txcount, txsize;
 	int sessionId;
-	uint64_t key;
+	uint8_t key[KEY_LENGTH];
 	char *username;
 	bool_t bUDP, authenticated, deaf, mute, self_deaf, self_mute, recording, bOpus;
 	char *os, *release, *os_version;
@@ -109,7 +109,7 @@ typedef struct {
 void Client_init();
 int Client_getfds(struct pollfd *pollfds);
 void Client_janitor();
-int Client_add(int fd, struct sockaddr_in *remote);
+int Client_add(int fd, struct sockaddr_storage *remote);
 int Client_read_fd(int fd);
 int Client_write_fd(int fd);
 int Client_send_message(client_t *client, message_t *msg);
@@ -119,7 +119,7 @@ int Client_count(void);
 void Client_close(client_t *client);
 client_t *Client_iterate(client_t **client);
 int Client_send_message_except(client_t *client, message_t *msg);
-int Client_read_udp(void);
+int Client_read_udp(int udpsock);
 void Client_disconnect_all();
 int Client_voiceMsg(client_t *client, uint8_t *data, int len);
 void recheckCodecVersions(client_t *connectingClient);
