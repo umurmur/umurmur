@@ -46,7 +46,7 @@ AC_PROG_CC
 
 # Checks dependencies.
 AC_CHECK_HEADERS([google/protobuf-c/protobuf-c.h], [], [AC_MSG_ERROR([could not find google/protobuf-c/protobuf-c.h])])
-AC_CHECK_LIB([protobuf-c], [protobuf_c_data_buffer_init], [], [AC_MSG_ERROR([could not find protobuf-c library])])
+AC_CHECK_LIB([protobuf-c], [protobuf_c_message_init], [], [AC_MSG_ERROR([could not find protobuf-c library])])
 AC_CHECK_HEADERS([libconfig.h], [], [AC_MSG_ERROR([could not find libconfig.h])])
 AC_CHECK_LIB([config], [config_init], [], [AC_MSG_ERROR([could not find libconfig])])
 case $host_os in
@@ -108,7 +108,7 @@ AC_TYPE_UINT64_T
 AC_TYPE_UINT8_T
 
 # Checks for library functions.
-AC_CHECK_FUNCS([ftruncate gettimeofday inet_ntoa memchr memmove memset socket strdup strerror strrchr uname poll], [], [AC_MSG_ERROR([missing a required func])])
+AC_CHECK_FUNCS([ftruncate gettimeofday inet_ntoa memchr memmove memset socket strdup strrchr uname poll], [], [AC_MSG_ERROR([missing a required func])])
 
 AC_CONFIG_FILES([Makefile src/Makefile])
 AC_OUTPUT
