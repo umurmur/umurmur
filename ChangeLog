@@ -1,3 +1,8 @@
+0.2.15:
+IPv6 dual-stack support (fmorgner).
+CMake build system added alongside Autotools (fmorgner).
+Update to use Protobuf-C 1.0.0.
+
 0.2.14:
 Add 'silent' option to channel configuration.
 Add 'position' option to channel configuration.

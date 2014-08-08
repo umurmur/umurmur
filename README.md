@@ -11,14 +11,19 @@ Instructions for building from source
 1. Requirements
 	* [OpenSSL](http://www.openssl.org/) or [PolarSSL](http://polarssl.org/) library. For PolarSSL version 1.0.0 and above is required.
 	* [libconfig](http://www.hyperrealm.com/libconfig/)
-	* [libprotoc-c](http://code.google.com/p/protobuf-c/) version 0.14 or 0.15 (use --disable-protoc option in its ./configure to build only the library). If you for some reason have to run an earlier version you need to recompile the protocol file `Mumble.proto` using the protobuf compiler for the corresponding version.
-  * [CMake](http://cmake.org)
+	* [libprotoc-c](http://code.google.com/p/protobuf-c/) version 1.0.0 (use --disable-protoc option in its ./configure to build only the library). If you for some reason have to run an earlier version you need to recompile the protocol file `Mumble.proto` using the protobuf compiler for the corresponding version.
+  * [CMake](http://cmake.org) (optional)
 
-2. Build
+2. Build - CMake
 	* Create a build folder and cd into it
 	* `cmake ../` to use default settings (polarssl, no test-cert and /dev/urandom as source for randomness).
 	* `make`
 
+2. Build - Autotools
+	* Run `./autogen.sh`
+	* Run `./configure` for default settings
+	* `make`
+   
 3. Install
 	* `make install`
 	* Edit the umurmur.conf found in the 'etc' folder in the prefix (eg. /usr/local) you installed to.
