@@ -30,7 +30,7 @@
 
 # Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.63])
-AC_INIT([umurmur], [0.2.14], [http://code.google.com/p/umurmur/issues/entry], [umurmur], [http://code.google.com/p/umurmur])
+AC_INIT([umurmur], [0.2.15], [http://code.google.com/p/umurmur/issues/entry], [umurmur], [http://code.google.com/p/umurmur])
 AC_CONFIG_SRCDIR([src/client.h])
 AC_CONFIG_HEADERS([src/config.h])
 AM_INIT_AUTOMAKE
