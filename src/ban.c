@@ -8,7 +8,7 @@
    are met:
 
    - Redistributions of source code must retain the above copyright notice,
-     this list of conditions and the following disclaimer.
+	 this list of conditions and the following disclaimer.
    - Redistributions in binary form must reproduce the above copyright notice,
      this list of conditions and the following disclaimer in the documentation
      and/or other materials provided with the distribution.
@@ -27,10 +27,11 @@
    LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+   */
 
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
 #include "log.h"
 #include "list.h"
 #include "ban.h"
@@ -69,19 +70,14 @@ void Ban_UserBan(client_t *client, char *reason)
 	ban_t *ban;
 	char hexhash[41];
 
-	ban = malloc(sizeof(ban_t));
+	ban = calloc(1, sizeof(ban_t));
 	if (ban == NULL)
 		Log_fatal("Out of memory");
-	memset(ban, 0, sizeof(ban_t));
 
 	memcpy(ban->hash, client->hash, 20);
-	if (client->remote_tcp.ss_family == AF_INET) {
-		memcpy(&ban->address, &(((struct sockaddr_in*)&client->remote_tcp)->sin_addr), sizeof(in_addr_t));
-		ban->mask = sizeof(in_addr_t);
-	} else {
-		memcpy(&ban->address, &(((struct sockaddr_in6*)&client->remote_tcp)->sin6_addr), 4 * sizeof(in_addr_t));
-		ban->mask = 4 * sizeof(in_addr_t);
-	}
+
+	ban->address = client->remote_tcp;
+	ban->mask = (ban->address.ss_family == AF_INET) ? 32 : 128;
 	ban->reason = strdup(reason);
 	ban->name = strdup(client->username);
 	ban->time = time(NULL);
@@ -104,7 +100,6 @@ void Ban_pruneBanned()
 {
 	struct dlist *itr;
 	ban_t *ban;
-	char hexhash[41];
 	uint64_t bantime_long;
 
 	list_iterate(itr, &banlist) {
@@ -113,7 +108,7 @@ void Ban_pruneBanned()
 #ifdef DEBUG
 		SSLi_hash2hex(ban->hash, hexhash);
 		Log_debug("BL: User %s Reason: '%s' Hash: %s IP: %s Time left: %d",
-			ban->name, ban->reason, hexhash, inet_ntoa(*((struct in_addr *)&ban->address)),
+			ban->name, ban->reason, hexhash, Util_addressToString(&ban->address)),
 			bantime_long / 1000000LL - Timer_elapsed(&ban->startTime) / 1000000LL);
 #endif
 		/* Duration of 0 = forever */
@@ -147,19 +142,15 @@ bool_t Ban_isBannedAddr(struct sockaddr_storage *address)
 {
 	struct dlist *itr;
 	ban_t *ban;
-	in_addr_t tempaddr1, tempaddr2;
+	char* addressString = Util_addressToString(address);
 
 	list_iterate(itr, &banlist) {
 		ban = list_get_entry(itr, ban_t, node);
 
-		if(ban->mask == sizeof(in_addr_t)) {
-			if(memcmp(ban->address, &((struct sockaddr_in *)address)->sin_addr, ban->mask) == 0)
-				return true;
+		if( strncmp(Util_addressToString(&ban->address), addressString, ban->mask) == 0) {
+			return true;
 		}
-		else {
-			if(memcmp(ban->address, &((struct sockaddr_in6 *)address)->sin6_addr, ban->mask) == 0)
-				return true;
-		}
+
 	}
 	return false;
 }
@@ -186,12 +177,17 @@ message_t *Ban_getBanList(void)
 		gmtime_r(&ban->time, &timespec);
 		strftime(timestr, 32, "%Y-%m-%dT%H:%M:%S", &timespec);
 		SSLi_hash2hex(ban->hash, hexhash);
-		/* ipv4 representation as ipv6 address. */
 		memset(address, 0, 16);
-		memcpy(&address[12], &ban->address, 4);
-		memset(&address[10], 0xff, 2); /* IPv4 */
-		Msg_banList_addEntry(msg, i++, address, ban->mask, ban->name,
-			hexhash, ban->reason, timestr, ban->duration);
+
+		if(ban->address.ss_family == AF_INET) {
+			memcpy(&address[12], &((struct sockaddr_in *)&ban->address)->sin_addr, 4);
+			memset(&address[10], 0xff, 2);
+			Msg_banList_addEntry(msg, i++, address, ban->mask + 96, ban->name, hexhash, ban->reason, timestr, ban->duration);
+		} else {
+			memcpy(&address, &((struct sockaddr_in6 *)&ban->address)->sin6_addr, 16);
+			Msg_banList_addEntry(msg, i++, address, ban->mask, ban->name, hexhash, ban->reason, timestr, ban->duration);
+		}
+
 	}
 	return msg;
 }
@@ -218,15 +214,26 @@ void Ban_putBanList(message_t *msg, int n_bans)
 	char *hexhash, *name, *reason, *start;
 	uint32_t duration, mask;
 	uint8_t *address;
+	char mappedBytes[12] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff};
 
 	for (i = 0; i < n_bans; i++) {
 		Msg_banList_getEntry(msg, i, &address, &mask, &name, &hexhash, &reason, &start, &duration);
 		ban = malloc(sizeof(ban_t));
 		if (ban == NULL)
 			Log_fatal("Out of memory");
-		memset(ban, 0, sizeof(ban_t));
 		SSLi_hex2hash(hexhash, ban->hash);
-		memcpy(&ban->address, &address[12], 4);
+
+		if(memcmp(address, mappedBytes, 12) == 0) {
+			memcpy(&((struct sockaddr_in *)&ban->address)->sin_addr, &address[12], 4);
+			ban->address.ss_family = AF_INET;
+			if (mask > 32) {
+				mask = 32;
+			}
+		} else {
+			memcpy(&((struct sockaddr_in6 *)&ban->address)->sin6_addr, address, 16);
+			ban->address.ss_family = AF_INET6;
+		}
+
 		ban->mask = mask;
 		ban->reason = strdup(reason);
 		ban->name = strdup(name);
@@ -259,8 +266,8 @@ static void Ban_saveBanFile(void)
 	list_iterate(itr, &banlist) {
 		ban = list_get_entry(itr, ban_t, node);
 		SSLi_hash2hex(ban->hash, hexhash);
-		fprintf(file, "%s,%s,%d,%ld,%d,%s,%s\n", hexhash, inet_ntoa(*((struct in_addr *)&ban->address)),
-			ban->mask, (long int)ban->time, ban->duration, ban->name, ban->reason);
+
+		fprintf(file, "%s,%s,%d,%ld,%d,%s,%s\n", hexhash, Util_addressToString(&ban->address),ban->mask, (long int)ban->time, ban->duration, ban->name, ban->reason);
 	}
 	fclose(file);
 	banlist_changed = false;
@@ -269,7 +276,6 @@ static void Ban_saveBanFile(void)
 
 static void Ban_readBanFile(void)
 {
-	struct dlist *itr;
 	ban_t *ban;
 	char line[1024], *hexhash, *address, *name, *reason;
 	uint32_t mask, duration;
@@ -309,7 +315,15 @@ static void Ban_readBanFile(void)
 			Log_fatal("Out of memory");
 		memset(ban, 0, sizeof(ban_t));
 		SSLi_hex2hash(hexhash, ban->hash);
-		inet_aton(address, (struct in_addr *)&ban->address);
+		if (inet_pton(AF_INET, address, &ban->address) == 0) {
+			if (inet_pton(AF_INET6, address, &ban->address) == 0) {
+				Log_warn("Address \"%s\" is illegal!", address);
+			} else {
+				ban->address.ss_family = AF_INET6;
+			}
+		} else {
+			ban->address.ss_family = AF_INET;
+		}
 		ban->name = strdup(name);
 		ban->reason = strdup(reason);
 		if (ban->name == NULL || ban->reason == NULL)
