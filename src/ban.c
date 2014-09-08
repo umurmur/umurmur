@@ -155,7 +155,7 @@ bool_t Ban_isBannedAddr(struct sockaddr_storage *address)
 	list_iterate(itr, &banlist) {
 		ban = list_get_entry(itr, ban_t, node);
 
-		if(address->ss_len == ban->address.ss_family) {
+		if(address->ss_family == ban->address.ss_family) {
 			if (ban->address.ss_family == AF_INET) {
 				memcpy(banAddressBytes, &((struct sockaddr_in *)&ban->address)->sin_addr, 4);
 			} else {
