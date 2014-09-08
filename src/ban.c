@@ -142,16 +142,43 @@ bool_t Ban_isBannedAddr(struct sockaddr_storage *address)
 {
 	struct dlist *itr;
 	ban_t *ban;
-	char* addressString = Util_addressToString(address);
+	uint64_t clientAddressBytes[2] = {0};
+	uint64_t banAddressBytes[2] = {0};
+	uint64_t banMaskBits[2] = {UINT64_MAX};
+
+	if (address->ss_family == AF_INET) {
+		memcpy(clientAddressBytes, &((struct sockaddr_in *)address)->sin_addr, 4);
+	} else {
+		memcpy(clientAddressBytes, &((struct sockaddr_in6 *)address)->sin6_addr, 16);
+	}
 
 	list_iterate(itr, &banlist) {
 		ban = list_get_entry(itr, ban_t, node);
 
-		if( strncmp(Util_addressToString(&ban->address), addressString, ban->mask) == 0) {
-			return true;
+		if(address->ss_len == ban->address.ss_family) {
+			if (ban->address.ss_family == AF_INET) {
+				memcpy(banAddressBytes, &((struct sockaddr_in *)&ban->address)->sin_addr, 4);
+			} else {
+				memcpy(banAddressBytes, &((struct sockaddr_in6 *)&ban->address)->sin6_addr, 16);
+			}
+
+			banMaskBits[0] <<= (ban->mask >= 64) ? 0 : 64 - ban->mask;
+			banMaskBits[1] <<= (ban->mask > 64) ? 128 - ban->mask : 64;
+
+			clientAddressBytes[0] &= banMaskBits[0];
+			clientAddressBytes[1] &= banMaskBits[1];
+
+			banAddressBytes[0] &= banMaskBits[0];
+			banAddressBytes[1] &= banMaskBits[1];
+
+			if (memcmp(clientAddressBytes, banAddressBytes, 16) == 0) {
+				return true;
+			}
+
 		}
 
 	}
+
 	return false;
 }
 
