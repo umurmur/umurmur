@@ -44,7 +44,6 @@ typedef struct {
 	char *name;
 	time_t time;
 	uint32_t duration;
-	etimer_t startTime;
 	struct dlist node;
 } ban_t;
 

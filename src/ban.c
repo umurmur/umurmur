@@ -82,7 +82,6 @@ void Ban_UserBan(client_t *client, char *reason)
 	ban->name = strdup(client->username);
 	ban->time = time(NULL);
 	ban->duration = ban_duration;
-	Timer_init(&ban->startTime);
 	list_add_tail(&ban->node, &banlist);
 	bancount++;
 	banlist_changed = true;
@@ -100,19 +99,17 @@ void Ban_pruneBanned()
 {
 	struct dlist *itr;
 	ban_t *ban;
-	uint64_t bantime_long;
 
 	list_iterate(itr, &banlist) {
 		ban = list_get_entry(itr, ban_t, node);
-		bantime_long = ban->duration * 1000000LL;
 #ifdef DEBUG
 		SSLi_hash2hex(ban->hash, hexhash);
 		Log_debug("BL: User %s Reason: '%s' Hash: %s IP: %s Time left: %d",
 			ban->name, ban->reason, hexhash, Util_addressToString(&ban->address)),
-			bantime_long / 1000000LL - Timer_elapsed(&ban->startTime) / 1000000LL);
+			ban->time + ban->duration - time(NULL));
 #endif
 		/* Duration of 0 = forever */
-		if (ban->duration != 0 && Timer_isElapsed(&ban->startTime, bantime_long)) {
+		if (ban->duration != 0 && ban->time + ban->duration - time(NULL) <= 0) {
 			free(ban->name);
 			free(ban->reason);
 			list_del(&ban->node);
@@ -142,41 +139,35 @@ bool_t Ban_isBannedAddr(struct sockaddr_storage *address)
 {
 	struct dlist *itr;
 	ban_t *ban;
-	uint64_t clientAddressBytes[2] = {0};
-	uint64_t banAddressBytes[2] = {0};
-	uint64_t banMaskBits[2] = {UINT64_MAX};
-
-	if (address->ss_family == AF_INET) {
-		memcpy(clientAddressBytes, &((struct sockaddr_in *)address)->sin_addr, 4);
-	} else {
-		memcpy(clientAddressBytes, &((struct sockaddr_in6 *)address)->sin6_addr, 16);
-	}
 
 	list_iterate(itr, &banlist) {
 		ban = list_get_entry(itr, ban_t, node);
-
-		if(address->ss_family == ban->address.ss_family) {
-			if (ban->address.ss_family == AF_INET) {
-				memcpy(banAddressBytes, &((struct sockaddr_in *)&ban->address)->sin_addr, 4);
+		if (ban->address.ss_family == address->ss_family) {
+			if (address->ss_family == AF_INET) {
+				uint32_t a1, a2, mask = 2 ^ ban->mask;
+				a1 = (uint32_t)((struct sockaddr_in *)&ban->address)->sin_addr.s_addr & mask;
+				a2 = (uint32_t)((struct sockaddr_in *)address)->sin_addr.s_addr & mask;
+				if (a1 == a2)
+					return true;
 			} else {
-				memcpy(banAddressBytes, &((struct sockaddr_in6 *)&ban->address)->sin6_addr, 16);
+				uint64_t mask[2];
+				uint64_t *a1 = (uint64_t *) &((struct sockaddr_in6 *)&ban->address)->sin6_addr.s6_addr;
+				uint64_t *a2 = (uint64_t *) &((struct sockaddr_in6 *)address)->sin6_addr.s6_addr;
+
+				if (ban->mask == 128)
+					mask[0] = mask[1] = 0xffffffffffffffffULL;
+				else if (ban->mask > 64) {
+					mask[0] = 0xffffffffffffffffULL;
+					mask[1] = SWAPPED(~((1ULL << (128 - ban->mask)) - 1));
+				} else {
+					mask[0] = SWAPPED(~((1ULL << (64 - ban->mask)) - 1));
+					mask[1] = 0ULL;
+				}
+				if ((a1[0] & mask[0]) == (a2[0] & mask[0]) &&
+				    (a1[1] & mask[1]) == (a2[1] & mask[1]))
+				    return true;
 			}
-
-			banMaskBits[0] <<= (ban->mask >= 64) ? 0 : 64 - ban->mask;
-			banMaskBits[1] <<= (ban->mask > 64) ? 128 - ban->mask : 64;
-
-			clientAddressBytes[0] &= banMaskBits[0];
-			clientAddressBytes[1] &= banMaskBits[1];
-
-			banAddressBytes[0] &= banMaskBits[0];
-			banAddressBytes[1] &= banMaskBits[1];
-
-			if (memcmp(clientAddressBytes, banAddressBytes, 16) == 0) {
-				return true;
-			}
-
 		}
-
 	}
 
 	return false;
@@ -202,7 +193,7 @@ message_t *Ban_getBanList(void)
 	list_iterate(itr, &banlist) {
 		ban = list_get_entry(itr, ban_t, node);
 		gmtime_r(&ban->time, &timespec);
-		strftime(timestr, 32, "%Y-%m-%dT%H:%M:%S", &timespec);
+		strftime(timestr, 32, "%Y-%m-%dT%H:%M:%SZ", &timespec);
 		SSLi_hash2hex(ban->hash, hexhash);
 		memset(address, 0, 16);
 
@@ -242,6 +233,7 @@ void Ban_putBanList(message_t *msg, int n_bans)
 	uint32_t duration, mask;
 	uint8_t *address;
 	char mappedBytes[12] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff};
+	char *tz;
 
 	for (i = 0; i < n_bans; i++) {
 		Msg_banList_getEntry(msg, i, &address, &mask, &name, &hexhash, &reason, &start, &duration);
@@ -264,9 +256,24 @@ void Ban_putBanList(message_t *msg, int n_bans)
 		ban->mask = mask;
 		ban->reason = strdup(reason);
 		ban->name = strdup(name);
+
+		/*
+		 * Parse the timestring. We need to set TZ to UTC so that mktime() knows that the info in
+		 * struct tm indeed is given in UTC. Otherwise it will use the current locale. There's
+		 * apparently no other way to do this...
+		 */
+		memset(&timespec, 0, sizeof(struct tm));
 		strptime(start, "%Y-%m-%dT%H:%M:%S", &timespec);
+		tz = getenv("TZ");
+		setenv("TZ", "UTC", 1);
+		tzset();
 		ban->time = mktime(&timespec);
-		ban->startTime = ban->time * 1000000LL;
+		if (tz)
+			setenv("TZ", tz, 1);
+		else
+			unsetenv("TZ");
+		tzset();
+
 		ban->duration = duration;
 		list_add_tail(&ban->node, &banlist);
 		bancount++;
@@ -358,7 +365,6 @@ static void Ban_readBanFile(void)
 		ban->time = time;
 		ban->duration = duration;
 		ban->mask = mask;
-		ban->startTime = ban->time * 1000000LL;
 		list_add_tail(&ban->node, &banlist);
 		bancount++;
 		Log_debug("Banfile: H = '%s' A = '%s' M = %d U = '%s' R = '%s'", hexhash, address, ban->mask, ban->name, ban->reason);
