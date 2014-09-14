@@ -194,6 +194,7 @@ void Server_runLoop(struct pollfd* pollfds)
 			if (pollfds[nofServerSocks + i].revents & POLLOUT)
 				Client_write_fd(pollfds[nofServerSocks + i].fd);
 		}
+    Sharedmemory_update();
 	}
 }
 
