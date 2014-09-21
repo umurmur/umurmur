@@ -125,7 +125,7 @@ static inline void SSLi_hash2hex(uint8_t *hash, char *out)
 }
 static inline void SSLi_hex2hash(char *in, uint8_t *hash)
 {
-	int i, offset = 0;
+	int i;
 	char byte[3];
 	int scanned;
 
