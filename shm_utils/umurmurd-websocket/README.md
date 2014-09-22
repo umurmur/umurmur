@@ -10,7 +10,7 @@ Instructions for building from source
 -------------------------------------
 1. Requirements
   * [OpenSSL](http://www.openssl.org/)
-	* [libwebsockets](http://libwebsockets.org) library. I used this [tarball]([http://git.libwebsockets.org/cgi-bin/cgit/libwebsockets/snapshot/libwebsockets-1.23-chrome32-firefox24.tar.gz) 
+  * [libwebsockets](http://libwebsockets.org) library. I used this [tarball]([http://git.libwebsockets.org/cgi-bin/cgit/libwebsockets/snapshot/libwebsockets-1.23-chrome32-firefox24.tar.gz) 
   * [Jansson](www.digip.org/jansson/) library.  I used this [tarball](http://www.digip.org/jansson/releases/jansson-2.6.tar.gz) Jansson is a C library for encoding, decoding and manipulating JSON data
   * [CMake](http://cmake.org) 
 
