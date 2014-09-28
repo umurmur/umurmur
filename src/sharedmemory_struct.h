@@ -5,7 +5,7 @@ typedef struct
   int tcp_port, udp_port;
   char channel[121];
   bool_t bUDP, authenticated, deaf, mute, self_deaf, self_mute, recording, bOpus;
-  etimer_t lastActivity, connectTime, idleTime;
+  uint32_t online_secs, idle_secs;
   float UDPPingAvg, UDPPingVar, TCPPingAvg, TCPPingVar;
   uint32_t UDPPackets, TCPPackets;
 
@@ -15,7 +15,7 @@ typedef struct
 {
 
   int clientcount, server_max_clients;
-  unsigned int umurmurd_pid; //Use this to make sure umurmurd is still running so I can allow more than one connection.
-  shmclient_t client[];    //MJP BUG: Use max usersetting from conf file
+  unsigned int umurmurd_pid; 
+  shmclient_t client[];    
   
 }shm_t;

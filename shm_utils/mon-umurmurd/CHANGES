@@ -1,0 +1,3 @@
+* code clean up and some comments added
+* 100% of the useful client data shown
+* outputs a more meaningful idle and online time, both are reported in secs

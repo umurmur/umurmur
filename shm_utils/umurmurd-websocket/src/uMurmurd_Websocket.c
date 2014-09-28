@@ -1,5 +1,5 @@
 /*
- * uMurmurd Websocket server - HTTP/JSON serverexample
+ * uMurmurd Websocket - HTTP/JSON server example
  *
  * Copyright (C) 2014 Michael P. Pounders <>
  *
@@ -23,44 +23,32 @@
 #endif
 
 #include <stdio.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <getopt.h>
 #include <string.h>
+#include <assert.h>
+#include <syslog.h>
+#include <signal.h>
 #include <sys/time.h>
 #include <sys/stat.h>
-#include <fcntl.h>
-#include <assert.h>
-
-#include <syslog.h>
-
-#include <signal.h>
 
 #include <jansson.h>
-
 #include <libwebsockets.h>
 #include "../../../src/sharedmemory.h"
 
-int max_poll_elements;
-
 struct pollfd *pollfds;
-int *fd_lookup;
-int count_pollfds;
-int force_exit = 0;
+char *resource_path = "../web";
+int max_poll_elements, *fd_lookup, count_pollfds, force_exit = 0, autoupdate = 0;
 
 enum demo_protocols {
 	/* always first */
 	PROTOCOL_HTTP = 0,
-
 	PROTOCOL_JSON_UMURMURD,
-
 	/* always last */
 	DEMO_PROTOCOL_COUNT
 };
-
-
-
-char *resource_path = "../web";
 
 /*
  * We take a strict whitelist approach to stop ../ attacks
@@ -323,7 +311,8 @@ json_t *root = NULL, *server = NULL, *client, *clients;
           if( !shmptr->client[cc].authenticated )
             continue;
                                                                                
-          client = json_pack( "{:s:s,s:s,s:i,s:s,s:I,s:I,s:I}", "username", 
+          client = json_pack( "{:s:s,s:s,s:i,s:s,s:i,s:i}", 
+                                            "username", 
                                             shmptr->client[cc].username, 
                                             "ipaddress", 
                                             shmptr->client[cc].ipaddress,
@@ -331,19 +320,19 @@ json_t *root = NULL, *server = NULL, *client, *clients;
                                             shmptr->client[cc].udp_port,
                                             "channel",
                                             shmptr->client[cc].channel,
-                                            "lastactivity",
-                                            shmptr->client[cc].lastActivity,
-                                            "connecttime",
-                                            shmptr->client[cc].connectTime,
-                                            "idleTime",
-                                            (long long unsigned int)shmptr->client[cc].lastActivity - shmptr->client[cc].idleTime                                            
+                                            "online_secs",
+                                            shmptr->client[cc].online_secs,
+                                            "idle_secs",
+                                            shmptr->client[cc].idle_secs                                                                                        
                                             );                                                                                                                                                   
-          json_array_append_new( jarr1, client );           
+          json_array_append_new( jarr1, client );
+                     
           } 
  json_object_set_new( clients, "clients", jarr1 );         
  json_object_update( root, clients );
+ 
 }
-  json_dump_file(root, "json.txt", JSON_PRESERVE_ORDER | JSON_INDENT(4) );        
+  //json_dump_file(root, "json.txt", JSON_PRESERVE_ORDER | JSON_INDENT(4) );        
   result = json_dumps(root, JSON_PRESERVE_ORDER | JSON_COMPACT );
 
   *n = sprintf( (char *)&buf[LWS_SEND_BUFFER_PRE_PADDING], "%s", result  );
@@ -351,17 +340,19 @@ json_t *root = NULL, *server = NULL, *client, *clients;
 
   if( result )
     free( result );
+    	
+  
 
   json_decref(root);
   return 0;         
 }
 
-struct per_session_data__umurmur_json {
+struct per_session_data__umurmurd_json {
 	int test;
 };
 
 static int
-callback_umurmur_json( struct libwebsocket_context *context,
+callback_umurmurd_json( struct libwebsocket_context *context,
 			                 struct libwebsocket *wsi,
 			                 enum libwebsocket_callback_reasons reason,
 					             void *user, void *in, size_t len)
@@ -371,12 +362,12 @@ callback_umurmur_json( struct libwebsocket_context *context,
 	unsigned char buf[LWS_SEND_BUFFER_PRE_PADDING + 4096 +
 						        LWS_SEND_BUFFER_POST_PADDING];
 	
-	//struct per_session_data__umurmur_json *pss = (struct per_session_data__umurmur_json *)user;
+	//struct per_session_data__umurmurd_json *pss = (struct per_session_data__umurmurd_json *)user;
 
 	switch (reason) {
 
 	case LWS_CALLBACK_ESTABLISHED:
-		lwsl_info("callback_umurmur_json: LWS_CALLBACK_ESTABLISHED\n");            
+		lwsl_info("callback_umurmurd_json: LWS_CALLBACK_ESTABLISHED\n");            
 		break;
 
 	case LWS_CALLBACK_SERVER_WRITEABLE:
@@ -389,12 +380,19 @@ callback_umurmur_json( struct libwebsocket_context *context,
 
 	case LWS_CALLBACK_RECEIVE:
   	//fprintf(stderr, "rx %d\n", (int)len);
-		if (len < 6)
-			break;
-		if (strcmp((const char *)in, "update\n") == 0)
+// 		if (len < 6)
+// 			break;
+		if( strcmp((const char *)in, "update\n") == 0 )
+    {
 			libwebsocket_callback_on_writable_all_protocol(libwebsockets_get_protocol( wsi ));
+      break;
+    }
+    else if( strcmp((const char *)in, "autoupdate\n") == 0 )
+    {
+      autoupdate = !autoupdate;  //toggle
+      break;
+    }
       
-		break;
 	/*
 	 * this just demonstrates how to use the protocol filter. If you won't
 	 * study and reject connections based on header content, you don't need
@@ -427,9 +425,9 @@ static struct libwebsocket_protocols protocols[] = {
 		0,			                                /* max frame size / rx buffer */
 	},
 	{
-		"umurmur-json-protocol",
-		callback_umurmur_json,
-		sizeof(struct per_session_data__umurmur_json),
+		"umurmurd-json-protocol",
+		callback_umurmurd_json,
+		sizeof(struct per_session_data__umurmurd_json),
 		128,
 	},
 	{ NULL, NULL, 0, 0 } /* terminator */
@@ -461,7 +459,7 @@ int main(int argc, char **argv)
 	int opts = 0;
 	char interface_name[128] = "";
 	const char *iface = NULL;
-//	unsigned int oldus = 0;
+	uint64_t oldus = 0;
 	struct lws_context_creation_info info;
 
   int syslog_options = LOG_PID | LOG_PERROR; 
@@ -600,12 +598,14 @@ key_t key = 0x53021d79;
 		 * live websocket connection using the DUMB_INCREMENT protocol,
 		 * as soon as it can take more packets (usually immediately)
 		 */
-
-// 		if (((unsigned int)tv.tv_usec - oldus) > 50000) {
-// 			libwebsocket_callback_on_writable_all_protocol(&protocols[PROTOCOL_JSON_UMURMURD]);
-//       oldus = tv.tv_usec;
-//		}
-
+    if( autoupdate )
+    {
+		  if(((unsigned int)tv.tv_sec - oldus) > 1 )
+      {
+			 libwebsocket_callback_on_writable_all_protocol(&protocols[PROTOCOL_JSON_UMURMURD]);
+        oldus = tv.tv_sec;
+		  }
+    }
 
 		/*
 		 * If libwebsockets sockets are all we care about,
@@ -623,7 +623,7 @@ key_t key = 0x53021d79;
 
 	libwebsocket_context_destroy(context);
 
-	lwsl_notice("umurmur_websocket server exited cleanly\n");
+	lwsl_notice("uMurmurd Websocket server exited cleanly\n");
 
   shmdt( shmptr );
 	closelog();

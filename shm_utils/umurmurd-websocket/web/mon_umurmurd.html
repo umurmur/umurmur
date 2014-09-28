@@ -12,6 +12,7 @@
 
 <div id="output"> </div>
 <input type=button id=offset value="Update" onclick="update();">
+<input type=button id=offset value="AutoUpdate" onclick="autoupdate();">
 <script src="/js/jquery.min.js"></script>
 <script src="/js/crel.js"></script>
 <script src="/js/json.human.js"></script>
@@ -66,10 +67,10 @@ function get_appropriate_ws_url()
 
 	if (typeof MozWebSocket != "undefined") {
 		socket_json = new MozWebSocket(get_appropriate_ws_url(),
-				   "umurmur-json-protocol");
+				   "umurmurd-json-protocol");
 	} else {
 		socket_json = new WebSocket(get_appropriate_ws_url(),
-				   "umurmur-json-protocol");
+				   "umurmurd-json-protocol");
 	}
 
   
@@ -88,6 +89,9 @@ function get_appropriate_ws_url()
 		}      
 function update() {
 	socket_json.send("update\n");
+}
+function autoupdate() {
+	socket_json.send("autoupdate\n");
 }
 </script>
 </body>
