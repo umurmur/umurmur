@@ -350,8 +350,11 @@ int main(int argc, char **argv)
 		Chan_init();
 		Client_init();
 		Ban_init();
-    Sharedmemory_init();
     
+#ifdef USE_SHAREDMEMORY_API    
+    Sharedmemory_init();
+#endif
+   
 #ifdef POSIX_PRIORITY_SCHEDULING
 		if (realtime)
 			setscheduler();
@@ -359,7 +362,10 @@ int main(int argc, char **argv)
 
 		Server_run();
 
+#ifdef USE_SHAREDMEMORY_API
     Sharedmemory_deinit();
+#endif
+
 		Ban_deinit();
 		SSLi_deinit();
 		Chan_free();

@@ -38,3 +38,7 @@ else
 umurmurd_SOURCES+=ssli_polarssl.c
 endif
 endif
+
+if USE_SHAREDMEMORY_API
+umurmurd_SOURCES+=sharedmemory.c
+endif
