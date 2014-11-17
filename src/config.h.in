@@ -1,9 +1,0 @@
-#ifndef CONFIG_H
-#define CONFIG_H
-
-#cmakedefine USE_POLARSSL
-#cmakedefine USE_POLARSSL_TESTCERT
-#cmakedefine USE_POLARSSL_HAVEGE
-#define DEFAULT_CONFIG "${CMAKE_INSTALL_PREFIX}/etc/umurmur.conf"
-
-#endif // CONFIG_H
