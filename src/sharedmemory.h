@@ -4,19 +4,19 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <sys/shm.h>
+#include <fcntl.h> /* For O_* constants */ 
+#include <unistd.h>
+#include <sys/mman.h>
 
 #include "util.h"
 #include "conf.h" 
 #include "client.h"
 #include "channel.h"
-#include "sharedmemory_struct.h"
-
-int shmid;
-shm_t *shmptr; 
+#include "sharedmemory_struct.h" 
 
 void Sharedmemory_init(void);
 void Sharedmemory_update(void);
+void Sharedmemory_alivetick(void);
 void Sharedmemory_deinit(void);
 
-#endif  // SHAREDMEMORY_H_777736932196
+#endif // SHAREDMEMORY_H_777736932196

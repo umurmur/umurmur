@@ -1,5 +1,6 @@
 typedef struct
 {
+
   char username[121];
   char ipaddress[46];
   int tcp_port, udp_port;
@@ -15,7 +16,8 @@ typedef struct
 {
 
   int clientcount, server_max_clients;
-  unsigned int umurmurd_pid; 
+  unsigned int umurmurd_pid;
+	uint8_t alive; 
   shmclient_t client[];    
   
 }shm_t;

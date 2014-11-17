@@ -4,8 +4,8 @@
 
 
 # The recommended compiler flags for the Raspberry Pi
-#CCFLAGS=-Wall -Ofast -mfpu=vfp -mfloat-abi=hard -march=armv6zk -mtune=arm1176jzf-s -g
-#CCFLAGS=
+#CCFLAGS=-Wall -Ofast -mfpu=vfp -mfloat-abi=hard -march=armv6zk -mtune=arm1176jzf-s -g -lrt
+CCFLAGS= -lrt
 
 # define all programs
 PROGRAMS = mon-umurmurd

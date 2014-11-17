@@ -59,7 +59,7 @@
 
 #define IS_AUTH(_a_) ((_a_)->authenticated)
 
-typedef struct {
+typedef struct {   /* You can add new lines to this struct, any reordering of some of the lines will break the sharedmemory API */
 	int tcpfd;
 	SSL_handle_t *ssl;
 	bool_t SSLready;

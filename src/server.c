@@ -141,6 +141,10 @@ void Server_runLoop(struct pollfd* pollfds)
 	while (!shutdown_server) {
 		struct sockaddr_storage remote;
 		int i;
+		
+#ifdef USE_SHAREDMEMORY_API
+    Sharedmemory_alivetick();
+#endif
 
 		for(i = 0; i < nofServerSocks; i++) {
 			pollfds[i].revents = 0;
