@@ -21,9 +21,9 @@ int main(int argc, char **argv)
 
 
     while ( (opt = getopt(argc, argv, "w")) != -1 ) 
-		{
+    {
         switch(opt) 
-				{
+        {
            case 'w':
               wait = 1;
               break;
@@ -84,8 +84,8 @@ int main(int argc, char **argv)
 uint8_t check_serverTick(void)
 {
   last = shmptr->alive;
-	sleep( 1 );  // Sleep for 1 sec
-	return(shmptr->alive - last); 
+  sleep( 1 );  // Sleep for 1 sec
+  return(shmptr->alive - last); 
 }
 
 void run_shm(void)
@@ -93,49 +93,61 @@ void run_shm(void)
 
 int cc;
 
-		printf( "\033[2J\033[H" ); //clear screen VT100
+    printf( "\033[2J\033[H" ); //clear screen VT100
           
           
-    		for( cc = 0 ; cc < shmptr->server_max_clients ; cc++ )
+        for( cc = 0 ; cc < shmptr->server_max_clients ; cc++ )
         {
           
           if( !shmptr->client[cc].authenticated )
             continue; 
             
-					printf( "%s@%s:%i in channel: %s\n\
-                		\tOnline(secs): %lu Idle(secs): %lu\n\
-                		\tusingUDP=%i\n\
-                		\tdeaf=%i, mute=%i\n\
-                		\tself_deaf=%i, self_mute=%i\n\
-                		\trecording=%i\n\
-                		\tbOpus=%i\n\
-                		\tUDP_Avg/Var: %3.2f/%3.2f \n\
-                		\tTCP_Avg/Var: %3.2f/%3.2f \n\
-                		\tUDP_C/TCP_C: %lu/%lu\n", 
-                                          		shmptr->client[cc].username,
-                                          		shmptr->client[cc].ipaddress,
-                                          		shmptr->client[cc].udp_port,
-                                          		shmptr->client[cc].channel,
-                                          		shmptr->client[cc].online_secs,
-                                          		shmptr->client[cc].idle_secs,
+          printf( "%s@%s:%i in channel: %s\n\
+                    \tclient_OS: %s %s\n\
+                    \tclient_info: %s\n\
+                    \tavailableBandwidth: %i\n\
+                    \tOnline(secs): %lu Idle(secs): %lu\n\
+                    \tusingUDP=%i\n\
+                    \tdeaf=%i, mute=%i\n\
+                    \tself_deaf=%i, self_mute=%i\n\
+                    \trecording=%i\n\
+                    \tbOpus=%i\n\
+                    \tisAdmin=%i\n\
+                    \tisSuppressed=%i\n\
+                    \tUDP_Avg/Var: %3.2f/%3.2f\n\
+                    \tTCP_Avg/Var: %3.2f/%3.2f\n\
+                    \tUDP_C/TCP_C: %lu/%lu\n", 
+                                              shmptr->client[cc].username,
+                                              shmptr->client[cc].ipaddress,
+                                              shmptr->client[cc].udp_port,
+                                              shmptr->client[cc].channel,
+                                              shmptr->client[cc].os,
+                                              shmptr->client[cc].os_version,
+                                              shmptr->client[cc].release,
+                                              shmptr->client[cc].availableBandwidth,
+                                              shmptr->client[cc].online_secs,
+                                              shmptr->client[cc].idle_secs,
                                                              
-                                          		shmptr->client[cc].bUDP,
-                                          		shmptr->client[cc].deaf,
-                                          		shmptr->client[cc].mute,
-                                          		shmptr->client[cc].self_deaf,
-                                          		shmptr->client[cc].self_mute,
-                                          		shmptr->client[cc].recording,
-                                          		shmptr->client[cc].bOpus,
+                                              shmptr->client[cc].bUDP,
+                                              shmptr->client[cc].deaf,
+                                              shmptr->client[cc].mute,
+                                              shmptr->client[cc].self_deaf,
+                                              shmptr->client[cc].self_mute,
+                                              shmptr->client[cc].recording,
+                                              shmptr->client[cc].bOpus,
+                                              
+                                              shmptr->client[cc].isAdmin,
+                                              shmptr->client[cc].isSuppressed,
                                                                               
-                                          		shmptr->client[cc].UDPPingAvg,
-                                          		shmptr->client[cc].UDPPingVar,
-                                          		shmptr->client[cc].TCPPingAvg,
-                                          		shmptr->client[cc].TCPPingVar,
-                                          		shmptr->client[cc].UDPPackets,
-                                          		shmptr->client[cc].TCPPackets ); fflush(stdout);  // fflush need because of sleep() call
+                                              shmptr->client[cc].UDPPingAvg,
+                                              shmptr->client[cc].UDPPingVar,
+                                              shmptr->client[cc].TCPPingAvg,
+                                              shmptr->client[cc].TCPPingVar,
+                                              shmptr->client[cc].UDPPackets,
+                                              shmptr->client[cc].TCPPackets ); fflush(stdout);  // fflush need because of sleep() call
         }
-				if( !check_serverTick() )          
+        if( !check_serverTick() )
         {
-						exit(EXIT_FAILURE); //You dont have to exit you could just report the fact that the data is not valid 
-				}
+            exit(EXIT_FAILURE); //You dont have to exit you could just report the fact that the data is not valid 
+        }
 }
