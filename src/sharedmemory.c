@@ -7,33 +7,29 @@ void Sharedmemory_init(void)
   int bindport = getIntConf(BINDPORT);                //MJP BUG commandline option for address and port dont work this way going to have 
   int server_max_clients = getIntConf(MAX_CLIENTS);   //to bring them across as prameters to Sharedmemory_init(void)
   int shmptr_size =  sizeof( shm_t  ) + (sizeof( shmclient_t ) * server_max_clients);
-  
-
 
   sprintf( shm_file_name, "umurmurd:%i", bindport );
+  Log_info("SHM_API: shm_fd=\"%s\"", shm_file_name  );
 
-  Log_info("SHM_FD: %s", shm_file_name  );
+		shm_fd = shm_open( shm_file_name, O_CREAT | O_RDWR, 0666 );
+				if(shm_fd == -1)
+				{
+    				Log_fatal( "SHM_API: Open failed:%s\n", strerror(errno));
+    				exit(1);
+				}  
 
-shm_fd = shm_open( shm_file_name, O_CREAT | O_RDWR, 0666 );
-if(shm_fd == -1)
-{
-    fprintf(stderr, "Open failed:%s\n", strerror(errno)); //MJP BUG make this Log_ calls once I get this working
-    exit(1);
-}  
+				if( ftruncate( shm_fd, shmptr_size ) == -1 )
+				{
+    				Log_fatal( "SHM_API: ftruncate : %s\n", strerror(errno));  
+    				exit(1);
+				}
 
-if( ftruncate( shm_fd, shmptr_size ) == -1 )
-{
-    fprintf(stderr, "ftruncate : %s\n", strerror(errno));  //MJP BUG make this Log_ calls once I get this working
-    exit(1);
-}
-
-  shmptr = mmap(0, shmptr_size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
-  if (shmptr == (void *) -1) 
-  {
-     fprintf(stderr, "mmap failed : %s\n", strerror(errno)); //MJP BUG make this Log_ calls once I get this working
-     exit(1);
-  } 
-
+  			shmptr = mmap(0, shmptr_size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
+  			if (shmptr == (void *) -1) 
+  			{
+     				Log_fatal( "SHM_API: mmap failed : %s\n", strerror(errno));
+     				exit(1);
+  			} 
 
   memset( shmptr, 0, shmptr_size );
                                        
