@@ -93,7 +93,7 @@ void run_shm(void)
 
 int cc;
 
-    printf( "\033[2J\033[H" ); //clear screen VT100
+    printf( "\033[2J\033[H" ); fflush(stdout); //clear screen VT100
           
           
         for( cc = 0 ; cc < shmptr->server_max_clients ; cc++ )

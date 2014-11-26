@@ -105,6 +105,6 @@ void Sharedmemory_alivetick(void)
 void Sharedmemory_deinit(void) 
 {
   close( shm_fd );
-  unlink( shm_file_name );
+  shm_unlink( shm_file_name );
   shmptr->umurmurd_pid = 0;
 }

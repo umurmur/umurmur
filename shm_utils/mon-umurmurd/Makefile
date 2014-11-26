@@ -20,6 +20,6 @@ clean:
 	rm -rf $(PROGRAMS)
 
 install: all
-
+	cp mon-umurmurd /usr/local/bin/
 
 .PHONY: install
