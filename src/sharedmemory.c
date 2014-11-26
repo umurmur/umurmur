@@ -11,7 +11,7 @@ void Sharedmemory_init(void)
   sprintf( shm_file_name, "umurmurd:%i", bindport );
   Log_info("SHM_API: shm_fd=\"%s\"", shm_file_name  );
 
-		shm_fd = shm_open( shm_file_name, O_CREAT | O_RDWR, 0666 );
+		shm_fd = shm_open( shm_file_name, O_CREAT | O_RDWR, 0660 );
 				if(shm_fd == -1)
 				{
     				Log_fatal( "SHM_API: Open failed:%s\n", strerror(errno));
