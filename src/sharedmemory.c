@@ -1,40 +1,47 @@
 #include "sharedmemory.h"
 #include "sharedmemory_global.h"
 
-void Sharedmemory_init(void) 
+void Sharedmemory_init( int bindport, int bindport6 ) 
 {
+                 
+  int server_max_clients = getIntConf(MAX_CLIENTS);  
+  int shmtotal_size =  sizeof( shm_t  ) + (sizeof( shmclient_t ) * server_max_clients);
 
-  int bindport = getIntConf(BINDPORT);                //MJP BUG commandline option for address and port dont work this way going to have 
-  int server_max_clients = getIntConf(MAX_CLIENTS);   //to bring them across as prameters to Sharedmemory_init(void)
-  int shmptr_size =  sizeof( shm_t  ) + (sizeof( shmclient_t ) * server_max_clients);
+  if( !bindport )
+  {
+    bindport = getIntConf(BINDPORT);  
+  }
 
-  sprintf( shm_file_name, "umurmurd:%i", bindport );
+  sprintf( shm_file_name, "/umurmurd:%i", bindport );
   Log_info("SHM_API: shm_fd=\"%s\"", shm_file_name  );
 
-		shm_fd = shm_open( shm_file_name, O_CREAT | O_RDWR, 0660 );
-				if(shm_fd == -1)
-				{
-    				Log_fatal( "SHM_API: Open failed:%s\n", strerror(errno));
-    				exit(1);
-				}  
+    shm_fd = shm_open( shm_file_name, O_CREAT | O_RDWR, 0660 );
+        if(shm_fd == -1)
+        {
+            Log_fatal( "SHM_API: Open failed:%s\n", strerror(errno));
+            exit(1);
+        }  
 
-				if( ftruncate( shm_fd, shmptr_size ) == -1 )
-				{
-    				Log_fatal( "SHM_API: ftruncate : %s\n", strerror(errno));  
-    				exit(1);
-				}
+        if( ftruncate( shm_fd, shmtotal_size ) == -1 )
+        {
+            Log_fatal( "SHM_API: ftruncate : %s\n", strerror(errno));  
+            exit(1);
+        }
 
-  			shmptr = mmap(0, shmptr_size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
-  			if (shmptr == (void *) -1) 
-  			{
-     				Log_fatal( "SHM_API: mmap failed : %s\n", strerror(errno));
-     				exit(1);
-  			} 
+        shmptr = mmap(0, shmtotal_size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
+        if (shmptr == (void *) -1) 
+        {
+            Log_fatal( "SHM_API: mmap failed : %s\n", strerror(errno));
+            exit(1);
+        } 
 
-  memset( shmptr, 0, shmptr_size );
-                                       
+  memset( shmptr, 0, shmtotal_size );
+
   shmptr->umurmurd_pid = getpid();
-  shmptr->server_max_clients = server_max_clients;  
+  shmptr->server_max_clients = server_max_clients;   
+  shmptr->shmtotal_size = shmtotal_size;
+  shmptr->shmclient_size = sizeof( shmclient_t ) * shmptr->server_max_clients;                           
+ 
 }
 
 void Sharedmemory_update(void) 
@@ -44,7 +51,7 @@ void Sharedmemory_update(void)
   unsigned int cc = 0;
   client_t *client_itr = NULL;
 
-    memset( &shmptr->client[0], 0, sizeof( shmclient_t ) * shmptr->server_max_clients );
+    memset( &shmptr->client[0], 0, shmptr->shmclient_size );
     shmptr->clientcount = Client_count();
     
       if( shmptr->clientcount )

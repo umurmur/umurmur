@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/stat.h>
 #include <sys/mman.h>
 #include <sys/types.h>
 #include "../../src/sharedmemory.h"
@@ -18,25 +19,35 @@ void run_shm(void);
 
 int main(int argc, char **argv) 
 {
-
-
-    while ( (opt = getopt(argc, argv, "w")) != -1 ) 
+  struct stat buf;
+  int bindport = 0;
+  
+    while ( (opt = getopt(argc, argv, "wb:")) != -1 ) 
     {
         switch(opt) 
         {
            case 'w':
               wait = 1;
               break;
-           default: 
-              fprintf(stderr, "Usage: %s [-w]\n", argv[0]);
+           case 'b':
+              bindport = atoi(optarg);
+              break;              
+           default:					 		 
+              fprintf(stderr, "Usage: %s [-w] [-b <port>]\n", argv[0]);
               fprintf(stderr, "\t-w         - Wait for umurmurd to create shm area. useful if you need to start from init.d script\n" );
+              fprintf(stderr, "\t-b <port>  - Change this to the port used when starting umurmurd. Defaults to \"/umurmurd:64738\" \n");
               exit(EXIT_FAILURE);
         }
     }
 
       shmptr = NULL;
       
-      sprintf( shm_file_name, "/umurmurd:%i", 64738 );
+      if( !bindport )
+      {
+        bindport = 64738;
+      }
+      
+      sprintf( shm_file_name, "/umurmurd:%i", bindport );
             
       if( wait )
           shm_statem = WAIT_ATTACH_SHM;
@@ -62,10 +73,10 @@ int main(int argc, char **argv)
                     }
                     shm_statem = MAT_SHM;
                     break;
-             case MAT_SHM:                                       
-                    if( ( shmptr = mmap(0, 1, PROT_READ, MAP_SHARED, shm_fd, 0) ) == (void *) (-1) )   //MJP BUG? 
+             case MAT_SHM:                  
+                    fstat( shm_fd, &buf);                                       
+                    if( ( shmptr = mmap(0, buf.st_size, PROT_READ, MAP_SHARED, shm_fd, 0) ) == (void *) (-1) )   //MJP BUG? 
                     {
-                        
                         exit(EXIT_FAILURE);
                     }                    
                     printf( "umumurd PID: %u\n\r", shmptr->umurmurd_pid );
@@ -94,7 +105,7 @@ void run_shm(void)
 int cc;
 
     printf( "\033[2J\033[H" ); fflush(stdout); //clear screen VT100
-          
+    printf( "%s  Clients(CONECTED/MAX)  %i/%i\n\n", shm_file_name, shmptr->clientcount, shmptr->server_max_clients );      
           
         for( cc = 0 ; cc < shmptr->server_max_clients ; cc++ )
         {

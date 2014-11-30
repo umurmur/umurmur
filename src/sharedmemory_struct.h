@@ -7,7 +7,7 @@ typedef struct
   char os[121], release[121], os_version[121];
   int tcp_port, udp_port;
   bool_t bUDP, authenticated, deaf, mute, self_deaf, self_mute, recording, bOpus;
-	int availableBandwidth;
+  int availableBandwidth;
   uint32_t online_secs, idle_secs;
   bool_t isAdmin;
   bool_t isSuppressed;
@@ -19,9 +19,10 @@ typedef struct
 typedef struct
 {
 
+  int shmtotal_size, shmclient_size;
   int clientcount, server_max_clients;
   unsigned int umurmurd_pid;
-	uint8_t alive; 
-  shmclient_t client[];    
-  
+  uint8_t alive;
+  shmclient_t client[];
+
 }shm_t;

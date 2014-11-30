@@ -352,7 +352,7 @@ int main(int argc, char **argv)
 		Ban_init();
     
 #ifdef USE_SHAREDMEMORY_API    
-    Sharedmemory_init();
+    Sharedmemory_init( bindport, bindport6 );
 #endif
    
 #ifdef POSIX_PRIORITY_SCHEDULING
