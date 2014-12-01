@@ -144,7 +144,8 @@ bool_t Ban_isBannedAddr(struct sockaddr_storage *address)
 		ban = list_get_entry(itr, ban_t, node);
 		if (ban->address.ss_family == address->ss_family) {
 			if (address->ss_family == AF_INET) {
-				uint32_t a1, a2, mask = 2 ^ ban->mask;
+				uint32_t a1, a2, mask;
+				mask = (ban->mask == 32) ? UINT32_MAX : (1u << ban->mask) - 1;
 				a1 = (uint32_t)((struct sockaddr_in *)&ban->address)->sin_addr.s_addr & mask;
 				a2 = (uint32_t)((struct sockaddr_in *)address)->sin_addr.s_addr & mask;
 				if (a1 == a2)
