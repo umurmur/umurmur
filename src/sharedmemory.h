@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <sys/mman.h>
 
+#include <netinet/in.h>
 #include "util.h"
 #include "conf.h" 
 #include "client.h"

@@ -2,7 +2,7 @@ typedef struct
 {
 
   char username[121];
-  char ipaddress[46];
+  char ipaddress[INET6_ADDRSTRLEN];
   char channel[121];
   char os[121], release[121], os_version[121];
   int tcp_port, udp_port;

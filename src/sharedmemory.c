@@ -19,20 +19,20 @@ void Sharedmemory_init( int bindport, int bindport6 )
         if(shm_fd == -1)
         {
             Log_fatal( "SHM_API: Open failed:%s\n", strerror(errno));
-            exit(1);
+            exit(EXIT_FAILURE);
         }  
 
         if( ftruncate( shm_fd, shmtotal_size ) == -1 )
         {
             Log_fatal( "SHM_API: ftruncate : %s\n", strerror(errno));  
-            exit(1);
+            exit(EXIT_FAILURE);
         }
 
-        shmptr = mmap(0, shmtotal_size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
-        if (shmptr == (void *) -1) 
+        shmptr = mmap( 0, shmtotal_size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0 );
+        if (shmptr == MAP_FAILED) 
         {
             Log_fatal( "SHM_API: mmap failed : %s\n", strerror(errno));
-            exit(1);
+            exit(EXIT_FAILURE);
         } 
 
   memset( shmptr, 0, shmtotal_size );
@@ -64,7 +64,7 @@ void Sharedmemory_update(void)
               channel_t *channel = client_itr->channel;
         
                 strncpy( shmptr->client[cc].username, client_itr->username, 120 );
-                strncpy( shmptr->client[cc].ipaddress, Util_clientAddressToString( client_itr ), 45 );
+                strncpy( shmptr->client[cc].ipaddress, Util_clientAddressToString( client_itr ), INET6_ADDRSTRLEN - 1 );
                 strncpy( shmptr->client[cc].channel, channel->name, 120 );
                 
                 strncpy( shmptr->client[cc].os, client_itr->os, 120 );

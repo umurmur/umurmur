@@ -75,7 +75,7 @@ int main(int argc, char **argv)
                     break;
              case MAT_SHM:                  
                     fstat( shm_fd, &buf);                                       
-                    if( ( shmptr = mmap(0, buf.st_size, PROT_READ, MAP_SHARED, shm_fd, 0) ) == (void *) (-1) )   //MJP BUG? 
+                    if( ( shmptr = mmap(0, buf.st_size, PROT_READ, MAP_SHARED, shm_fd, 0) ) == MAP_FAILED ) 
                     {
                         exit(EXIT_FAILURE);
                     }                    
