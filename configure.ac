@@ -38,8 +38,12 @@ AC_CANONICAL_HOST
 
 # Configure options.
 AC_ARG_WITH([ssl], [AC_HELP_STRING([--with-ssl=@<:@LIB@:>@], [SSL library (openssl|polarssl) @<:@default=polarssl@:>@])], [], [with_ssl=polarssl])
+AC_ARG_ENABLE([shmapi], [AC_HELP_STRING([--enable-shmapi], [compile with Sharedmemory API support @<:@default=no@:>@])],[],[enable_shmapi=no] )
 AC_ARG_ENABLE(polarssl-test-cert, [  --enable-polarssl-test-cert  Link to PolarSSL test certificate and key @<:@default=no@:>@], [enable_polarssl_test_cert=yes])
-AC_ARG_ENABLE(polarssl-havege, [  --enable-polarssl-havege  Link to PolarSSL HAVEGE random generator key @<:@default=no@:>@ Deafult: /dev/urandom], [enable_polarssl_havege=yes])
+AC_ARG_ENABLE(polarssl-havege, [  --enable-polarssl-havege  Link to PolarSSL HAVEGE random generator key @<:@default=no@:>@ Default: /dev/urandom], [enable_polarssl_havege=yes])
+
+
+
 
 # Checks for programs.
 AC_PROG_CC
@@ -88,6 +92,16 @@ AS_IF([test "x$with_ssl" = xopenssl], [
 
 AM_CONDITIONAL(USE_OPENSSL, test x$with_ssl = xopenssl)
 AM_CONDITIONAL(USE_GNUTLS, test x$with_ssl = xgnutls)
+
+AS_IF([test "x$enable_shmapi" != xno],
+	[
+	AM_CONDITIONAL(USE_SHAREDMEMORY_API, true)
+	AC_DEFINE([USE_SHAREDMEMORY_API],[],[Use sharedmemory API])
+	], [
+	AM_CONDITIONAL(USE_SHAREDMEMORY_API, false)
+])
+
+
 
 AC_DEFINE([DEFAULT_CONFIG], ["/etc/umurmur.conf"], [Default config])
 

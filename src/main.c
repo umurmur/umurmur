@@ -55,6 +55,7 @@
 #include "conf.h"
 #include "version.h"
 #include "config.h"
+#include "sharedmemory.h"
 
 char system_string[64], version_string[64];
 int bindport;
@@ -349,13 +350,21 @@ int main(int argc, char **argv)
 		Chan_init();
 		Client_init();
 		Ban_init();
-
+    
+#ifdef USE_SHAREDMEMORY_API    
+    Sharedmemory_init( bindport, bindport6 );
+#endif
+   
 #ifdef POSIX_PRIORITY_SCHEDULING
 		if (realtime)
 			setscheduler();
 #endif
 
 		Server_run();
+
+#ifdef USE_SHAREDMEMORY_API
+    Sharedmemory_deinit();
+#endif
 
 		Ban_deinit();
 		SSLi_deinit();

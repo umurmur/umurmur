@@ -8,6 +8,8 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH true)
 option(USE_POLARSSL_TESTCERT "Link to the PolarSSL test certificate and key." OFF)
 option(USE_POLARSSL_HAVEGE "Use the PolarSSL HAVEGE random generator key." OFF)
 
+option(USE_SHAREDMEMORY_API "Compile with Sharedmemory API support" OFF)
+
 if(USE_POLARSSL_TESTCERT OR USE_POLARSSL_HAVEGE)
   if(SSL MATCHES "openssl" OR SSL MATCHES "gnutls")
     message(FATAL_ERROR "Selecting USE_POLARSSL_TESTCERT or USE_POLARSSL_HAVEGE implies SSL=polarssl")
