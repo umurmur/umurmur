@@ -171,8 +171,8 @@ void Server_runLoop(struct pollfd* pollfds)
 		/* Check for new connection */
 		for (i = 0; i < nofServerSocks / 2; i++) {
 			if (pollfds[i].revents) {
-				static int tcpfd;
-				static uint32_t addrlen = sizeof(struct sockaddr_storage);
+				int tcpfd;
+				uint32_t addrlen = sizeof(struct sockaddr_storage);
 				tcpfd = accept(pollfds[i].fd, (struct sockaddr *)&remote, &addrlen);
 				fcntl(tcpfd, F_SETFL, O_NONBLOCK);
 				setsockopt(tcpfd, IPPROTO_TCP, TCP_NODELAY, (char *) &on, sizeof(int));

@@ -427,7 +427,8 @@ void Msg_banList_addEntry(message_t *msg, int index, uint8_t *address, uint32_t 
 		entry->duration = duration;
 		entry->has_duration = true;
 	}
-	Log_debug("Msg_banList_addEntry: %s %s %s %s %s", entry->name, entry->hash, entry->address.data, entry->reason, entry->start);
+	Log_debug("Msg_banList_addEntry: %s %s %s %s %s",
+		entry->name, entry->hash, entry->address.data, entry->reason, entry->start);
 }
 
 void Msg_banList_getEntry(message_t *msg, int index, uint8_t **address, uint32_t *mask,
