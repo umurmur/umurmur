@@ -1,3 +1,7 @@
+#include <arpa/inet.h>
+#include <stdint.h>
+#include "types.h"
+
 typedef struct
 {
 

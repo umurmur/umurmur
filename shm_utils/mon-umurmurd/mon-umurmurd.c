@@ -7,10 +7,13 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <sys/types.h>
-#include "../../src/sharedmemory.h"
-#include "../../src/sharedmemory_global.h"
+#include "../../src/sharedmemory_struct.h"
 
 enum{ NOP_SHM, WAIT_ATTACH_SHM, TRY_ATTACH_SHM, MAT_SHM, CLEAN_UP_SHM, RUN_SHM };
+
+int shm_fd;
+shm_t *shmptr = NULL;
+char shm_file_name[128];
 
 int wait = 0, opt;
 uint8_t last, shm_statem = TRY_ATTACH_SHM;
