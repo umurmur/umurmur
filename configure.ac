@@ -97,6 +97,7 @@ AS_IF([test "x$enable_shmapi" != xno],
 	[
 	AM_CONDITIONAL(USE_SHAREDMEMORY_API, true)
 	AC_DEFINE([USE_SHAREDMEMORY_API],[],[Use sharedmemory API])
+    AC_CHECK_FUNC([shm_open], [], [AC_CHECK_LIB([rt], [shm_open], [], [AC_MSG_ERROR([could not find shm_open() in librt])])])
 	], [
 	AM_CONDITIONAL(USE_SHAREDMEMORY_API, false)
 ])
