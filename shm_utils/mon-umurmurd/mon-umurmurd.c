@@ -7,7 +7,8 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <sys/types.h>
-#include "../../src/sharedmemory_struct.h"
+
+#include "sharedmemory_struct.h"
 
 enum{ NOP_SHM, WAIT_ATTACH_SHM, TRY_ATTACH_SHM, MAT_SHM, CLEAN_UP_SHM, RUN_SHM };
 
