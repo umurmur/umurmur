@@ -196,6 +196,7 @@ void Chan_init()
 	/* Channel links */
 	for (i = 0; ; i++) {
 		channel_t *ch_src, *ch_dst, *ch_itr = NULL;
+		channellist_t *chl;
 		if (Conf_getNextChannelLink(&chlink, i) < 0) {
 			if (i == 0)
 				Log_info("No channel links found in configuration file.");
@@ -220,8 +221,11 @@ void Chan_init()
 					  chlink.destination);
 		else
 			ch_dst = ch_itr;
-
-		list_add_tail(&ch_dst->link_node, &ch_src->channel_links);
+		
+		chl = malloc(sizeof(channellist_t));
+		chl->chan = ch_dst;
+		init_list_entry(&chl->node);
+		list_add_tail(&chl->node, &ch_src->channel_links);
 		ch_src->linkcount++;
 		Log_info("Adding channel link '%s' -> '%s'", ch_src->name, ch_dst->name);
 	}
@@ -230,6 +234,7 @@ void Chan_init()
 void Chan_free()
 {
 	struct dlist *itr, *save;
+	struct dlist *linkitr, *linksave;
 	channel_t *ch;
 
 	list_iterate_safe(itr, save, &channels) {
@@ -240,6 +245,11 @@ void Chan_free()
 			free(ch->desc);
 		if (ch->password)
 			free(ch->password);
+		list_iterate_safe(linkitr, linksave, &ch->channel_links) {
+			channellist_t *chl;
+			chl = list_get_entry(linkitr, channellist_t, node);
+			free(chl);
+		}
 		free(ch);
 	}
 }

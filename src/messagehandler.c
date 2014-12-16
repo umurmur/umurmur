@@ -286,8 +286,10 @@ void Mh_handle_message(client_t *client, message_t *msg)
 
 				links = (uint32_t *)malloc(ch_itr->linkcount * sizeof(uint32_t));
 				list_iterate(itr, &ch_itr->channel_links) { /* Iterate links */
+					channellist_t *chl;
 					channel_t *ch;
-					ch = list_get_entry(itr, channel_t, link_node);
+					chl = list_get_entry(itr, channellist_t, node);
+					ch = chl->chan;
 					links[i++] = ch->id;
 				}
 				sendmsg->payload.channelState->links = links;

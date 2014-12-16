@@ -958,8 +958,10 @@ int Client_voiceMsg(client_t *client, uint8_t *data, int len)
 			if (vt->channels[i].linked && !list_empty(&ch->channel_links)) {
 				struct dlist *ch_itr;
 				list_iterate(ch_itr, &ch->channel_links) {
+					channellist_t *chl;
 					channel_t *ch_link;
-					ch_link = list_get_entry(ch_itr, channel_t, link_node);
+					chl = list_get_entry(ch_itr, channellist_t, node);
+					ch_link = chl->chan;
 					list_iterate(itr, &ch_link->clients) {
 						client_t *c;
 						c = list_get_entry(itr, client_t, chan_node);

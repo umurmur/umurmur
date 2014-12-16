@@ -49,7 +49,6 @@ typedef struct channel {
 	struct dlist flatlist_node;
 	struct dlist channel_links;
 	int linkcount;
-	struct dlist link_node;
 } channel_t;
 
 typedef struct {
