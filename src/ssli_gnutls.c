@@ -82,3 +82,8 @@ SSL_handle_t * SSLi_newconnection( int * fileDescriptor, bool_t * isSSLReady )
   return session;
   }
 
+bool_t SSLi_getSHA1Hash(SSL_handle_t *ssl, uint8_t *hash)
+  {
+  *hash = 0;
+  return true;
+  }
