@@ -79,6 +79,8 @@ SSL_handle_t * SSLi_newconnection( int * fileDescriptor, bool_t * isSSLReady )
     Log_fatal("TLS handshake failed with error %i (%s).", error, gnutls_strerror(error));
   }
 
+  *isSSLReady = true;
+
   return session;
   }
 
