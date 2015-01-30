@@ -57,3 +57,28 @@ void SSLi_deinit()
   gnutls_priority_deinit(cipherCache);
   gnutls_global_deinit();
   }
+
+SSL_handle_t * SSLi_newconnection( int * fileDescriptor, bool_t * isSSLReady )
+  {
+  gnutls_session_t * session; // Maybe we need to calloc here
+
+  gnutls_init(session, GNUTLS_SERVER);
+  gnutls_priority_set(*session, cipherCache);
+  gnutls_credentials_set(*session, GNUTLS_CRD_CERTIFICATE, certificate);
+
+  gnutls_certificate_server_set_request(*session, GNUTLS_CERT_REQUIRE);
+
+  gnutls_transport_set_int(*session, *fileDescriptor);
+
+  int error;
+  do {
+  gnutls_handshake(*session);
+  } while(error < GNUTLS_E_SUCCESS && !gnutls_error_is_fatal(error));
+
+  if ( error < GNUTLS_E_SUCCESS ) {
+    Log_fatal("TLS handshake failed with error %i (%s).", error, gnutls_strerror(error));
+  }
+
+  return session;
+  }
+
