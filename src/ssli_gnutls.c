@@ -54,5 +54,6 @@ void SSLi_init()
 void SSLi_deinit()
   {
   gnutls_certificate_free_credentials(certificate);
+  gnutls_priority_deinit(cipherCache);
   gnutls_global_deinit();
   }
