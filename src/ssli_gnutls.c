@@ -85,7 +85,7 @@ int SSLi_nonblockaccept( SSL_handle_t *session, bool_t * isSSLReady )
   {
   int error;
   do {
-  gnutls_handshake(*session);
+    gnutls_handshake(*session);
   } while(error < GNUTLS_E_SUCCESS && !gnutls_error_is_fatal(error));
 
   if ( error < GNUTLS_E_SUCCESS ) {
@@ -96,3 +96,8 @@ int SSLi_nonblockaccept( SSL_handle_t *session, bool_t * isSSLReady )
   }
 
 
+void SSLi_shutdown(SSL_handle_t *ssl)
+  {
+  }
+
+void SSLi_free(SSL_handle_t *ssl) {}
