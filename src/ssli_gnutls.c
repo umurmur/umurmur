@@ -1,10 +1,14 @@
 #include "ssl.h"
 #include "conf.h"
+#include "log.h"
 
 static gnutls_dh_params_t dhParameters;
-static gnutls_certificate_credentials certificate;
+static gnutls_certificate_credentials_t certificate;
 
-void initiliazeCertificate()
+static const char * ciphers = "SECURE128:-VERS-DTLS-ALL:-VERS-SSL3.0:-VERS-TLS1.0:+COMP_ALL";
+static gnutls_priority_t cipherCache;
+
+void initializeCertificate()
   {
   char* certificatePath = (char*) getStrConf(CERTIFICATE);
 
@@ -38,6 +42,8 @@ void SSLi_init()
 #if GNUTLS_VERSION_NUMBER < 0x030300
   gnutls_global_init();
 #endif
+
+  gnutls_priority_init(&cipherCache, ciphers, NULL);
 
   initializeCertificate();
 
