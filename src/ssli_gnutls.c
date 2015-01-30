@@ -5,7 +5,7 @@
 static gnutls_dh_params_t dhParameters;
 static gnutls_certificate_credentials_t certificate;
 
-static const char * ciphers = "SECURE128:-VERS-DTLS-ALL:-VERS-SSL3.0:-VERS-TLS1.0:+COMP_ALL";
+static const char * ciphers = "NONE:+CTYPE-X.509:+DHE-RSA:+RSA:+AES-256-CBC:+AES-128-CBC:+SHA256:+SHA1:+VERS-TLS-ALL:+COMP-ALL:+SIGN-DSA-SHA256:+SIGN-DSA-SHA1";
 static gnutls_priority_t cipherCache;
 
 void initializeCertificate()
@@ -60,7 +60,7 @@ void SSLi_deinit()
 
 SSL_handle_t * SSLi_newconnection( int * fileDescriptor, bool_t * isSSLReady )
   {
-  gnutls_session_t * session; // Maybe we need to calloc here
+  gnutls_session_t * session = calloc(1, sizeof(gnutls_session_t));
 
   gnutls_init(session, GNUTLS_SERVER);
   gnutls_priority_set(*session, cipherCache);
@@ -70,7 +70,8 @@ SSL_handle_t * SSLi_newconnection( int * fileDescriptor, bool_t * isSSLReady )
 
   gnutls_transport_set_int(*session, *fileDescriptor);
 
-  *isSSLReady = true;
+  if(isSSLReady && SSLi_nonblockaccept(session, isSSLReady))
+    *isSSLReady = true;
 
   return session;
   }
@@ -85,12 +86,15 @@ int SSLi_nonblockaccept( SSL_handle_t *session, bool_t * isSSLReady )
   {
   int error;
   do {
-    gnutls_handshake(*session);
+    error = gnutls_handshake(*session);
   } while(error < GNUTLS_E_SUCCESS && !gnutls_error_is_fatal(error));
 
   if ( error < GNUTLS_E_SUCCESS ) {
     Log_fatal("TLS handshake failed with error %i (%s).", error, gnutls_strerror(error));
   }
+
+  if(isSSLReady)
+    *isSSLReady = true;
 
   return error;
   }
@@ -115,8 +119,12 @@ bool_t SSLi_data_pending(SSL_handle_t *session)
   return gnutls_record_check_pending(*session);
   }
 
-void SSLi_shutdown(SSL_handle_t *ssl)
+void SSLi_shutdown(SSL_handle_t *session)
   {
+  gnutls_bye(*session, GNUTLS_SHUT_WR);
   }
 
-void SSLi_free(SSL_handle_t *ssl) {}
+void SSLi_free(SSL_handle_t *session)
+  {
+  gnutls_deinit(*session);
+  }
