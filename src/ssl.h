@@ -43,7 +43,7 @@
 #include <polarssl/ssl.h>
 #include <polarssl/version.h>
 
-#ifdef POLARSSL_VERSION_MAJOR
+#if defined(POLARSSL_VERSION_MAJOR)
 #if (POLARSSL_VERSION_MAJOR < 1)
 #error PolarSSL version 1.0.0 or greater is required!
 #endif
@@ -51,7 +51,7 @@
 #error PolarSSL version 1.0.0 or greater is required!
 #endif
 
-#ifdef USE_POLARSSL_HAVEGE
+#if defined(USE_POLARSSL_HAVEGE)
 #include <polarssl/havege.h>
     #if (POLARSSL_VERSION_MINOR >= 1)
         #define HAVEGE_RAND (havege_random)
@@ -80,7 +80,7 @@ int urandom_bytes(void *ctx, unsigned char *dest, size_t len);
 #endif
 
 #define SSLI_ERROR_WANT_READ -0x0F300 /* PolarSSL v0.x.x uses -0x0f00 -> --0x0f90, v1.x.x uses -0x7080 -> -0x7e80 */
-#define SSLI_ERROk_WANT_WRITE -0x0F310
+#define SSLI_ERROR_WANT_WRITE -0x0F310
 
 #define SSLI_ERROR_ZERO_RETURN 0
 #define SSLI_ERROR_CONNRESET POLARSSL_ERR_NET_CONN_RESET
@@ -148,3 +148,4 @@ static inline void SSLi_hex2hash(char *in, uint8_t *hash)
 	}
 }
 #endif
+
