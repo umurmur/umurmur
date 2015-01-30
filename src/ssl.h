@@ -1,6 +1,6 @@
 /* Copyright (C) 2009-2014, Martin Johansson <martin@fatbob.nu>
-   Copyright (C) 2005-2014, Thorvald Natvig <thorvald@natvig.com>
 
+   Copyright (C) 2005-2014, Thorvald Natvig <thorvald@natvig.com>
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -33,8 +33,13 @@
 #define SSL_H_987698
 
 #include "config.h"
+#include "types.h"
 
-#ifdef USE_POLARSSL
+#include <inttypes.h>
+#include <stdio.h>
+#include <string.h>
+
+#if defined(USE_POLARSSL)
 #include <polarssl/ssl.h>
 #include <polarssl/version.h>
 
@@ -74,17 +79,8 @@ int urandom_bytes(void *ctx, unsigned char *dest, size_t len);
     #define POLARSSL_API_V1_3_ABOVE
 #endif
 
-#else /* OpenSSL */
-#include <openssl/x509v3.h>
-#include <openssl/ssl.h>
-#endif
-
-#include "types.h"
-#include <inttypes.h>
-
-#ifdef USE_POLARSSL
 #define SSLI_ERROR_WANT_READ -0x0F300 /* PolarSSL v0.x.x uses -0x0f00 -> --0x0f90, v1.x.x uses -0x7080 -> -0x7e80 */
-#define SSLI_ERROR_WANT_WRITE -0x0F310
+#define SSLI_ERROk_WANT_WRITE -0x0F310
 
 #define SSLI_ERROR_ZERO_RETURN 0
 #define SSLI_ERROR_CONNRESET POLARSSL_ERR_NET_CONN_RESET
@@ -92,7 +88,21 @@ int urandom_bytes(void *ctx, unsigned char *dest, size_t len);
 
 typedef	ssl_context SSL_handle_t;
 
-#else
+#elif defined(USE_GNUTLS)
+
+#include <gnutls/gnutls.h>
+
+#define SSLI_ERROR_WANT_READ GNUTLS_E_AGAIN
+#define SSLI_ERROR_WANT_WRITE GNUTLS_E_AGAIN
+#define SSLI_ERROR_ZERO_RETURN 6 // taken from the openssl compat. layer
+#define SSLI_ERROR_CONNRESET GNUTLS_E_PREMATURE_TERMINATION
+#define SSLI_ERROR_SYSCALL 5
+
+typedef gnutls_session_t SSL_handle_t;
+
+#else /* OpenSSL */
+#include <openssl/x509v3.h>
+#include <openssl/ssl.h>
 
 #define SSLI_ERROR_WANT_READ SSL_ERROR_WANT_READ
 #define SSLI_ERROR_WANT_WRITE SSL_ERROR_WANT_WRITE
@@ -123,6 +133,7 @@ static inline void SSLi_hash2hex(uint8_t *hash, char *out)
 	for (i = 0; i < 20; i++)
 		offset += sprintf(out + offset, "%02x", hash[i]);
 }
+
 static inline void SSLi_hex2hash(char *in, uint8_t *hash)
 {
 	int i;
