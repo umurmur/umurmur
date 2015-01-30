@@ -70,15 +70,6 @@ SSL_handle_t * SSLi_newconnection( int * fileDescriptor, bool_t * isSSLReady )
 
   gnutls_transport_set_int(*session, *fileDescriptor);
 
-  int error;
-  do {
-  gnutls_handshake(*session);
-  } while(error < GNUTLS_E_SUCCESS && !gnutls_error_is_fatal(error));
-
-  if ( error < GNUTLS_E_SUCCESS ) {
-    Log_fatal("TLS handshake failed with error %i (%s).", error, gnutls_strerror(error));
-  }
-
   *isSSLReady = true;
 
   return session;
@@ -89,3 +80,19 @@ bool_t SSLi_getSHA1Hash(SSL_handle_t *ssl, uint8_t *hash)
   *hash = 0;
   return true;
   }
+
+int SSLi_nonblockaccept( SSL_handle_t *session, bool_t * isSSLReady )
+  {
+  int error;
+  do {
+  gnutls_handshake(*session);
+  } while(error < GNUTLS_E_SUCCESS && !gnutls_error_is_fatal(error));
+
+  if ( error < GNUTLS_E_SUCCESS ) {
+    Log_fatal("TLS handshake failed with error %i (%s).", error, gnutls_strerror(error));
+  }
+
+  return error;
+  }
+
+
