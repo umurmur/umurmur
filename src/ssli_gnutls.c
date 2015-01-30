@@ -95,6 +95,10 @@ int SSLi_nonblockaccept( SSL_handle_t *session, bool_t * isSSLReady )
   return error;
   }
 
+int SSLi_read(SSL_handle_t *session, uint8_t *buffer, int length)
+  {
+  return gnutls_record_recv(*session, buffer, length);
+  }
 
 void SSLi_shutdown(SSL_handle_t *ssl)
   {
