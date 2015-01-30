@@ -105,6 +105,16 @@ int SSLi_write(SSL_handle_t *session, uint8_t *buffer, int length)
   return gnutls_record_send(*session, buffer, length);
   }
 
+int SSLi_get_error(SSL_handle_t *session, int code)
+  {
+  return code;
+  }
+
+bool_t SSLi_data_pending(SSL_handle_t *session)
+  {
+  return gnutls_record_check_pending(*session);
+  }
+
 void SSLi_shutdown(SSL_handle_t *ssl)
   {
   }
