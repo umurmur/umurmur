@@ -34,13 +34,48 @@
 #include "byteorder.h"
 #include "config.h"
 
-#ifdef USE_POLARSSL
+#if defined(USE_POLARSSL)
+
 #include <polarssl/havege.h>
 #include <polarssl/aes.h>
+
+#define CRYPT_AES_KEY aes_context
 #define AES_BLOCK_SIZE 16
+
+#define CRYPT_RANDOM_BYTES(dest, size) RAND_bytes((dest), (size))
+#define CRYPT_SET_ENC_KEY(dest, source, size) aes_setkey_enc((dest), (source), (size));
+#define CRYPT_SET_DEC_KEY(dest, source, size) aes_setkey_dec((dest), (source), (size));
+
+#define CRYPT_AES_ENCRYPT(src, dst, cryptstate) aes_crypt_ecb(&(cryptstate)->encrypt_key, AES_ENCRYPT, (unsigned char *)(src), (unsigned char *)(dst));
+#define CRYPT_AES_DECRYPT(src, dst, cryptstate) aes_crypt_ecb(&(cryptstate)->decrypt_key, AES_DECRYPT, (unsigned char *)(src), (unsigned char *)(dst));
+
+#elif defined(USE_GNUTLS)
+
+#include <nettle/aes.h>
+#include <gnutls/gnutls.h>
+#include <gnutls/crypto.h>
+
+#define CRYPT_AES_KEY struct aes_ctx
+#define CRYPT_RANDOM_BYTES(dest, size) gnutls_rnd(GNUTLS_RND_KEY, (dest), (size))
+#define CRYPT_SET_ENC_KEY(dest, source, size) aes_set_encrypt_key((dest), (size)/8, (source));
+#define CRYPT_SET_DEC_KEY(dest, source, size) aes_set_decrypt_key((dest), (size)/8, (source));
+
+#define CRYPT_AES_ENCRYPT(src, dest, ctx) aes_encrypt(&(ctx)->encrypt_key, AES_BLOCK_SIZE, (uint8_t *)(dest), (uint8_t *)(src))
+#define CRYPT_AES_DECRYPT(src, dest, ctx) aes_decrypt(&(ctx)->decrypt_key, AES_BLOCK_SIZE, (uint8_t *)(dest), (uint8_t *)(src))
+
 #else
+
 #include <openssl/rand.h>
 #include <openssl/aes.h>
+
+#define CRYPT_AES_KEY AES_KEY
+#define CRYPT_RANDOM_BYTES(dest, size) RAND_bytes((dest), (size))
+#define CRYPT_SET_ENC_KEY(dest, source, size) AES_set_encrypt_key((source), (size), (dest));
+#define CRYPT_SET_DEC_KEY(dest, source, size) AES_set_decrypt_key((source), (size), (dest));
+
+#define CRYPT_AES_ENCRYPT(src, dst, cryptstate) AES_encrypt((unsigned char *)(src), (unsigned char *)(dst), &(cryptstate)->encrypt_key);
+#define CRYPT_AES_DECRYPT(src, dst, cryptstate) AES_decrypt((unsigned char *)(src), (unsigned char *)(dst), &(cryptstate)->decrypt_key);
+
 #endif
 
 #include <stdint.h>
@@ -62,13 +97,10 @@ typedef struct CryptState {
 	unsigned int uiRemoteLate;
 	unsigned int uiRemoteLost;
 	unsigned int uiRemoteResync;
-#ifndef USE_POLARSSL
-	AES_KEY	encrypt_key;
-	AES_KEY decrypt_key;
-#else
-	aes_context aes_enc;
-	aes_context aes_dec;
-#endif
+
+	CRYPT_AES_KEY encrypt_key;
+	CRYPT_AES_KEY decrypt_key;
+
 	etimer_t tLastGood;
 	etimer_t tLastRequest;
 	bool_t bInit;
