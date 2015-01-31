@@ -78,10 +78,13 @@ SSL_handle_t * SSLi_newconnection( int * fileDescriptor, bool_t * isSSLReady )
   return session;
   }
 
-bool_t SSLi_getSHA1Hash(SSL_handle_t *ssl, uint8_t *hash)
+bool_t SSLi_getSHA1Hash(SSL_handle_t *session, uint8_t *hash)
   {
-  *hash = 0;
-  return true;
+	gnutls_datum_t const * certificateData = gnutls_certificate_get_peers(*session, NULL);
+
+	size_t resultSize = 0;
+	int error = gnutls_fingerprint( GNUTLS_DIG_SHA1, certificateData, hash, &resultSize);
+	return error == GNUTLS_E_SUCCESS && resultSize == 20;
   }
 
 int SSLi_nonblockaccept( SSL_handle_t *session, bool_t * isSSLReady )
