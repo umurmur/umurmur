@@ -90,7 +90,7 @@ int SSLi_nonblockaccept( SSL_handle_t *session, bool_t * isSSLReady )
   } while(error < GNUTLS_E_SUCCESS && !gnutls_error_is_fatal(error));
 
   if ( error < GNUTLS_E_SUCCESS ) {
-    Log_fatal("TLS handshake failed with error %i (%s).", error, gnutls_strerror(error));
+    Log_warn("TLS handshake failed with error %i (%s).", error, gnutls_strerror(error));
   }
 
   if(isSSLReady)
