@@ -2,10 +2,12 @@
 #include "conf.h"
 #include "log.h"
 
+#include <stdlib.h>
+
 static gnutls_dh_params_t dhParameters;
 static gnutls_certificate_credentials_t certificate;
 
-static const char * ciphers = "NONE:+CTYPE-X.509:+DHE-RSA:+RSA:+AES-256-CBC:+AES-128-CBC:+SHA256:+SHA1:+VERS-TLS-ALL:+COMP-ALL:+SIGN-DSA-SHA256:+SIGN-DSA-SHA1";
+static const char * ciphers = "NORMAL";
 static gnutls_priority_t cipherCache;
 
 void initializeCertificate()
