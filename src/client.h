@@ -127,5 +127,8 @@ void Client_codec_add(client_t *client, int codec);
 void Client_codec_free(client_t *client);
 codec_t *Client_codec_iterate(client_t *client, codec_t **codec_itr);
 void Client_textmessage(client_t *client, char *text);
+bool_t Client_token_match(client_t *client, char const *str);
+void Client_token_free(client_t *client);
+void Client_token_add(client_t *client, char *token_string);
 
 #endif
