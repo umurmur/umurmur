@@ -132,4 +132,5 @@ void SSLi_shutdown(SSL_handle_t *session)
 void SSLi_free(SSL_handle_t *session)
   {
   gnutls_deinit(*session);
+  free(session);
   }
