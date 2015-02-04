@@ -168,7 +168,7 @@ void Client_token_add(client_t *client, char *token_string)
 	client->tokencount++;
 }
 
-bool_t Client_token_match(client_t *client, char *str)
+bool_t Client_token_match(client_t *client, char const *str)
 {
 	token_t *token;
 	struct dlist *itr;

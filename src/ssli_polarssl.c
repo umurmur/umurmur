@@ -28,17 +28,12 @@
    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#include <string.h>
-#include <stdlib.h>
-#include <fcntl.h>
-
 #include "conf.h"
 #include "log.h"
 #include "ssl.h"
 
-/*
- * PolarSSL interface
- */
+#include <stdlib.h>
+#include <fcntl.h>
 
 #include <polarssl/config.h>
 #include <polarssl/havege.h>

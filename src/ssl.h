@@ -1,6 +1,6 @@
 /* Copyright (C) 2009-2014, Martin Johansson <martin@fatbob.nu>
-   Copyright (C) 2005-2014, Thorvald Natvig <thorvald@natvig.com>
 
+   Copyright (C) 2005-2014, Thorvald Natvig <thorvald@natvig.com>
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -33,12 +33,17 @@
 #define SSL_H_987698
 
 #include "config.h"
+#include "types.h"
 
-#ifdef USE_POLARSSL
+#include <inttypes.h>
+#include <stdio.h>
+#include <string.h>
+
+#if defined(USE_POLARSSL)
 #include <polarssl/ssl.h>
 #include <polarssl/version.h>
 
-#ifdef POLARSSL_VERSION_MAJOR
+#if defined(POLARSSL_VERSION_MAJOR)
 #if (POLARSSL_VERSION_MAJOR < 1)
 #error PolarSSL version 1.0.0 or greater is required!
 #endif
@@ -46,7 +51,7 @@
 #error PolarSSL version 1.0.0 or greater is required!
 #endif
 
-#ifdef USE_POLARSSL_HAVEGE
+#if defined(USE_POLARSSL_HAVEGE)
 #include <polarssl/havege.h>
     #if (POLARSSL_VERSION_MINOR >= 1)
         #define HAVEGE_RAND (havege_random)
@@ -74,15 +79,6 @@ int urandom_bytes(void *ctx, unsigned char *dest, size_t len);
     #define POLARSSL_API_V1_3_ABOVE
 #endif
 
-#else /* OpenSSL */
-#include <openssl/x509v3.h>
-#include <openssl/ssl.h>
-#endif
-
-#include "types.h"
-#include <inttypes.h>
-
-#ifdef USE_POLARSSL
 #define SSLI_ERROR_WANT_READ -0x0F300 /* PolarSSL v0.x.x uses -0x0f00 -> --0x0f90, v1.x.x uses -0x7080 -> -0x7e80 */
 #define SSLI_ERROR_WANT_WRITE -0x0F310
 
@@ -92,7 +88,21 @@ int urandom_bytes(void *ctx, unsigned char *dest, size_t len);
 
 typedef	ssl_context SSL_handle_t;
 
-#else
+#elif defined(USE_GNUTLS)
+
+#include <gnutls/gnutls.h>
+
+#define SSLI_ERROR_WANT_READ GNUTLS_E_AGAIN
+#define SSLI_ERROR_WANT_WRITE GNUTLS_E_AGAIN
+#define SSLI_ERROR_ZERO_RETURN GNUTLS_E_PREMATURE_TERMINATION
+#define SSLI_ERROR_CONNRESET GNUTLS_E_PREMATURE_TERMINATION
+#define SSLI_ERROR_SYSCALL GNUTLS_E_PREMATURE_TERMINATION
+
+typedef gnutls_session_t SSL_handle_t;
+
+#else /* OpenSSL */
+#include <openssl/x509v3.h>
+#include <openssl/ssl.h>
 
 #define SSLI_ERROR_WANT_READ SSL_ERROR_WANT_READ
 #define SSLI_ERROR_WANT_WRITE SSL_ERROR_WANT_WRITE
@@ -123,6 +133,7 @@ static inline void SSLi_hash2hex(uint8_t *hash, char *out)
 	for (i = 0; i < 20; i++)
 		offset += sprintf(out + offset, "%02x", hash[i]);
 }
+
 static inline void SSLi_hex2hash(char *in, uint8_t *hash)
 {
 	int i;
@@ -137,3 +148,4 @@ static inline void SSLi_hex2hash(char *in, uint8_t *hash)
 	}
 }
 #endif
+
