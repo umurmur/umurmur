@@ -4,15 +4,15 @@ int shm_fd;
 shm_t *shmptr = NULL;
 char shm_file_name[128];
 
-void Sharedmemory_init( int bindport, int bindport6 ) 
+void Sharedmemory_init( int bindport, int bindport6 )
 {
-                 
-  int server_max_clients = getIntConf(MAX_CLIENTS);  
+
+  int server_max_clients = getIntConf(MAX_CLIENTS);
   int shmtotal_size =  sizeof( shm_t  ) + (sizeof( shmclient_t ) * server_max_clients);
 
   if( !bindport )
   {
-    bindport = getIntConf(BINDPORT);  
+    bindport = getIntConf(BINDPORT);
   }
 
   sprintf( shm_file_name, "/umurmurd:%i", bindport );
@@ -23,31 +23,31 @@ void Sharedmemory_init( int bindport, int bindport6 )
         {
             Log_fatal( "SHM_API: Open failed:%s\n", strerror(errno));
             exit(EXIT_FAILURE);
-        }  
+        }
 
         if( ftruncate( shm_fd, shmtotal_size ) == -1 )
         {
-            Log_fatal( "SHM_API: ftruncate : %s\n", strerror(errno));  
+            Log_fatal( "SHM_API: ftruncate : %s\n", strerror(errno));
             exit(EXIT_FAILURE);
         }
 
         shmptr = mmap( 0, shmtotal_size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0 );
-        if (shmptr == MAP_FAILED) 
+        if (shmptr == MAP_FAILED)
         {
             Log_fatal( "SHM_API: mmap failed : %s\n", strerror(errno));
             exit(EXIT_FAILURE);
-        } 
+        }
 
   memset( shmptr, 0, shmtotal_size );
 
   shmptr->umurmurd_pid = getpid();
-  shmptr->server_max_clients = server_max_clients;   
+  shmptr->server_max_clients = server_max_clients;
   shmptr->shmtotal_size = shmtotal_size;
-  shmptr->shmclient_size = sizeof( shmclient_t ) * shmptr->server_max_clients;                           
- 
+  shmptr->shmclient_size = sizeof( shmclient_t ) * shmptr->server_max_clients;
+
 }
 
-void Sharedmemory_update(void) 
+void Sharedmemory_update(void)
 {
 
   uint64_t now;
@@ -56,30 +56,30 @@ void Sharedmemory_update(void)
 
     memset( &shmptr->client[0], 0, shmptr->shmclient_size );
     shmptr->clientcount = Client_count();
-    
+
       if( shmptr->clientcount )
       {
         Timer_init( &now );
           while( Client_iterate(&client_itr) != NULL )
-          {                                                                                   
+          {
             if( client_itr->authenticated )
-            {        
+            {
               channel_t *channel = client_itr->channel;
-        
+
                 strncpy( shmptr->client[cc].username, client_itr->username, 120 );
                 strncpy( shmptr->client[cc].ipaddress, Util_clientAddressToString( client_itr ), INET6_ADDRSTRLEN - 1 );
                 strncpy( shmptr->client[cc].channel, channel->name, 120 );
-                
+
                 strncpy( shmptr->client[cc].os, client_itr->os, 120 );
                 strncpy( shmptr->client[cc].release, client_itr->release, 120 );
                 strncpy( shmptr->client[cc].os_version, client_itr->os_version, 120 );
-                
+
                 shmptr->client[cc].tcp_port = Util_clientAddressToPortTCP( client_itr );
-                shmptr->client[cc].udp_port = Util_clientAddressToPortUDP( client_itr );                
-        
+                shmptr->client[cc].udp_port = Util_clientAddressToPortUDP( client_itr );
+
                 shmptr->client[cc].online_secs = ( now - client_itr->connectTime ) / 1000000LL;
                 shmptr->client[cc].idle_secs = ( now - client_itr->idleTime ) / 1000000LL;
-                        
+
                 shmptr->client[cc].bUDP  = client_itr->bUDP;
                 shmptr->client[cc].deaf  = client_itr->deaf;
                 shmptr->client[cc].mute  = client_itr->mute;
@@ -88,31 +88,31 @@ void Sharedmemory_update(void)
                 shmptr->client[cc].self_mute  = client_itr->self_mute;
                 shmptr->client[cc].recording  = client_itr->recording;
                 shmptr->client[cc].authenticated  = client_itr->authenticated;
-                
+
                 shmptr->client[cc].availableBandwidth  = client_itr->availableBandwidth;
-                
+
                 shmptr->client[cc].UDPPingAvg = client_itr->UDPPingAvg;
                 shmptr->client[cc].UDPPingVar = client_itr->UDPPingVar;
                 shmptr->client[cc].TCPPingAvg = client_itr->TCPPingAvg;
                 shmptr->client[cc].TCPPingVar = client_itr->TCPPingVar;
-                
+
                 shmptr->client[cc].isAdmin = client_itr->isAdmin;
                 shmptr->client[cc].isSuppressed = client_itr->isSuppressed;
-                
+
                 shmptr->client[cc].UDPPackets = client_itr->UDPPackets;
                 shmptr->client[cc].TCPPackets = client_itr->TCPPackets;
-                
-            }  
-          cc++;     
+
+            }
+          cc++;
         }
-      } 
+      }
 }
 void Sharedmemory_alivetick(void)
 {
  shmptr->alive++;
 }
 
-void Sharedmemory_deinit(void) 
+void Sharedmemory_deinit(void)
 {
   close( shm_fd );
   shm_unlink( shm_file_name );
