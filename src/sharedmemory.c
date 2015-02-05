@@ -67,8 +67,10 @@ void Sharedmemory_update(void)
             {
               channel_t *channel = client_itr->channel;
 
+				char* clientAddressString = Util_clientAddressToString( client_itr );
+
                 strncpy( shmptr->client[cc].username, client_itr->username, 120 );
-                strncpy( shmptr->client[cc].ipaddress, Util_clientAddressToString( client_itr ), INET6_ADDRSTRLEN - 1 );
+                strncpy( shmptr->client[cc].ipaddress, clientAddressString, INET6_ADDRSTRLEN - 1 );
                 strncpy( shmptr->client[cc].channel, channel->name, 120 );
 
                 strncpy( shmptr->client[cc].os, client_itr->os, 120 );
@@ -103,6 +105,7 @@ void Sharedmemory_update(void)
                 shmptr->client[cc].UDPPackets = client_itr->UDPPackets;
                 shmptr->client[cc].TCPPackets = client_itr->TCPPackets;
 
+				free(clientAddressString);
             }
           cc++;
         }
