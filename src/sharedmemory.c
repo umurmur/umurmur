@@ -27,6 +27,7 @@ void Sharedmemory_init( int bindport, int bindport6 )
 
         if( ftruncate( shm_fd, shmtotal_size ) == -1 )
         {
+			Sharedmemory_deinit();
             Log_fatal( "SHM_API: ftruncate : %s\n", strerror(errno));
             exit(EXIT_FAILURE);
         }
