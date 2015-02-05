@@ -2,8 +2,6 @@ uMurmur - minimalistic Mumble server
 ====================================
 Project page on [GoogleCode](http://code.google.com/p/umurmur/)
 
-Source hosted on [GitHub](https://github.com/fatbob313/umurmur)
-
 uMurmur is a minimalistic Mumble server primarily targeted to run on embedded computers, like routers, with an open OS like e.g. OpenWRT. The server part of Mumble is called Murmur, hence the name uMurmur. It is available as a precompiled package for quite a lot distributions. Check your distribution's package repository.
 
 Instructions for building from source
@@ -44,6 +42,7 @@ Contributors
 * [hasufell](https://github.com/hasufell)
 * [fmorgner](https://github.com/fmorgner)
 * [Rawi666](https://github.com/Rawi666)
+* [snowblind](https://github.com/snowblind)
 
 Hope I didn't forget anyone... Please just send me a mail if you feel this is the case.
 
