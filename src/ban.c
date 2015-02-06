@@ -107,9 +107,10 @@ void Ban_pruneBanned()
 	list_iterate(itr, &banlist) {
 		ban = list_get_entry(itr, ban_t, node);
 #ifdef DEBUG
+		char hexhash[41];
 		SSLi_hash2hex(ban->hash, hexhash);
 		Log_debug("BL: User %s Reason: '%s' Hash: %s IP: %s Time left: %d",
-			ban->name, ban->reason, hexhash, Util_addressToString(&ban->address)),
+			ban->name, ban->reason, hexhash, Util_addressToString(&ban->address),
 			ban->time + ban->duration - time(NULL));
 #endif
 		/* Duration of 0 = forever */
