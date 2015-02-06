@@ -323,9 +323,12 @@ int Client_add(int fd, struct sockaddr_storage *remote)
 {
 	client_t* newclient;
 	message_t *sendmsg;
+	char* addressString = NULL;
 
 	if (Ban_isBannedAddr(remote)) {
-		Log_info("Address %s banned. Disconnecting", Util_addressToString(remote));
+		addressString = Util_addressToString(remote);
+		Log_info("Address %s banned. Disconnecting", addressString);
+		free(addressString);
 		return -1;
 	}
 
@@ -336,7 +339,9 @@ int Client_add(int fd, struct sockaddr_storage *remote)
 	memcpy(&newclient->remote_tcp, remote, sizeof(struct sockaddr_storage));
 	newclient->ssl = SSLi_newconnection(&newclient->tcpfd, &newclient->SSLready);
 	if (newclient->ssl == NULL) {
-		Log_warn("SSL negotiation failed with %s on port %d", Util_addressToString(remote), Util_addressToPort(remote));
+		addressString = Util_addressToString(remote);
+		Log_warn("SSL negotiation failed with %s on port %d", addressString, Util_addressToPort(remote));
+		free(addressString);
 		free(newclient);
 		return -1;
 	}
@@ -834,7 +839,9 @@ int Client_read_udp(int udpsock)
 			if (memcmp(itraddress, fromaddress, addresslength) == 0) {
 				if (checkDecrypt(itr, encrypted, buffer, len)) {
 					memcpy(itr->key, key, KEY_LENGTH);
-					Log_info_client(itr, "New UDP connection from %s on port %d", Util_clientAddressToString(itr), fromport);
+					char* clientAddressString = Util_clientAddressToString(itr);
+					Log_info_client(itr, "New UDP connection from %s on port %d", clientAddressString, fromport);
+					free(clientAddressString);
 					memcpy(&itr->remote_udp, &from, sizeof(struct sockaddr_storage));
 					break;
 				}
@@ -848,6 +855,9 @@ int Client_read_udp(int udpsock)
 	itr->bUDP = true;
 	len -= 4; /* Adjust for crypt header */
 	msgType = (UDPMessageType_t)((buffer[0] >> 5) & 0x7);
+
+	char *clientAddressString = NULL;
+
 	switch (msgType) {
 		case UDPVoiceSpeex:
 		case UDPVoiceCELTAlpha:
@@ -862,7 +872,9 @@ int Client_read_udp(int udpsock)
 			Client_send_udp(itr, buffer, len);
 			break;
 		default:
-			Log_debug("Unknown UDP message type from %s port %d", Util_clientAddressToString(itr), fromport);
+			clientAddressString = Util_clientAddressToString(itr);
+			Log_debug("Unknown UDP message type from %s port %d", clientAddressString, fromport);
+			free(clientAddressString);
 			break;
 	}
 

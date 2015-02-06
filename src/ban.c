@@ -90,8 +90,12 @@ void Ban_UserBan(client_t *client, char *reason)
 
 	SSLi_hash2hex(ban->hash, hexhash);
 
+	char *clientAddressString = Util_clientAddressToString(client);
+
 	Log_info_client(client, "User kickbanned. Reason: '%s' Hash: %s IP: %s Banned for: %d seconds",
-		ban->reason, hexhash, Util_clientAddressToString(client), ban->duration);
+		ban->reason, hexhash, clientAddressString, ban->duration);
+
+	free(clientAddressString);
 }
 
 
@@ -103,10 +107,13 @@ void Ban_pruneBanned()
 	list_iterate(itr, &banlist) {
 		ban = list_get_entry(itr, ban_t, node);
 #ifdef DEBUG
+		char hexhash[41];
 		SSLi_hash2hex(ban->hash, hexhash);
+		char *addressString = Util_addressToString(&ban->address);
 		Log_debug("BL: User %s Reason: '%s' Hash: %s IP: %s Time left: %d",
-			ban->name, ban->reason, hexhash, Util_addressToString(&ban->address)),
+			ban->name, ban->reason, hexhash, addressString,
 			ban->time + ban->duration - time(NULL));
+		free(addressString);
 #endif
 		/* Duration of 0 = forever */
 		if (ban->duration != 0 && ban->time + ban->duration - time(NULL) <= 0) {
@@ -302,7 +309,9 @@ static void Ban_saveBanFile(void)
 		ban = list_get_entry(itr, ban_t, node);
 		SSLi_hash2hex(ban->hash, hexhash);
 
-		fprintf(file, "%s,%s,%d,%ld,%d,%s,%s\n", hexhash, Util_addressToString(&ban->address),ban->mask, (long int)ban->time, ban->duration, ban->name, ban->reason);
+		char *addressString = Util_addressToString(&ban->address);
+		fprintf(file, "%s,%s,%d,%ld,%d,%s,%s\n", hexhash, addressString,ban->mask, (long int)ban->time, ban->duration, ban->name, ban->reason);
+		free(addressString);
 	}
 	fclose(file);
 	banlist_changed = false;

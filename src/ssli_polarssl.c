@@ -265,12 +265,10 @@ SSL_handle_t *SSLi_newconnection(int *fd, bool_t *SSLready)
 	ssl_session *ssn;
 	int rc;
 
-	ssl = malloc(sizeof(ssl_context));
-	ssn = malloc(sizeof(ssl_session));
+	ssl = calloc(1, sizeof(ssl_context));
+	ssn = calloc(1, sizeof(ssl_session));
 	if (!ssl || !ssn)
 		Log_fatal("Out of memory");
-	memset(ssl, 0, sizeof(ssl_context));
-	memset(ssn, 0, sizeof(ssl_session));
 
 	rc = ssl_init(ssl);
 	if (rc != 0 )
