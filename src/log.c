@@ -191,11 +191,13 @@ void Log_info_client(client_t *client, const char *logstring, ...)
 	offset += vsnprintf(&buf[offset], STRSIZE - offset, logstring, argp);
 	va_end(argp);
 
+	char *clientAddressString = Util_clientAddressToString(client);
 	offset += snprintf(&buf[offset], STRSIZE - offset, " - [%d] %s@%s:%d",
 		client->sessionId,
 		client->username == NULL ? "" : client->username,
-		Util_clientAddressToString(client),
+		clientAddressString,
 		Util_clientAddressToPortTCP(client));
+	free(clientAddressString);
 
 	if (termprint)
 		fprintf(stderr, "%s\n", buf);

@@ -90,8 +90,12 @@ void Ban_UserBan(client_t *client, char *reason)
 
 	SSLi_hash2hex(ban->hash, hexhash);
 
+	char *clientAddressString = Util_clientAddressToString(client);
+
 	Log_info_client(client, "User kickbanned. Reason: '%s' Hash: %s IP: %s Banned for: %d seconds",
-		ban->reason, hexhash, Util_clientAddressToString(client), ban->duration);
+		ban->reason, hexhash, clientAddressString, ban->duration);
+
+	free(clientAddressString);
 }
 
 
