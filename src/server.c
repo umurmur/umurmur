@@ -141,7 +141,7 @@ void Server_runLoop(struct pollfd* pollfds)
 	while (!shutdown_server) {
 		struct sockaddr_storage remote;
 		int i;
-		
+
 #ifdef USE_SHAREDMEMORY_API
     Sharedmemory_alivetick();
 #endif
@@ -180,7 +180,9 @@ void Server_runLoop(struct pollfd* pollfds)
 				tcpfd = accept(pollfds[i].fd, (struct sockaddr *)&remote, &addrlen);
 				fcntl(tcpfd, F_SETFL, O_NONBLOCK);
 				setsockopt(tcpfd, IPPROTO_TCP, TCP_NODELAY, (char *) &on, sizeof(int));
-				Log_debug("Connection from %s port %d\n", Util_addressToString(&remote), Util_addressToPort(&remote));
+				char *addressString = Util_addressToString(&remote);
+				Log_debug("Connection from %s port %d\n", addressString, Util_addressToPort(&remote));
+				free(addressString);
 				if (Client_add(tcpfd, &remote) < 0)
 					close(tcpfd);
 			}
@@ -198,9 +200,9 @@ void Server_runLoop(struct pollfd* pollfds)
 			if (pollfds[nofServerSocks + i].revents & POLLOUT)
 				Client_write_fd(pollfds[nofServerSocks + i].fd);
 		}
-#ifdef USE_SHAREDMEMORY_API    
+#ifdef USE_SHAREDMEMORY_API
     Sharedmemory_update();
-#endif    
+#endif
 	}
 }
 
@@ -216,8 +218,11 @@ void Server_setupTCPSockets(struct sockaddr_storage* addresses[2], struct pollfd
 			Log_fatal("socket IPv4");
 		if (setsockopt(sockets[0], SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) != 0)
 			Log_fatal("setsockopt IPv4: %s", strerror(errno));
-		if (bind(sockets[0], (struct sockaddr *)addresses[0], sizeof (struct sockaddr_in)) < 0)
-			Log_fatal("bind %s %d: %s", Util_addressToString(addresses[0]), Util_addressToPort(addresses[0]), strerror(errno));
+		if (bind(sockets[0], (struct sockaddr *)addresses[0], sizeof (struct sockaddr_in)) < 0) {
+			char *addressString = Util_addressToString(addresses[0]);
+			Log_fatal("bind %s %d: %s", addressString, Util_addressToPort(addresses[0]), strerror(errno));
+			free(addressString);
+		}
 		if (listen(sockets[0], 3) < 0)
 			Log_fatal("listen IPv4");
 		fcntl(sockets[0], F_SETFL, O_NONBLOCK);
@@ -235,8 +240,11 @@ void Server_setupTCPSockets(struct sockaddr_storage* addresses[2], struct pollfd
 			Log_fatal("setsockopt IPv6: %s", strerror(errno));
 		if (setsockopt(sockets[1], IPPROTO_IPV6, IPV6_V6ONLY, &yes, sizeof(int)) != 0)
 			Log_fatal("setsockopt IPv6: %s", strerror(errno));
-		if (bind(sockets[1], (struct sockaddr *)addresses[1], sizeof (struct sockaddr_in6)) < 0)
-			Log_fatal("bind %s %d: %s", Util_addressToString(addresses[1]), Util_addressToPort(addresses[1]), strerror(errno));
+		if (bind(sockets[1], (struct sockaddr *)addresses[1], sizeof (struct sockaddr_in6)) < 0) {
+			char *addressString = Util_addressToString(addresses[1]);
+			Log_fatal("bind %s %d: %s", addressString, Util_addressToPort(addresses[1]), strerror(errno));
+			free(addressString);
+		}
 		if (listen(sockets[1], 3) < 0)
 			Log_fatal("listen IPv6");
 		fcntl(sockets[1], F_SETFL, O_NONBLOCK);
@@ -258,8 +266,11 @@ void Server_setupUDPSockets(struct sockaddr_storage* addresses[2], struct pollfd
 
 	if (hasv4) {
 		sockets[0] = socket(PF_INET, SOCK_DGRAM, 0);
-		if (bind(sockets[0], (struct sockaddr *) addresses[0], sizeof (struct sockaddr_in)) < 0)
-			Log_fatal("bind %s %d: %s", Util_addressToString(addresses[0]), Util_addressToPort(addresses[0]), strerror(errno));
+		if (bind(sockets[0], (struct sockaddr *) addresses[0], sizeof (struct sockaddr_in)) < 0) {
+			char *addressString = Util_addressToString(addresses[0]);
+			Log_fatal("bind %s %d: %s", addressString, Util_addressToPort(addresses[0]), strerror(errno));
+			free(addressString);
+		}
 		val = 0xe0;
 		if (setsockopt(sockets[0], IPPROTO_IP, IP_TOS, &val, sizeof(val)) < 0)
 			Log_warn("Server: Failed to set TOS for UDP Socket");
@@ -277,8 +288,11 @@ void Server_setupUDPSockets(struct sockaddr_storage* addresses[2], struct pollfd
 		sockets[1] = socket(PF_INET6, SOCK_DGRAM, 0);
 		if (setsockopt(sockets[1], IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof(int)) != 0)
 			Log_fatal("setsockopt IPv6: %s", strerror(errno));
-		if (bind(sockets[1], (struct sockaddr *) addresses[1], sizeof (struct sockaddr_in6)) < 0)
-			Log_fatal("bind %s %d: %s", Util_addressToString(addresses[1]), Util_addressToPort(addresses[1]), strerror(errno));
+		if (bind(sockets[1], (struct sockaddr *) addresses[1], sizeof (struct sockaddr_in6)) < 0) {
+			char *addressString = Util_addressToString(addresses[1]);
+			Log_fatal("bind %s %d: %s", addressString, Util_addressToPort(addresses[1]), strerror(errno));
+			free(addressString);
+		}
 		val = 0xe0;
 		if (setsockopt(sockets[1], IPPROTO_IPV6, IPV6_TCLASS, &val, sizeof(val)) < 0)
 			Log_warn("Server: Failed to set TOS for UDP Socket");

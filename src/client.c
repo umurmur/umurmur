@@ -323,9 +323,12 @@ int Client_add(int fd, struct sockaddr_storage *remote)
 {
 	client_t* newclient;
 	message_t *sendmsg;
+	char* addressString = NULL;
 
 	if (Ban_isBannedAddr(remote)) {
-		Log_info("Address %s banned. Disconnecting", Util_addressToString(remote));
+		addressString = Util_addressToString(remote);
+		Log_info("Address %s banned. Disconnecting", addressString);
+		free(addressString);
 		return -1;
 	}
 
@@ -336,7 +339,9 @@ int Client_add(int fd, struct sockaddr_storage *remote)
 	memcpy(&newclient->remote_tcp, remote, sizeof(struct sockaddr_storage));
 	newclient->ssl = SSLi_newconnection(&newclient->tcpfd, &newclient->SSLready);
 	if (newclient->ssl == NULL) {
-		Log_warn("SSL negotiation failed with %s on port %d", Util_addressToString(remote), Util_addressToPort(remote));
+		addressString = Util_addressToString(remote);
+		Log_warn("SSL negotiation failed with %s on port %d", addressString, Util_addressToPort(remote));
+		free(addressString);
 		free(newclient);
 		return -1;
 	}
