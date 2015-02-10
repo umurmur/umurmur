@@ -37,7 +37,7 @@ AM_INIT_AUTOMAKE
 AC_CANONICAL_HOST
 
 # Configure options.
-AC_ARG_WITH([ssl], [AC_HELP_STRING([--with-ssl=@<:@LIB@:>@], [SSL library (openssl|polarssl) @<:@default=polarssl@:>@])], [], [with_ssl=polarssl])
+AC_ARG_WITH([ssl], [AC_HELP_STRING([--with-ssl=@<:@LIB@:>@], [SSL library (openssl|polarssl|gnutls) @<:@default=polarssl@:>@])], [], [with_ssl=polarssl])
 AC_ARG_ENABLE([shmapi], [AC_HELP_STRING([--enable-shmapi], [compile with Sharedmemory API support @<:@default=no@:>@])],[],[enable_shmapi=no] )
 AC_ARG_ENABLE(polarssl-test-cert, [  --enable-polarssl-test-cert  Link to PolarSSL test certificate and key @<:@default=no@:>@], [enable_polarssl_test_cert=yes])
 AC_ARG_ENABLE(polarssl-havege, [  --enable-polarssl-havege  Link to PolarSSL HAVEGE random generator key @<:@default=no@:>@ Default: /dev/urandom], [enable_polarssl_havege=yes])
@@ -88,6 +88,12 @@ AS_IF([test "x$with_ssl" = xopenssl], [
 	AC_CHECK_HEADERS([openssl/ssl.h], [], [AC_MSG_ERROR([could not find openssl/ssl.h])])
 	AC_CHECK_LIB([crypto], [BN_init], [], [AC_MSG_ERROR([could not find libcrypto])])
 	AC_CHECK_LIB([ssl], [SSL_library_init], [], [AC_MSG_ERROR([could not find libssl])])
+])
+AS_IF([test "x$with_ssl" = xgnutls], [
+	AC_CHECK_HEADERS([gnutls/gnutls.h], [], [AC_MSG_ERROR([could not find gnutls/gnutls.h])])
+	AC_CHECK_LIB([gnutls], [gnutls_priority_init], [], [AC_MSG_ERROR([could not find libgnutls])])
+	AC_CHECK_LIB([nettle], [_nettle_aes_decrypt], [], [AC_MSG_ERROR([could not find libnettle])])
+	AC_DEFINE([USE_GNUTLS], [], [Use PolarSSL])
 ])
 
 AM_CONDITIONAL(USE_OPENSSL, test x$with_ssl = xopenssl)
