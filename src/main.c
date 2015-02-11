@@ -199,6 +199,10 @@ void daemonize()
 	for (i = getdtablesize(); i >= 0; --i)
 		close(i); /* close all descriptors */
 
+#ifdef USE_GNUTLS
+	 gnutls_global_init();
+#endif
+
 	i = open("/dev/null",O_RDWR);
 	(void)dup(i);
 	(void)dup(i);

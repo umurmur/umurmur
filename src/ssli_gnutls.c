@@ -68,16 +68,21 @@ void SSLi_init()
 {
 	unsigned const bitCount = gnutls_sec_param_to_pk_bits(GNUTLS_PK_DH, GNUTLS_SEC_PARAM_MEDIUM);
 
-	gnutls_dh_params_init(&dhParameters);
-	gnutls_dh_params_generate2(dhParameters, bitCount);
-
-#if GNUTLS_VERSION_NUMBER < 0x030300
-	gnutls_global_init();
-#endif
-
 	gnutls_priority_init(&cipherCache, ciphers, NULL);
-
 	initializeCertificate();
+
+	gnutls_dh_params_init(&dhParameters);
+
+	Log_info("Generating Diffie-Hellman parameters (%i bits)", bitCount);
+	int error = gnutls_dh_params_generate2(dhParameters, bitCount);
+
+	if(!error) {
+		Log_info("Successfully generated Diffie-Hellman parameters");
+	} else {
+		Log_warn("Failed to generate Diffie-Hellman parameters: %s", gnutls_strerror(error));
+	}
+
+	gnutls_certificate_set_dh_params(certificate, dhParameters);
 
 	Log_info("Sucessfully initialized GNUTLS version %s", gnutls_check_version(NULL));
 
