@@ -235,7 +235,7 @@ static void SSL_initializeCert() {
 
 void SSLi_init(void)
 {
-	const SSL_METHOD *method;
+	SSL_METHOD *method;
 	SSL *ssl;
 	int i, offset = 0, cipherstringlen = 0;
 	STACK_OF(SSL_CIPHER) *cipherlist = NULL, *cipherlist_new = NULL;
@@ -254,7 +254,7 @@ void SSLi_init(void)
 		abort();
 	}
 
-	char* sslCAPath = getStrConf(CAPATH);
+	char const * sslCAPath = getStrConf(CAPATH);
 	if(sslCAPath != NULL)
 	{
 		SSL_CTX_load_verify_locations(context, NULL, sslCAPath);
