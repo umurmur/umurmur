@@ -1,0 +1,3 @@
+[submodule "tools/umurmur-monitor"]
+	path = tools/umurmur-monitor
+	url = https://github.com/umurmur/umurmur-monitor.git
