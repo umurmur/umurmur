@@ -1,9 +1,12 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.8.3)
 
 project(umurmurd C)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH true)
+
+set(UMURMUR_ROOT_PATH "${CMAKE_CURRENT_LIST_DIR}")
+set(UMURMUR_BINARY_DIR ${CMAKE_BINARY_DIR})
 
 option(USE_POLARSSL_TESTCERT "Link to the PolarSSL test certificate and key." OFF)
 option(USE_POLARSSL_HAVEGE "Use the PolarSSL HAVEGE random generator key." OFF)
@@ -68,6 +71,19 @@ else()
   set(LIBRT rt)
 endif()
 
+if(USE_SHAREDMEMORY_API)
+  set(UMURMUR_MONITOR_SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/tools/umurmur-monitor/" CACHE PATH "The path to the umurmur-monitor source directory")
+  option(BUILD_UMURMUR_MONITOR "Build the umurmur-monitor utility" OFF)
+
+  if(BUILD_UMURMUR_MONITOR)
+    if(EXISTS "${UMURMUR_MONITOR_SOURCE_DIR}/CMakeLists.txt")
+      add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/tools/umurmur-monitor")
+    else()
+      message(FATAL_ERROR "Could not find umurmur-monitor source. Please specify UMURMUR_MONITOR_SOURCE_DIR")
+    endif()
+  endif()
+endif()
+
 set(SOURCE "")
 add_subdirectory(src)
 
@@ -76,8 +92,8 @@ configure_file(src/config.h.in ${CMAKE_SOURCE_DIR}/src/config.h)
 include_directories(${LIBCONFIG_INCLUDE_DIR} ${PROTOBUFC_INCLUDE_DIR} ${SSLIMP_INCLUDE_DIR})
 link_directories(${LIBCONFIG_LIB_DIR} ${PROTOBUFC_LIB_DIR} ${SSLIMP_LIB_DIR})
 
-add_executable(umurmurd ${SOURCE})
-install(TARGETS umurmurd RUNTIME DESTINATION "bin")
+add_executable(${PROJECT_NAME} ${SOURCE})
+install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION "bin")
 
 find_path(OLD_CONFIG_FILE NAMES "umurmur.conf" PATHS ${CMAKE_INSTALL_PREFIX} PATH_SUFFIXES "etc")
 if(NOT OLD_CONFIG_FILE)
@@ -86,4 +102,4 @@ endif(NOT OLD_CONFIG_FILE)
 
 add_definitions(${SSLIMP_CFLAGS})
 
-target_link_libraries(umurmurd ${LIBCONFIG_LIBRARIES} ${PROTOBUFC_LIBRARIES} ${SSLIMP_LIBRARIES} ${LIBRT} ${CRYPTO_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${LIBCONFIG_LIBRARIES} ${PROTOBUFC_LIBRARIES} ${SSLIMP_LIBRARIES} ${LIBRT} ${CRYPTO_LIBRARIES})
