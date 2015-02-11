@@ -93,7 +93,7 @@ AS_IF([test "x$with_ssl" = xgnutls], [
 	AC_CHECK_HEADERS([gnutls/gnutls.h], [], [AC_MSG_ERROR([could not find gnutls/gnutls.h])])
 	AC_CHECK_LIB([gnutls], [gnutls_priority_init], [], [AC_MSG_ERROR([could not find libgnutls])])
 	AC_CHECK_LIB([nettle], [_nettle_aes_decrypt], [], [AC_MSG_ERROR([could not find libnettle])])
-	AC_DEFINE([USE_GNUTLS], [], [Use PolarSSL])
+	AC_DEFINE([USE_GNUTLS], [], [Use GnuTLS])
 ])
 
 AM_CONDITIONAL(USE_OPENSSL, test x$with_ssl = xopenssl)
