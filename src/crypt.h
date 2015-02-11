@@ -42,7 +42,7 @@
 #define CRYPT_AES_KEY aes_context
 #define AES_BLOCK_SIZE 16
 
-#define CRYPT_RANDOM_BYTES(dest, size) RAND_bytes((dest), (size))
+#define CRYPT_RANDOM_BYTES(dest, size) RAND_bytes((unsigned char *)(dest), (size))
 #define CRYPT_SET_ENC_KEY(dest, source, size) aes_setkey_enc((dest), (source), (size));
 #define CRYPT_SET_DEC_KEY(dest, source, size) aes_setkey_dec((dest), (source), (size));
 
@@ -69,7 +69,7 @@
 #include <openssl/aes.h>
 
 #define CRYPT_AES_KEY AES_KEY
-#define CRYPT_RANDOM_BYTES(dest, size) RAND_bytes((dest), (size))
+#define CRYPT_RANDOM_BYTES(dest, size) RAND_bytes((unsigned char *)(dest), (size))
 #define CRYPT_SET_ENC_KEY(dest, source, size) AES_set_encrypt_key((source), (size), (dest));
 #define CRYPT_SET_DEC_KEY(dest, source, size) AES_set_decrypt_key((source), (size), (dest));
 
