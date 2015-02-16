@@ -47,6 +47,7 @@
 #include "timer.h"
 #include "version.h"
 #include "util.h"
+#include "sharedmemory.h"
 
 /* globals */
 bool_t shutdown_server;
