@@ -1,3 +1,16 @@
+0.2.16:
+[FIX] Reworked timestamping code (fatbob313)
+[FIX] Banning works again when using IPv6 (fatbob313 and fmorgner)
+[NEW] Sharedmemory API (snowblind)
+	to enable use:
+	- '--with-shmapi' with Autotools
+	- '-DENABLE_SHAREDMEMORY_API=on' with CMake
+	The shm API allows you to use/write tools that communicate directyly with
+	umurmurd. For an example, see: http://github.com/umurmur/umurmur-monitor
+[NEW] GnuTLS backend (fmorgner)
+[NEW] SELinux type-enforcement rules for umurmur (fmorgner)
+	The SELinux rules can be found at http://github.com/umurmur/umurmur-selinux
+
 0.2.15:
 IPv6 dual-stack support (fmorgner).
 CMake build system added alongside Autotools (fmorgner).
