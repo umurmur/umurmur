@@ -5,7 +5,7 @@
 	to enable use:
 	- '--with-shmapi' with Autotools
 	- '-DENABLE_SHAREDMEMORY_API=on' with CMake
-	The shm API allows you to use/write tools that communicate directyly with
+	The shm API allows you to use/write tools that communicate directly with
 	umurmurd. For an example, see: http://github.com/umurmur/umurmur-monitor
 [NEW] GnuTLS backend (fmorgner)
 [NEW] SELinux type-enforcement rules for umurmur (fmorgner)
