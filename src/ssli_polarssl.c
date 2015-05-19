@@ -225,8 +225,12 @@ void SSLi_init(void)
 	    Log_fatal("Cannot open /dev/urandom");
 #endif
 
+#ifdef POLARSSL_VERSION_FEATURES
     version_get_string(verstring);
     Log_info("PolarSSL library version %s initialized", verstring);
+#else
+    Log_info("PolarSSL library initialized");
+#endif
 }
 
 void SSLi_deinit(void)
