@@ -4,16 +4,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <fcntl.h> /* For O_* constants */ 
+#include <fcntl.h> /* For O_* constants */
 #include <unistd.h>
 #include <sys/mman.h>
 
 #include <netinet/in.h>
 #include "util.h"
-#include "conf.h" 
+#include "conf.h"
 #include "client.h"
 #include "channel.h"
-#include "sharedmemory_struct.h" 
+#include "sharedmemory_struct.h"
 
 void Sharedmemory_init( int bindport, int bindport6 );
 void Sharedmemory_update(void);
