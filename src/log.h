@@ -53,7 +53,7 @@ void Log_debug(const char *logstring, ...);
 void Log_warn(const char *logstring, ...);
 void Log_info(const char *logstring, ...);
 void Log_info_client(client_t *client, const char *logstring, ...);
-void Log_fatal(const char *logstring, ...);
+void Log_fatal(const char *logstring, ...) __attribute__((__noreturn__));
 
 void Log_init(bool_t terminal);
 void Log_reset();
