@@ -1,3 +1,8 @@
+0.2.16a:
+[FIX] Crash in SHM API during update (doctaweeks)
+[FIX] Failure to detect missing IPv6 support in FreeBSD jails (marcusball)
+[FIX] Compile-time check for availability of version_get_string (fatbob313)
+
 0.2.16:
 [FIX] Reworked timestamping code (fatbob313)
 [FIX] Banning works again when using IPv6 (fatbob313 and fmorgner)
