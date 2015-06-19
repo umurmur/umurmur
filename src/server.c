@@ -67,13 +67,13 @@ void checkIPversions()
 	int testsocket = -1;
 
 	testsocket = socket(PF_INET, SOCK_STREAM, 0);
-	hasv4 = (errno == EAFNOSUPPORT) ? false : true;
+	hasv4 = (errno == EAFNOSUPPORT || errno == EPROTONOSUPPORT) ? false : true;
 	if (!(testsocket < 0)) close(testsocket);
 
 	testsocket = socket(PF_INET6, SOCK_STREAM, 0);
-	hasv6 = (errno == EAFNOSUPPORT) ? false : true;
+	hasv6 = (errno == EAFNOSUPPORT || errno == EPROTONOSUPPORT) ? false : true;
 	if (!(testsocket < 0)) close(testsocket);
-
+	
 	if(!hasv4)
 	{
 		Log_info("IPv4 is not supported by this system");
@@ -85,7 +85,6 @@ void checkIPversions()
 		Log_info("IPv6 is not supported by this system");
 		nofServerSocks -= 2;
 	}
-
 	if(nofServerSocks == 0)
 	{
 		Log_fatal("Neither IPv4 nor IPv6 are supported by this system");
