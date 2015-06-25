@@ -31,6 +31,7 @@
 #include "ssl.h"
 #include "conf.h"
 #include "log.h"
+#include "memory.h"
 
 #include <stdlib.h>
 
@@ -97,7 +98,8 @@ void SSLi_deinit()
 
 SSL_handle_t * SSLi_newconnection( int * fileDescriptor, bool_t * isSSLReady )
 {
-	gnutls_session_t * session = calloc(1, sizeof(gnutls_session_t));
+	gnutls_session_t * session
+		= Memory_safeCalloc(1, sizeof(gnutls_session_t));
 
 	gnutls_init(session, GNUTLS_SERVER);
 	gnutls_priority_set(*session, cipherCache);

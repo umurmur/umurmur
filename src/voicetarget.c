@@ -33,6 +33,7 @@
 #include <string.h>
 #include "voicetarget.h"
 #include "log.h"
+#include "memory.h"
 
 void Voicetarget_add_session(client_t *client, int targetId, int sessionId)
 {
@@ -83,10 +84,7 @@ void Voicetarget_add_id(client_t *client, int targetId)
 	int i;
 
 	Voicetarget_del_id(client, targetId);
-	newtarget = malloc(sizeof(voicetarget_t));
-	if (!newtarget)
-		Log_fatal("Out of memory");
-	memset(newtarget, 0, sizeof(voicetarget_t));
+	newtarget = Memory_safeCalloc(1, sizeof(voicetarget_t));
 	for (i = 0; i < TARGET_MAX_CHANNELS; i++)
 		newtarget->channels[i].channel = -1;
 	for (i = 0; i < TARGET_MAX_SESSIONS; i++)

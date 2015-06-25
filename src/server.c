@@ -44,6 +44,7 @@
 #include "client.h"
 #include "conf.h"
 #include "log.h"
+#include "memory.h"
 #include "timer.h"
 #include "version.h"
 #include "util.h"
@@ -94,18 +95,11 @@ void checkIPversions()
 /* Initialize the address structures for IPv4 and IPv6 */
 struct sockaddr_storage** Server_setupAddressesAndPorts()
 {
-	struct sockaddr_storage** addresses = calloc(2, sizeof(void*));
-	if(!addresses)
-		Log_fatal("Not enough memory to allocate addresses");
+	struct sockaddr_storage** addresses = Memory_safeCalloc(2, sizeof(void*));
 
-	struct sockaddr_storage* v4address = calloc(1, sizeof(struct sockaddr_storage));
-	if(!v4address)
-		Log_fatal("Not enough memory to allocate IPv4 address");
+	struct sockaddr_storage* v4address = Memory_safeCalloc(1, sizeof(struct sockaddr_storage));
 	v4address->ss_family = AF_INET;
-
-	struct sockaddr_storage* v6address = calloc(1, sizeof(struct sockaddr_storage));
-	if(!v6address)
-		Log_fatal("Not enough memory to allocate IPv6 address");
+	struct sockaddr_storage* v6address = Memory_safeCalloc(1, sizeof(struct sockaddr_storage));
 	v6address->ss_family = AF_INET6;
 
 #if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
@@ -268,8 +262,7 @@ void Server_setupUDPSockets(struct sockaddr_storage* addresses[2], struct pollfd
 	int val = 0;
 	int sockets[2] = {-1, -1};
 
-	if((udpsocks = calloc(nofServerSocks / 2, sizeof(int))) == NULL)
-		Log_fatal("Out of memory (%s:%s)", __FILE__, __LINE__);
+	udpsocks = Memory_safeCalloc(nofServerSocks / 2, sizeof(int))
 
 	if (hasv4) {
 		sockets[0] = socket(PF_INET, SOCK_DGRAM, 0);
@@ -322,8 +315,7 @@ void Server_run()
 	checkIPversions();
 
 	/* max clients + server sokets + client connecting that will be disconnected */
-	if ((pollfds = calloc((getIntConf(MAX_CLIENTS) + nofServerSocks + 1) , sizeof(struct pollfd))) == NULL)
-		Log_fatal("out of memory");
+	pollfds = Memory_safeCalloc((getIntConf(MAX_CLIENTS) + nofServerSocks + 1) , sizeof(struct pollfd))
 
 	/* Figure out bind address and port */
 	struct sockaddr_storage** addresses = Server_setupAddressesAndPorts();

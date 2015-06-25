@@ -33,6 +33,7 @@
 #include <time.h>
 #include <string.h>
 #include "log.h"
+#include "memory.h"
 #include "list.h"
 #include "ban.h"
 #include "conf.h"
@@ -70,9 +71,7 @@ void Ban_UserBan(client_t *client, char *reason)
 	ban_t *ban;
 	char hexhash[41];
 
-	ban = calloc(1, sizeof(ban_t));
-	if (ban == NULL)
-		Log_fatal("Out of memory");
+	ban = Memory_safeCalloc(1, sizeof(ban_t));
 
 	memcpy(ban->hash, client->hash, 20);
 
@@ -245,9 +244,7 @@ void Ban_putBanList(message_t *msg, int n_bans)
 
 	for (i = 0; i < n_bans; i++) {
 		Msg_banList_getEntry(msg, i, &address, &mask, &name, &hexhash, &reason, &start, &duration);
-		ban = malloc(sizeof(ban_t));
-		if (ban == NULL)
-			Log_fatal("Out of memory");
+		ban = Memory_safeMalloc(1, sizeof(ban_t));
 		SSLi_hex2hash(hexhash, ban->hash);
 
 		if(memcmp(address, mappedBytes, 12) == 0) {
@@ -354,9 +351,7 @@ static void Ban_readBanFile(void)
 		if (p == NULL) break;
 		reason = p;
 
-		ban = malloc(sizeof(ban_t));
-		if (ban == NULL)
-			Log_fatal("Out of memory");
+		ban = Memory_safeMalloc(1, sizeof(ban_t));
 		memset(ban, 0, sizeof(ban_t));
 		SSLi_hex2hash(hexhash, ban->hash);
 		if (inet_pton(AF_INET, address, &ban->address) == 0) {

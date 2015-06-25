@@ -38,6 +38,7 @@
 #include "client.h"
 #include "pds.h"
 #include "log.h"
+#include "memory.h"
 
 #define PREAMBLE_SIZE 6
 
@@ -266,10 +267,8 @@ int Msg_messageToNetwork(message_t *msg, uint8_t *buffer)
 
 static message_t *Msg_create_nopayload(messageType_t messageType)
 {
-	message_t *msg = malloc(sizeof(message_t));
+	message_t *msg = Memory_safeMalloc(1, sizeof(message_t));
 
-	if (msg == NULL)
-		Log_fatal("Out of memory");
 	memset(msg, 0, sizeof(message_t));
 	msg->refcount = 1;
 	msg->messageType = messageType;
@@ -284,92 +283,89 @@ message_t *Msg_create(messageType_t messageType)
 
 	switch (messageType) {
 	case Version:
-		msg->payload.version = malloc(sizeof(MumbleProto__Version));
+		msg->payload.version = Memory_safeMalloc(1, sizeof(MumbleProto__Version));
 		mumble_proto__version__init(msg->payload.version);
 		break;
 	case UDPTunnel:
-		msg->payload.UDPTunnel = malloc(sizeof(MumbleProto__UDPTunnel));
+		msg->payload.UDPTunnel = Memory_safeMalloc(1, sizeof(MumbleProto__UDPTunnel));
 		mumble_proto__udptunnel__init(msg->payload.UDPTunnel);
 		break;
 	case Authenticate:
-		msg->payload.authenticate = malloc(sizeof(MumbleProto__Authenticate));
+		msg->payload.authenticate = Memory_safeMalloc(1, sizeof(MumbleProto__Authenticate));
 		mumble_proto__authenticate__init(msg->payload.authenticate);
 		break;
 	case Ping:
-		msg->payload.ping = malloc(sizeof(MumbleProto__Ping));
+		msg->payload.ping = Memory_safeMalloc(1, sizeof(MumbleProto__Ping));
 		mumble_proto__ping__init(msg->payload.ping);
 		break;
 	case Reject:
-		msg->payload.reject = malloc(sizeof(MumbleProto__Reject));
+		msg->payload.reject = Memory_safeMalloc(1, sizeof(MumbleProto__Reject));
 		mumble_proto__reject__init(msg->payload.reject);
 		break;
 	case ServerSync:
-		msg->payload.serverSync = malloc(sizeof(MumbleProto__ServerSync));
+		msg->payload.serverSync = Memory_safeMalloc(1, sizeof(MumbleProto__ServerSync));
 		mumble_proto__server_sync__init(msg->payload.serverSync);
 		break;
 	case TextMessage:
-		msg->payload.textMessage = malloc(sizeof(MumbleProto__TextMessage));
+		msg->payload.textMessage = Memory_safeMalloc(1, sizeof(MumbleProto__TextMessage));
 		mumble_proto__text_message__init(msg->payload.textMessage);
 		break;
 	case PermissionDenied:
-		msg->payload.permissionDenied = malloc(sizeof(MumbleProto__PermissionDenied));
+		msg->payload.permissionDenied = Memory_safeMalloc(1, sizeof(MumbleProto__PermissionDenied));
 		mumble_proto__permission_denied__init(msg->payload.permissionDenied);
 		break;
 	case CryptSetup:
-		msg->payload.cryptSetup = malloc(sizeof(MumbleProto__CryptSetup));
+		msg->payload.cryptSetup = Memory_safeMalloc(1, sizeof(MumbleProto__CryptSetup));
 		mumble_proto__crypt_setup__init(msg->payload.cryptSetup);
 		break;
 	case UserList:
-		msg->payload.userList = malloc(sizeof(MumbleProto__UserList));
+		msg->payload.userList = Memory_safeMalloc(1, sizeof(MumbleProto__UserList));
 		mumble_proto__user_list__init(msg->payload.userList);
 		break;
 	case UserState:
-		msg->payload.userState = malloc(sizeof(MumbleProto__UserState));
+		msg->payload.userState = Memory_safeMalloc(1, sizeof(MumbleProto__UserState));
 		mumble_proto__user_state__init(msg->payload.userState);
 		break;
 	case ChannelState:
-		msg->payload.channelState = malloc(sizeof(MumbleProto__ChannelState));
+		msg->payload.channelState = Memory_safeMalloc(1, sizeof(MumbleProto__ChannelState));
 		mumble_proto__channel_state__init(msg->payload.channelState);
 		break;
 	case UserRemove:
-		msg->payload.userRemove = malloc(sizeof(MumbleProto__UserRemove));
+		msg->payload.userRemove = Memory_safeMalloc(1, sizeof(MumbleProto__UserRemove));
 		mumble_proto__user_remove__init(msg->payload.userRemove);
 		break;
 	case VoiceTarget:
-		msg->payload.voiceTarget = malloc(sizeof(MumbleProto__VoiceTarget));
+		msg->payload.voiceTarget = Memory_safeMalloc(1, sizeof(MumbleProto__VoiceTarget));
 		mumble_proto__voice_target__init(msg->payload.voiceTarget);
 		break;
 	case CodecVersion:
-		msg->payload.codecVersion = malloc(sizeof(MumbleProto__CodecVersion));
+		msg->payload.codecVersion = Memory_safeMalloc(1, sizeof(MumbleProto__CodecVersion));
 		mumble_proto__codec_version__init(msg->payload.codecVersion);
 		break;
 	case PermissionQuery:
-		msg->payload.permissionQuery = malloc(sizeof(MumbleProto__PermissionQuery));
+		msg->payload.permissionQuery = Memory_safeMalloc(1, sizeof(MumbleProto__PermissionQuery));
 		mumble_proto__permission_query__init(msg->payload.permissionQuery);
 		break;
 	case ChannelRemove:
-		msg->payload.channelRemove = malloc(sizeof(MumbleProto__ChannelRemove));
+		msg->payload.channelRemove = Memory_safeMalloc(1, sizeof(MumbleProto__ChannelRemove));
 		mumble_proto__channel_remove__init(msg->payload.channelRemove);
 		break;
 	case UserStats:
-		msg->payload.userStats = malloc(sizeof(MumbleProto__UserStats));
+		msg->payload.userStats = Memory_safeMalloc(1, sizeof(MumbleProto__UserStats));
 		mumble_proto__user_stats__init(msg->payload.userStats);
 
-		msg->payload.userStats->from_client = malloc(sizeof(MumbleProto__UserStats__Stats));
+		msg->payload.userStats->from_client = Memory_safeMalloc(1, sizeof(MumbleProto__UserStats__Stats));
 		mumble_proto__user_stats__stats__init(msg->payload.userStats->from_client);
 
-		msg->payload.userStats->from_server = malloc(sizeof(MumbleProto__UserStats__Stats));
+		msg->payload.userStats->from_server = Memory_safeMalloc(1, sizeof(MumbleProto__UserStats__Stats));
 		mumble_proto__user_stats__stats__init(msg->payload.userStats->from_server);
 
-		msg->payload.userStats->version = malloc(sizeof(MumbleProto__Version));
+		msg->payload.userStats->version = Memory_safeMalloc(1, sizeof(MumbleProto__Version));
 		mumble_proto__version__init(msg->payload.userStats->version);
 
-		if (!msg->payload.userStats || !msg->payload.userStats->from_client ||
-			!msg->payload.userStats->from_server || !msg->payload.userStats->version)
-			Log_fatal("Out of memory");
 		break;
 	case ServerConfig:
-		msg->payload.serverConfig = malloc(sizeof(MumbleProto__ServerConfig));
+		msg->payload.serverConfig = Memory_safeMalloc(1, sizeof(MumbleProto__ServerConfig));
 		mumble_proto__server_config__init(msg->payload.serverConfig);
 		break;
 
@@ -386,19 +382,13 @@ message_t *Msg_banList_create(int n_bans)
 	message_t *msg = Msg_create_nopayload(BanList);
 	int i;
 
-	msg->payload.banList = malloc(sizeof(MumbleProto__BanList));
-	if (msg->payload.banList == NULL)
-		Log_fatal("Out of memory");
+	msg->payload.banList = Memory_safeMalloc(1, sizeof(MumbleProto__BanList));
 	memset(msg->payload.banList, 0, sizeof(MumbleProto__BanList));
 	mumble_proto__ban_list__init(msg->payload.banList);
 	msg->payload.banList->n_bans = n_bans;
-	msg->payload.banList->bans = malloc(sizeof(MumbleProto__BanList__BanEntry *) * n_bans);
-	if (msg->payload.banList->bans == NULL)
-		Log_fatal("Out of memory");
+	msg->payload.banList->bans = Memory_safeMalloc(1, sizeof(MumbleProto__BanList__BanEntry *) * n_bans);
 	for (i = 0; i < n_bans; i++) {
-		msg->payload.banList->bans[i] = malloc(sizeof(MumbleProto__BanList__BanEntry));
-		if (msg->payload.banList->bans[i] == NULL)
-			Log_fatal("Out of memory");
+		msg->payload.banList->bans[i] = Memory_safeMalloc(1, sizeof(MumbleProto__BanList__BanEntry));
 		memset(msg->payload.banList->bans[i], 0, sizeof(MumbleProto__BanList__BanEntry));
 		mumble_proto__ban_list__ban_entry__init(msg->payload.banList->bans[i]);
 	}
@@ -410,9 +400,7 @@ void Msg_banList_addEntry(message_t *msg, int index, uint8_t *address, uint32_t 
 {
 	MumbleProto__BanList__BanEntry *entry = msg->payload.banList->bans[index];
 
-	entry->address.data = malloc(16);
-	if (!entry->address.data)
-		Log_fatal("Out of memory");
+	entry->address.data = Memory_safeMalloc(1, 16);
 	memcpy(entry->address.data, address, 16);
 	entry->address.len = 16;
 	entry->mask = mask;
@@ -674,12 +662,8 @@ message_t *Msg_CreateVoiceMsg(uint8_t *data, int size)
 
 	msg = Msg_create_nopayload(UDPTunnel);
 	msg->unpacked = false;
-	msg->payload.UDPTunnel = malloc(sizeof(struct _MumbleProto__UDPTunnel));
-	if (msg->payload.UDPTunnel == NULL)
-		Log_fatal("Out of memory");
-	msg->payload.UDPTunnel->packet.data = malloc(size);
-	if (msg->payload.UDPTunnel->packet.data == NULL)
-		Log_fatal("Out of memory");
+	msg->payload.UDPTunnel = Memory_safeMalloc(1, sizeof(struct _MumbleProto__UDPTunnel));
+	msg->payload.UDPTunnel->packet.data = Memory_safeMalloc(1, size);
 	memcpy(msg->payload.UDPTunnel->packet.data, data, size);
 	msg->payload.UDPTunnel->packet.len = size;
 	return msg;
