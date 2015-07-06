@@ -73,7 +73,7 @@ void checkIPversions()
 	testsocket = socket(PF_INET6, SOCK_STREAM, 0);
 	hasv6 = (errno == EAFNOSUPPORT || errno == EPROTONOSUPPORT) ? false : true;
 	if (!(testsocket < 0)) close(testsocket);
-	
+
 	if(!hasv4)
 	{
 		Log_info("IPv4 is not supported by this system");
@@ -95,11 +95,18 @@ void checkIPversions()
 struct sockaddr_storage** Server_setupAddressesAndPorts()
 {
 	struct sockaddr_storage** addresses = calloc(2, sizeof(void*));
+	if(!addresses)
+		Log_fatal("Not enough memory to allocate addresses");
 
 	struct sockaddr_storage* v4address = calloc(1, sizeof(struct sockaddr_storage));
 	v4address->ss_family = AF_INET;
+	if(!v4address)
+		Log_fatal("Not enough memory to allocate IPv4 address");
+
 	struct sockaddr_storage* v6address = calloc(1, sizeof(struct sockaddr_storage));
 	v6address->ss_family = AF_INET6;
+	if(!v4address)
+		Log_fatal("Not enough memory to allocate IPv6 address");
 
 #if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
 	v4address->ss_len = sizeof(struct sockaddr_storage);

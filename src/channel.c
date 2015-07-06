@@ -221,8 +221,10 @@ void Chan_init()
 					  chlink.destination);
 		else
 			ch_dst = ch_itr;
-		
+
 		chl = malloc(sizeof(channellist_t));
+		if(!chl)
+			Log_fatal("Out of memory");
 		chl->chan = ch_dst;
 		init_list_entry(&chl->node);
 		list_add_tail(&chl->node, &ch_src->channel_links);
@@ -381,6 +383,8 @@ void Chan_buildTreeList(channel_t *ch, struct dlist *head)
 	channel_t *sub;
 
 	chl = malloc(sizeof(channellist_t));
+	if(!chl)
+		Log_fatal("Out of memory");
 	chl->chan = ch;
 	init_list_entry(&chl->node);
 	list_add_tail(&chl->node, head);
