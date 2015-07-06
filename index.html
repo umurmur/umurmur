@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>Umurmur by umurmur</title>
+    <title>uMurmur by umurmur</title>
     <link rel="stylesheet" href="stylesheets/styles.css">
     <link rel="stylesheet" href="stylesheets/github-dark.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
@@ -31,7 +31,7 @@
 
       <section>
         <div id="title">
-          <h1>Umurmur</h1>
+          <h1>uMurmur</h1>
           <p>Minimalistic Murmur</p>
           <hr>
           <span class="credits left">Project maintained by <a href="https://github.com/umurmur">umurmur</a></span>
@@ -39,59 +39,14 @@
         </div>
 
         <h1>
-<a id="umurmur---minimalistic-mumble-server" class="anchor" href="#umurmur---minimalistic-mumble-server" aria-hidden="true"><span class="octicon octicon-link"></span></a>About uMurmur</h1>
+<a id="about-umurmur" class="anchor" href="#about-umurmur" aria-hidden="true"><span class="octicon octicon-link"></span></a>About uMurmur</h1>
 
 <p>uMurmur is a minimalistic Mumble server primarily targeted to run on embedded computers, like routers, with an open OS like e.g. OpenWRT. The server part of Mumble is called Murmur, hence the name uMurmur. It is available as a precompiled package for quite a lot distributions. Check your distribution's package repository.</p>
 
 <h2>
 <a id="instructions-for-building-from-source" class="anchor" href="#instructions-for-building-from-source" aria-hidden="true"><span class="octicon octicon-link"></span></a>Instructions for building from source</h2>
 
-<ol>
-<li>
-<p>Requirements</p>
-
-<ul>
-<li>
-<a href="http://www.openssl.org/">OpenSSL</a> or <a href="http://polarssl.org/">PolarSSL</a> library. For PolarSSL version 1.0.0 and above is required.</li>
-<li><a href="http://www.hyperrealm.com/libconfig/">libconfig</a></li>
-<li>
-<a href="http://code.google.com/p/protobuf-c/">libprotoc-c</a> version 1.0.0 (use --disable-protoc option in its ./configure to build only the library). If you for some reason have to run an earlier version you need to recompile the protocol file <code>Mumble.proto</code> using the protobuf compiler for the corresponding version.</li>
-<li>
-<a href="http://cmake.org">CMake</a> (optional)</li>
-</ul>
-</li>
-<li>
-<p>Build - CMake</p>
-
-<ul>
-<li>Create a build folder and cd into it</li>
-<li>
-<code>cmake ../</code> to use default settings (polarssl, no test-cert and /dev/urandom as source for randomness).</li>
-<li><code>make</code></li>
-</ul>
-</li>
-<li>
-<p>Build - Autotools</p>
-
-<ul>
-<li>Run <code>./autogen.sh</code>
-</li>
-<li>Run <code>./configure</code> for default settings</li>
-<li><code>make</code></li>
-</ul>
-</li>
-<li>
-<p>Install</p>
-
-<ul>
-<li><code>make install</code></li>
-<li>Edit the umurmur.conf found in the 'etc' folder in the prefix (eg. /usr/local) you installed to.</li>
-</ul>
-</li>
-<li><p>Run <code>umurmurd -c &lt;conf file&gt; -p &lt;PID file&gt; -r</code>. For other switches and their meaning run <code>umurmurd -h</code></p></li>
-</ol>
-
-<p>A startup script can easily be created if you want to. Just copy an existing script and edit it to your liking.</p>
+<p><a href="https://github.com/umurmur/umurmur/wiki/Building">Build instructions</a> can be found in the <a href="https://github.com/umurmur/umurmur/wiki">wiki</a>.</p>
 
 <h2>
 <a id="contributors" class="anchor" href="#contributors" aria-hidden="true"><span class="octicon octicon-link"></span></a>Contributors</h2>
@@ -114,6 +69,8 @@
 
 <h2>
 <a id="supportcontactdocumentation" class="anchor" href="#supportcontactdocumentation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Support/Contact/Documentation</h2>
+
+<p>Please consult the <a href="https://github.com/umurmur/umurmur/wiki">wiki</a> and use the <a href="https://github.com/umurmur/umurmur/issues">issue tracker</a> to report problems with uMurmur or to submit feature requests.</p>
 
 <p>Have fun!</p>
       </section>
