@@ -8,6 +8,10 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH true)
 set(UMURMUR_ROOT_PATH "${CMAKE_CURRENT_LIST_DIR}")
 set(UMURMUR_BINARY_DIR ${CMAKE_BINARY_DIR})
 
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "The type of build product that should be produced.")
+endif(NOT CMAKE_BUILD_TYPE)
+
 option(USE_POLARSSL_TESTCERT "Link to the PolarSSL test certificate and key." OFF)
 option(USE_POLARSSL_HAVEGE "Use the PolarSSL HAVEGE random generator key." OFF)
 
@@ -34,6 +38,11 @@ if("${SSL}" STREQUAL "openssl")
     set(SSLIMP_LIBRARIES ${OPENSSL_LIBRARIES})
     set(SSLIMP_INCLUDE_DIR ${OPENSSL_INCLUDE_DIR})
     set(SSLIMP_LIBRARY_DIR ${OPENSSL_LIB_DIR})
+
+    if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-deprecated-declarations")
+    endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+
   endif(OPENSSL_FOUND)
 elseif("${SSL}" STREQUAL "polarssl")
   find_package(PolarSSL REQUIRED)

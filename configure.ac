@@ -53,6 +53,7 @@ AC_CHECK_LIB([config], [config_init], [], [AC_MSG_ERROR([could not find libconfi
 case $host_os in
   darwin* )
     AC_CHECK_FUNC([clock_get_time], [], [AC_MSG_ERROR([could not find clock_get_time()])])
+    CFLAGS+=" -Wno-deprecated-declarations"
     ;;
   * )
     AC_CHECK_FUNC([clock_gettime], [], [AC_CHECK_LIB([rt], [clock_gettime], [], [AC_MSG_ERROR([could not find clock_gettime() in librt])])])
