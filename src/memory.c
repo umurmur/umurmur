@@ -36,7 +36,7 @@
 
 void * Memory_safeMalloc(size_t nmem, size_t size) {
 	// Check if we're going to overflow.
-	if (size && num > SIZE_MAX / size)
+	if (size && nmem > SIZE_MAX / size)
 		Log_fatal("Request for memory would've overflowed.");
 
 	// Allocate the memory requested.
