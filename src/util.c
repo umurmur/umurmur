@@ -35,9 +35,13 @@ char* Util_addressToString(struct sockaddr_storage *address)
 
 	if (address->ss_family == AF_INET) {
 		addressString = malloc(INET_ADDRSTRLEN);
+		if (!addressString)
+			Log_fatal("Out of memory");
 		inet_ntop(AF_INET, &((struct sockaddr_in *)address)->sin_addr, addressString, INET_ADDRSTRLEN);
 	} else if(address->ss_family == AF_INET6) {
 		addressString = malloc(INET6_ADDRSTRLEN);
+		if (!addressString)
+			Log_fatal("Out of memory");
 		inet_ntop(AF_INET6, &((struct sockaddr_in6 *)address)->sin6_addr, addressString, INET6_ADDRSTRLEN);
 	}
 
