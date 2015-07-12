@@ -99,14 +99,14 @@ struct sockaddr_storage** Server_setupAddressesAndPorts()
 		Log_fatal("Not enough memory to allocate addresses");
 
 	struct sockaddr_storage* v4address = calloc(1, sizeof(struct sockaddr_storage));
-	v4address->ss_family = AF_INET;
 	if(!v4address)
 		Log_fatal("Not enough memory to allocate IPv4 address");
+	v4address->ss_family = AF_INET;
 
 	struct sockaddr_storage* v6address = calloc(1, sizeof(struct sockaddr_storage));
-	v6address->ss_family = AF_INET6;
-	if(!v4address)
+	if(!v6address)
 		Log_fatal("Not enough memory to allocate IPv6 address");
+	v6address->ss_family = AF_INET6;
 
 #if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
 	v4address->ss_len = sizeof(struct sockaddr_storage);
