@@ -14,6 +14,7 @@ set(SOURCE_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/timer.c
   ${CMAKE_CURRENT_SOURCE_DIR}/util.c
   ${CMAKE_CURRENT_SOURCE_DIR}/voicetarget.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/memory.c
   )
 
 if(SSL MATCHES "openssl")

@@ -262,7 +262,7 @@ void Server_setupUDPSockets(struct sockaddr_storage* addresses[2], struct pollfd
 	int val = 0;
 	int sockets[2] = {-1, -1};
 
-	udpsocks = Memory_safeCalloc(nofServerSocks / 2, sizeof(int))
+	udpsocks = Memory_safeCalloc(nofServerSocks / 2, sizeof(int));
 
 	if (hasv4) {
 		sockets[0] = socket(PF_INET, SOCK_DGRAM, 0);
@@ -315,7 +315,7 @@ void Server_run()
 	checkIPversions();
 
 	/* max clients + server sokets + client connecting that will be disconnected */
-	pollfds = Memory_safeCalloc((getIntConf(MAX_CLIENTS) + nofServerSocks + 1) , sizeof(struct pollfd))
+	pollfds = Memory_safeCalloc((getIntConf(MAX_CLIENTS) + nofServerSocks + 1) , sizeof(struct pollfd));
 
 	/* Figure out bind address and port */
 	struct sockaddr_storage** addresses = Server_setupAddressesAndPorts();
