@@ -49,6 +49,21 @@
 #define CRYPT_AES_ENCRYPT(src, dst, cryptstate) aes_crypt_ecb(&(cryptstate)->encrypt_key, AES_ENCRYPT, (unsigned char *)(src), (unsigned char *)(dst));
 #define CRYPT_AES_DECRYPT(src, dst, cryptstate) aes_crypt_ecb(&(cryptstate)->decrypt_key, AES_DECRYPT, (unsigned char *)(src), (unsigned char *)(dst));
 
+#elif defined(USE_MBEDTLS)
+
+#include <mbedtls/havege.h>
+#include <mbedtls/aes.h>
+
+#define CRYPT_AES_KEY mbedtls_aes_context
+#define AES_BLOCK_SIZE 16
+
+#define CRYPT_RANDOM_BYTES(dest, size) RAND_bytes((unsigned char *)(dest), (size))
+#define CRYPT_SET_ENC_KEY(dest, source, size) mbedtls_aes_setkey_enc((dest), (source), (size));
+#define CRYPT_SET_DEC_KEY(dest, source, size) mbedtls_aes_setkey_dec((dest), (source), (size));
+
+#define CRYPT_AES_ENCRYPT(src, dst, cryptstate) mbedtls_aes_crypt_ecb(&(cryptstate)->encrypt_key, MBEDTLS_AES_ENCRYPT, (unsigned char *)(src), (unsigned char *)(dst));
+#define CRYPT_AES_DECRYPT(src, dst, cryptstate) mbedtls_aes_crypt_ecb(&(cryptstate)->decrypt_key, MBEDTLS_AES_DECRYPT, (unsigned char *)(src), (unsigned char *)(dst));
+
 #elif defined(USE_GNUTLS)
 
 #include <nettle/aes.h>

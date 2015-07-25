@@ -38,10 +38,12 @@ AC_CANONICAL_HOST
 AM_SILENT_RULES([yes])
 
 # Configure options.
-AC_ARG_WITH([ssl], [AC_HELP_STRING([--with-ssl=@<:@LIB@:>@], [SSL library (openssl|polarssl|gnutls) @<:@default=polarssl@:>@])], [], [with_ssl=polarssl])
+AC_ARG_WITH([ssl], [AC_HELP_STRING([--with-ssl=@<:@LIB@:>@], [SSL library (openssl|polarssl|gnutls|mbedtls) @<:@default=polarssl@:>@])], [], [with_ssl=polarssl])
 AC_ARG_ENABLE([shmapi], [AC_HELP_STRING([--enable-shmapi], [compile with Sharedmemory API support @<:@default=no@:>@])],[],[enable_shmapi=no] )
 AC_ARG_ENABLE(polarssl-test-cert, [  --enable-polarssl-test-cert  Link to PolarSSL test certificate and key @<:@default=no@:>@], [enable_polarssl_test_cert=yes])
 AC_ARG_ENABLE(polarssl-havege, [  --enable-polarssl-havege  Link to PolarSSL HAVEGE random generator key @<:@default=no@:>@ Default: /dev/urandom], [enable_polarssl_havege=yes])
+AC_ARG_ENABLE(mbedtls-test-cert, [  --enable-mbedtls-test-cert  Link to mbedTLS test certificate and key @<:@default=no@:>@], [enable_mbedtls_test_cert=yes])
+AC_ARG_ENABLE(mbedtls-havege, [  --enable-mbedtls-havege  Link to mbedTLS HAVEGE random generator key @<:@default=no@:>@ Default: /dev/urandom], [enable_mbedtls_havege=yes])
 
 # Checks for programs.
 AC_PROG_CC
@@ -83,6 +85,31 @@ AS_IF([test "x$with_ssl" = xpolarssl], [
 	    AC_DEFINE([USE_POLARSSL_HAVEGE], [], [Use PolarSSL HAVEGE random generator])
     ])
 ])
+AS_IF([test "x$with_ssl" = xmbedtls], [
+	AC_CHECK_HEADERS([mbedtls/ssl.h], [], [AC_MSG_ERROR([could not find mbedtls/ssl.h])])
+	AC_CHECK_HEADERS([mbedtls/version.h], [], [AC_MSG_ERROR([could not find mbedtls/version.h])])
+
+	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <mbedtls/ssl.h>]],
+		[[#if defined(MBEDTLS_ZLIB_SUPPORT)
+		int x;
+		#endif
+		x = 0;
+		return 0;]])],
+		[AC_CHECK_LIB([z], [deflate], [], [AC_MSG_ERROR([could not find zlib])])],
+		[])
+	AC_CHECK_LIB([mbedtls], [mbedtls_ssl_init], [], [AC_MSG_ERROR([could not find libmbedtls])], [-lmbedcrypto -lmbedx509])
+	AC_CHECK_LIB([mbedcrypto], [mbedtls_cipher_setup], [], [AC_MSG_ERROR([could not find libmbedcrypto])], [-lmbedtls -lmbedx509])
+	AC_CHECK_LIB([mbedx509], [mbedtls_x509_crt_init], [], [AC_MSG_ERROR([could not find libmbedx509])], [-lmbedcrypto -lmbedtls])
+	AC_DEFINE([USE_MBEDTLS], [], [Use mbedTLS])
+    AS_IF([test "x$enable_mbedtls_test_cert" = xyes], [
+	    AC_CHECK_LIB([mbedtls], [test_srv_crt], [], [AC_MSG_ERROR([could not find test_srv_crt])])
+	    AC_DEFINE([USE_MBEDTLS_TESTCERT], [], [Use mbedTLS test certificate])
+    ])
+    AS_IF([test "x$enable_mbedtls_havege" = xyes], [
+	    AC_CHECK_LIB([mbedtls], [havege_init], [], [AC_MSG_ERROR([could not find havege_init])])
+	    AC_DEFINE([USE_MBEDTLS_HAVEGE], [], [Use mbedTLS HAVEGE random generator])
+    ])
+])
 AS_IF([test "x$with_ssl" = xopenssl], [
 	AC_CHECK_HEADERS([openssl/ssl.h], [], [AC_MSG_ERROR([could not find openssl/ssl.h])])
 	AC_CHECK_LIB([crypto], [BN_init], [], [AC_MSG_ERROR([could not find libcrypto])])
@@ -103,6 +130,7 @@ AS_IF([test "x$with_ssl" = xgnutls], [
 
 AM_CONDITIONAL(USE_OPENSSL, test x$with_ssl = xopenssl)
 AM_CONDITIONAL(USE_GNUTLS, test x$with_ssl = xgnutls)
+AM_CONDITIONAL(USE_MBEDTLS, test x$with_ssl = xmbedtls)
 
 AS_IF([test "x$enable_shmapi" != xno],
 	[
