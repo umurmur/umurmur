@@ -18,7 +18,7 @@ typedef struct
   float UDPPingAvg, UDPPingVar, TCPPingAvg, TCPPingVar;
   uint32_t UDPPackets, TCPPackets;
 
-}shmclient_t;
+} shmclient_t;
 
 typedef struct
 {
@@ -29,4 +29,4 @@ typedef struct
   uint8_t alive;
   shmclient_t client[];
 
-}shm_t;
+} shm_t;

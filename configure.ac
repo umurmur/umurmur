@@ -32,9 +32,10 @@
 AC_PREREQ([2.63])
 AC_INIT([umurmur], [0.2.16], [https://github.com/umurmur/umurmur/issues/new], [umurmur], [http://github.com/umurmur/umurmur])
 AC_CONFIG_SRCDIR([src/client.h])
-AC_CONFIG_HEADERS([src/config.h])
+AC_CONFIG_HEADERS([src/config.h:config.h.in])
 AM_INIT_AUTOMAKE
 AC_CANONICAL_HOST
+AM_SILENT_RULES([yes])
 
 # Configure options.
 AC_ARG_WITH([ssl], [AC_HELP_STRING([--with-ssl=@<:@LIB@:>@], [SSL library (openssl|polarssl|gnutls) @<:@default=polarssl@:>@])], [], [with_ssl=polarssl])
@@ -53,6 +54,7 @@ AC_CHECK_LIB([config], [config_init], [], [AC_MSG_ERROR([could not find libconfi
 case $host_os in
   darwin* )
     AC_CHECK_FUNC([clock_get_time], [], [AC_MSG_ERROR([could not find clock_get_time()])])
+    CFLAGS+=" -Wno-deprecated-declarations"
     ;;
   * )
     AC_CHECK_FUNC([clock_gettime], [], [AC_CHECK_LIB([rt], [clock_gettime], [], [AC_MSG_ERROR([could not find clock_gettime() in librt])])])
@@ -110,8 +112,6 @@ AS_IF([test "x$enable_shmapi" != xno],
 	], [
 	AM_CONDITIONAL(USE_SHAREDMEMORY_API, false)
 ])
-
-
 
 AC_DEFINE([DEFAULT_CONFIG], ["/etc/umurmur.conf"], [Default config])
 

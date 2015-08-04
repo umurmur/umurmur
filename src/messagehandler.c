@@ -285,6 +285,9 @@ void Mh_handle_message(client_t *client, message_t *msg)
 				sendmsg->payload.channelState->n_links = ch_itr->linkcount;
 
 				links = (uint32_t *)malloc(ch_itr->linkcount * sizeof(uint32_t));
+				if(!links)
+					Log_fatal("Out of memory");
+
 				list_iterate(itr, &ch_itr->channel_links) { /* Iterate links */
 					channellist_t *chl;
 					channel_t *ch;
