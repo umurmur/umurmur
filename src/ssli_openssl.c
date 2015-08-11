@@ -158,7 +158,7 @@ static void SSL_initializeCert() {
 	char *key = (char *)getStrConf(KEY);
 
 	if (context) {
-		bool did_load_cert = SSL_CTX_use_certificate_chain_file(context, crt);
+		bool_t did_load_cert = SSL_CTX_use_certificate_chain_file(context, crt);
 		rsa = SSL_readprivatekey(key);
 
 		if (!rsa || !did_load_cert) {
