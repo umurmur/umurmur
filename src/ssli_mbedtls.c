@@ -175,9 +175,12 @@ static void pssl_debug(void *ctx, int level, const char *file, int line, const c
 		Log_info("mbedTLS [level %d]: %s", level, str);
 }
 
+mbedtls_ssl_config *conf;
+
 void SSLi_init(void)
 {
 	char verstring[12];
+	int rc;
 
 	initCert();
 #ifdef USE_MBEDTLS_TESTCERT
@@ -201,6 +204,38 @@ void SSLi_init(void)
 	    Log_fatal("Cannot open /dev/urandom");
 #endif
 
+	/* Initialize config */
+	conf = calloc(1, sizeof(mbedtls_ssl_config));
+
+	if (!conf)
+		Log_fatal("Out of memory");
+
+	mbedtls_ssl_config_init(conf);
+
+	if((rc = mbedtls_ssl_config_defaults(conf,
+			MBEDTLS_SSL_IS_SERVER,
+			MBEDTLS_SSL_TRANSPORT_STREAM,
+			MBEDTLS_SSL_PRESET_DEFAULT)) != 0)
+		Log_fatal("mbedtls_ssl_config_defaults returned %d", rc);
+
+	mbedtls_ssl_conf_authmode(conf, MBEDTLS_SSL_VERIFY_OPTIONAL);
+#ifdef USE_MBEDTLS_HAVEGE
+	mbedtls_ssl_conf_rng(conf, HAVEGE_RAND, &hs);
+#else
+	mbedtls_ssl_conf_rng(conf, urandom_bytes, NULL);
+#endif
+	mbedtls_ssl_conf_dbg(conf, pssl_debug, NULL);
+
+	mbedtls_ssl_conf_ciphersuites(conf, (const int*)&ciphers);
+
+	mbedtls_ssl_conf_ca_chain(conf, &certificate, NULL);
+
+	if((rc = mbedtls_ssl_conf_own_cert(conf, &certificate, &key)) != 0)
+		Log_fatal("mbedtls_ssl_conf_own_cert returned %d", rc);
+
+	if((rc = mbedtls_ssl_conf_dh_param(conf, my_dhm_P, my_dhm_G)) != 0)
+		Log_fatal("mbedtls_ssl_conf_dh_param returned %d", rc);
+
 #ifdef MBEDTLS_VERSION_FEATURES
     mbedtls_version_get_string(verstring);
     Log_info("mbedTLS library version %s initialized", verstring);
@@ -211,6 +246,8 @@ void SSLi_init(void)
 
 void SSLi_deinit(void)
 {
+	mbedtls_ssl_config_free(conf);
+	free(conf);
 	mbedtls_x509_crt_free(&certificate);
 	mbedtls_pk_free(&key);
 }
@@ -232,43 +269,18 @@ SSL_handle_t *SSLi_newconnection(int *fd, bool_t *SSLready)
 {
 	mbedtls_ssl_context *ssl;
 	mbedtls_ssl_session *ssn;
-	mbedtls_ssl_config *conf;
 	int rc;
 
 	ssl = calloc(1, sizeof(mbedtls_ssl_context));
 	ssn = calloc(1, sizeof(mbedtls_ssl_session));
-	conf = calloc(1, sizeof(mbedtls_ssl_config));
 
-	if (!ssl || !ssn || !conf)
+	if (!ssl || !ssn)
 		Log_fatal("Out of memory");
 
 	mbedtls_ssl_init(ssl);
-	mbedtls_ssl_config_init(conf);
-
-	if((rc = mbedtls_ssl_config_defaults(conf,
-			MBEDTLS_SSL_IS_SERVER,
-			MBEDTLS_SSL_TRANSPORT_STREAM,
-			MBEDTLS_SSL_PRESET_DEFAULT)) != 0)
-		Log_fatal("mbedtls_ssl_config_defaults returned %d", rc);
-
-	mbedtls_ssl_conf_authmode(conf, MBEDTLS_SSL_VERIFY_OPTIONAL);
-#ifdef USE_MBEDTLS_HAVEGE
-	mbedtls_ssl_conf_rng(conf, HAVEGE_RAND, &hs);
-#else
-	mbedtls_ssl_conf_rng(conf, urandom_bytes, NULL);
-#endif
-	mbedtls_ssl_conf_dbg(conf, pssl_debug, NULL);
 	mbedtls_ssl_set_bio(ssl, fd, mbedtls_net_send, mbedtls_net_recv, NULL);
-	mbedtls_ssl_conf_ciphersuites(conf, (const int*)&ciphers);
 	mbedtls_ssl_set_session(ssl, ssn);
-	mbedtls_ssl_conf_ca_chain(conf, &certificate, NULL);
-
-	if((rc = mbedtls_ssl_conf_own_cert(conf, &certificate, &key)) != 0)
-		Log_fatal("mbedtls_ssl_conf_own_cert returned %d", rc);
-
-	if((rc = mbedtls_ssl_conf_dh_param(conf, my_dhm_P, my_dhm_G)) != 0)
-		Log_fatal("mbedtls_ssl_conf_dh_param returned %d", rc);
-
+	
 	if((rc = mbedtls_ssl_setup(ssl, conf)) != 0)
 		Log_fatal("mbedtls_ssl_setup returned %d", rc);
 
@@ -332,9 +344,7 @@ void SSLi_shutdown(SSL_handle_t *ssl)
 void SSLi_free(SSL_handle_t *ssl)
 {
 	Log_debug("SSLi_free");
-	mbedtls_ssl_config_free((mbedtls_ssl_config*)ssl->conf);
 	mbedtls_ssl_free(ssl);
-	free((mbedtls_ssl_config*)ssl->conf);
 	free(ssl);
 }
 
