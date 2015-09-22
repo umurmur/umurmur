@@ -32,6 +32,7 @@
 #include "conf.h"
 #include "log.h"
 #include "ssl.h"
+#include "memory.h"
 
 #include <stdlib.h>
 #include <fcntl.h>
@@ -205,7 +206,7 @@ void SSLi_init(void)
 #endif
 
 	/* Initialize config */
-	conf = calloc(1, sizeof(mbedtls_ssl_config));
+	conf = Memory_safeCalloc(1, sizeof(mbedtls_ssl_config));
 
 	if (!conf)
 		Log_fatal("Out of memory");
@@ -271,8 +272,8 @@ SSL_handle_t *SSLi_newconnection(int *fd, bool_t *SSLready)
 	mbedtls_ssl_session *ssn;
 	int rc;
 
-	ssl = calloc(1, sizeof(mbedtls_ssl_context));
-	ssn = calloc(1, sizeof(mbedtls_ssl_session));
+	ssl = Memory_safeCalloc(1, sizeof(mbedtls_ssl_context));
+	ssn = Memory_safeCalloc(1, sizeof(mbedtls_ssl_session));
 
 	if (!ssl || !ssn)
 		Log_fatal("Out of memory");
@@ -280,7 +281,7 @@ SSL_handle_t *SSLi_newconnection(int *fd, bool_t *SSLready)
 	mbedtls_ssl_init(ssl);
 	mbedtls_ssl_set_bio(ssl, fd, mbedtls_net_send, mbedtls_net_recv, NULL);
 	mbedtls_ssl_set_session(ssl, ssn);
-	
+
 	if((rc = mbedtls_ssl_setup(ssl, conf)) != 0)
 		Log_fatal("mbedtls_ssl_setup returned %d", rc);
 
