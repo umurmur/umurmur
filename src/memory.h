@@ -1,4 +1,5 @@
-/* Copyright (C) 2014, Felix Morgner <felix.morgner@gmail.com>
+/* Copyright (C) 2009-2014, Martin Johansson <martin@fatbob.nu>
+   Copyright (C) 2005-2014, Thorvald Natvig <thorvald@natvig.com>
 
    All rights reserved.
 
@@ -27,49 +28,6 @@
    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#include "util.h"
-#include "memory.h"
 
-char* Util_addressToString(struct sockaddr_storage *address)
-{
-	char* addressString = NULL;
-
-	if (address->ss_family == AF_INET) {
-		addressString = Memory_safeMalloc(1, INET_ADDRSTRLEN);
-		inet_ntop(AF_INET, &((struct sockaddr_in *)address)->sin_addr, addressString, INET_ADDRSTRLEN);
-	} else if(address->ss_family == AF_INET6) {
-		addressString = Memory_safeMalloc(1, INET6_ADDRSTRLEN);
-		inet_ntop(AF_INET6, &((struct sockaddr_in6 *)address)->sin6_addr, addressString, INET6_ADDRSTRLEN);
-	}
-
-	return addressString;
-}
-
-int Util_addressToPort(struct sockaddr_storage *address)
-{
-	int port = 0;
-
-	if (address->ss_family == AF_INET) {
-		port = ntohs(((struct sockaddr_in *)address)->sin_port);
-	} else if(address->ss_family == AF_INET6) {
-		port = ntohs(((struct sockaddr_in6 *)address)->sin6_port);
-	}
-
-	return port;
-}
-
-char* Util_clientAddressToString(client_t *client)
-{
-	return Util_addressToString(&client->remote_tcp);
-}
-
-int Util_clientAddressToPortTCP(client_t *client)
-{
-	return Util_addressToPort(&client->remote_tcp);
-}
-
-int Util_clientAddressToPortUDP(client_t *client)
-{
-	return Util_addressToPort(&client->remote_udp);
-}
-
+void * Memory_safeMalloc(size_t nmem, size_t size);
+void * Memory_safeCalloc(size_t nmem, size_t size);

@@ -32,6 +32,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "log.h"
+#include "memory.h"
 #include "list.h"
 #include "client.h"
 #include "channel.h"
@@ -46,9 +47,7 @@ static channel_t *createChannel(int id, const char *name, const char *desc)
 {
 	channel_t *ch;
 
-	ch = malloc(sizeof(channel_t));
-	if (ch == NULL)
-		Log_fatal("out of memory");
+	ch = Memory_safeMalloc(1, sizeof(channel_t));
 	memset(ch, 0, sizeof(channel_t));
 	ch->id = id;
 	ch->name = strdup(name);
@@ -222,9 +221,7 @@ void Chan_init()
 		else
 			ch_dst = ch_itr;
 
-		chl = malloc(sizeof(channellist_t));
-		if(!chl)
-			Log_fatal("Out of memory");
+		chl = Memory_safeMalloc(1, sizeof(channellist_t));
 		chl->chan = ch_dst;
 		init_list_entry(&chl->node);
 		list_add_tail(&chl->node, &ch_src->channel_links);
@@ -382,9 +379,7 @@ void Chan_buildTreeList(channel_t *ch, struct dlist *head)
 	struct dlist *itr;
 	channel_t *sub;
 
-	chl = malloc(sizeof(channellist_t));
-	if(!chl)
-		Log_fatal("Out of memory");
+	chl = Memory_safeMalloc(1, sizeof(channellist_t));
 	chl->chan = ch;
 	init_list_entry(&chl->node);
 	list_add_tail(&chl->node, head);

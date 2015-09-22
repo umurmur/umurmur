@@ -32,6 +32,7 @@
 #include <stdlib.h>
 
 #include "log.h"
+#include "memory.h"
 #include "list.h"
 #include "client.h"
 #include "messages.h"
@@ -284,10 +285,9 @@ void Mh_handle_message(client_t *client, message_t *msg)
 				sendmsg->payload.channelState->channel_id = ch_itr->id;
 				sendmsg->payload.channelState->n_links = ch_itr->linkcount;
 
-				links = (uint32_t *)malloc(ch_itr->linkcount * sizeof(uint32_t));
-				if(!links)
-					Log_fatal("Out of memory");
-
+				links = (uint32_t*)Memory_safeMalloc(
+					ch_itr->linkcount,
+					sizeof(uint32_t));
 				list_iterate(itr, &ch_itr->channel_links) { /* Iterate links */
 					channellist_t *chl;
 					channel_t *ch;
@@ -498,12 +498,8 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			char *message;
 			uint32_t *tree_id;
 
-			message = malloc(strlen(client->username) + 32);
-			if (!message)
-				Log_fatal("Out of memory");
-			tree_id = malloc(sizeof(uint32_t));
-			if (!tree_id)
-				Log_fatal("Out of memory");
+			message = Memory_safeMalloc(1, strlen(client->username) + 32);
+			tree_id = Memory_safeMalloc(1, sizeof(uint32_t));
 			*tree_id = 0;
 			sendmsg = Msg_create(TextMessage);
 			sendmsg->payload.textMessage->message = message;
@@ -560,9 +556,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		if (msg->payload.userState->has_plugin_context) {
 			if (client->context)
 				free(client->context);
-			client->context = malloc(msg->payload.userState->plugin_context.len);
-			if (client->context == NULL)
-				Log_fatal("Out of memory");
+			client->context = Memory_safeMalloc(1, msg->payload.userState->plugin_context.len);
 			memcpy(client->context, msg->payload.userState->plugin_context.data,
 				   msg->payload.userState->plugin_context.len);
 
@@ -866,9 +860,8 @@ void Mh_handle_message(client_t *client, message_t *msg)
 				sendmsg->payload.userStats->version->os_version = strdup(target->os_version);
 
 			sendmsg->payload.userStats->n_celt_versions = target->codec_count;
-			sendmsg->payload.userStats->celt_versions = malloc(sizeof(int32_t) * target->codec_count);
-			if (!sendmsg->payload.userStats->celt_versions)
-				Log_fatal("Out of memory");
+			sendmsg->payload.userStats->celt_versions
+				= Memory_safeMalloc(target->codec_count, sizeof(int32_t));
 			i = 0;
 			while (Client_codec_iterate(target, &codec_itr) != NULL)
 				sendmsg->payload.userStats->celt_versions[i++] = codec_itr->codec;
@@ -878,9 +871,8 @@ void Mh_handle_message(client_t *client, message_t *msg)
 
 			/* Address */
 			sendmsg->payload.userStats->has_address = true;
-			sendmsg->payload.userStats->address.data = malloc(sizeof(uint8_t) * 16);
-			if (!sendmsg->payload.userStats->address.data)
-				Log_fatal("Out of memory");
+			sendmsg->payload.userStats->address.data
+				= Memory_safeMalloc(16, sizeof(uint8_t));
 			memset(sendmsg->payload.userStats->address.data, 0, 16);
 			/* ipv4 representation as ipv6 address. Supposedly correct. */
 			memset(&sendmsg->payload.userStats->address.data[10], 0xff, 2); /* IPv4 */

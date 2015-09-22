@@ -33,6 +33,7 @@
 
 #include "conf.h"
 #include "log.h"
+#include "memory.h"
 #include "ssl.h"
 
 /*
@@ -250,9 +251,7 @@ void SSLi_init(void)
 			Log_debug("%s", SSL_CIPHER_get_name(cipher));
 			cipherstringlen += strlen(SSL_CIPHER_get_name(cipher)) + 1;
 		}
-		cipherstring = malloc(cipherstringlen + 1);
-		if (cipherstring == NULL)
-			Log_fatal("Out of memory");
+		cipherstring = Memory_safeMalloc(1, cipherstringlen + 1);
 		for (i = 0; (cipher = sk_SSL_CIPHER_value(cipherlist_new, i)) != NULL; i++) {
 			offset += sprintf(cipherstring + offset, "%s:", SSL_CIPHER_get_name(cipher));
 		}
@@ -328,10 +327,7 @@ bool_t SSLi_getSHA1Hash(SSL_handle_t *ssl, uint8_t *hash)
 	}
 
 	len = i2d_X509(x509, NULL);
-	buf = malloc(len);
-	if (buf == NULL) {
-		Log_fatal("malloc");
-	}
+	buf = Memory_safeMalloc(1, len);
 
 	p = buf;
 	i2d_X509(x509, &p);

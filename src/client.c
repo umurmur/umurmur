@@ -36,6 +36,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "log.h"
+#include "memory.h"
 #include "list.h"
 #include "client.h"
 #include "ssl.h"
@@ -115,9 +116,7 @@ void Client_janitor()
 
 void Client_codec_add(client_t *client, int codec)
 {
-	codec_t *cd = malloc(sizeof(codec_t));
-	if (cd == NULL)
-		Log_fatal("Out of memory");
+	codec_t *cd = Memory_safeMalloc(1, sizeof(codec_t));
 	init_list_entry(&cd->node);
 	cd->codec = codec;
 	list_add_tail(&cd->node, &client->codecs);
@@ -157,9 +156,7 @@ void Client_token_add(client_t *client, char *token_string)
 
 	if (client->tokencount >= MAX_TOKENS)
 		return;
-	token = malloc(sizeof(token_t));
-	if (token == NULL)
-		Log_fatal("Out of memory");
+	token = Memory_safeMalloc(1, sizeof(token_t));
 	init_list_entry(&token->node);
 	token->token = strdup(token_string);
 	if (token->token == NULL)
@@ -227,9 +224,7 @@ void recheckCodecVersions(client_t *connectingClient)
 				}
 			}
 			if (!found) {
-				cd = malloc(sizeof(codec_t));
-				if (!cd)
-					Log_fatal("Out of memory");
+				cd = Memory_safeMalloc(1, sizeof(codec_t));
 				memset(cd, 0, sizeof(codec_t));
 				init_list_entry(&cd->node);
 				cd->codec = codec_itr->codec;
@@ -332,8 +327,7 @@ int Client_add(int fd, struct sockaddr_storage *remote)
 		return -1;
 	}
 
-	if ((newclient = calloc(1, sizeof(client_t))) == NULL)
-		Log_fatal("(%s:%s): Out of memory while allocating %d bytes.", __FILE__, __LINE__, sizeof(client_t));
+	newclient = Memory_safeCalloc(1, sizeof(client_t));
 
 	newclient->tcpfd = fd;
 	memcpy(&newclient->remote_tcp, remote, sizeof(struct sockaddr_storage));
@@ -675,12 +669,8 @@ void Client_textmessage(client_t *client, char *text)
 	uint32_t *tree_id;
 	message_t *sendmsg = NULL;
 
-	message = malloc(strlen(text) + 1);
-	if (!message)
-		Log_fatal("Out of memory");
-	tree_id = malloc(sizeof(uint32_t));
-	if (!tree_id)
-		Log_fatal("Out of memory");
+	message = Memory_safeMalloc(1, strlen(text) + 1);
+	tree_id = Memory_safeMalloc(1, sizeof(uint32_t));
 	*tree_id = 0;
 	sendmsg = Msg_create(TextMessage);
 	sendmsg->payload.textMessage->message = message;
@@ -1029,14 +1019,11 @@ static int Client_send_udp(client_t *client, uint8_t *data, int len)
 	if (Util_clientAddressToPortUDP(client) != 0 && CryptState_isValid(&client->cryptState) &&
 		client->bUDP) {
 #if defined(__LP64__)
-		buf = mbuf = malloc(len + 4 + 16);
+		buf = mbuf = Memory_safeMalloc(1, len + 4 + 16);
 		buf += 4;
 #else
-		mbuf = buf = malloc(len + 4);
+		mbuf = buf = Memory_safeMalloc(1, len + 4);
 #endif
-		if (mbuf == NULL)
-			Log_fatal("Out of memory");
-
 		CryptState_encrypt(&client->cryptState, data, buf, len);
 
 #if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)

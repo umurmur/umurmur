@@ -30,6 +30,7 @@
 */
 #include "conf.h"
 #include "log.h"
+#include "memory.h"
 #include "ssl.h"
 
 #include <stdlib.h>
@@ -269,10 +270,8 @@ SSL_handle_t *SSLi_newconnection(int *fd, bool_t *SSLready)
 	ssl_session *ssn;
 	int rc;
 
-	ssl = calloc(1, sizeof(ssl_context));
-	ssn = calloc(1, sizeof(ssl_session));
-	if (!ssl || !ssn)
-		Log_fatal("Out of memory");
+	ssl = Memory_safeCalloc(1, sizeof(ssl_context));
+	ssn = Memory_safeCalloc(1, sizeof(ssl_session));
 
 	rc = ssl_init(ssl);
 	if (rc != 0 )

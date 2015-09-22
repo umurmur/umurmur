@@ -32,6 +32,7 @@
 #include <stdlib.h>
 #include "pds.h"
 #include "log.h"
+#include "memory.h"
 
 /*
  * Data serialization functions below
@@ -117,9 +118,7 @@ static inline uint64_t next(pds_t *pds)
 
 pds_t *Pds_create(uint8_t *buf, int size)
 {
-	pds_t *pds = malloc(sizeof(pds_t));
-	if (pds == NULL)
-		Log_fatal("Out of memory");
+	pds_t *pds = Memory_safeMalloc(1, sizeof(pds_t));
 	pds->data = buf;
 	pds->offset = pds->overshoot = 0;
 	pds->maxsize = size;
