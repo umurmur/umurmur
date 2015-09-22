@@ -30,6 +30,7 @@
 */
 #include <stdint.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 #include "log.h"
 #include "memory.h"
