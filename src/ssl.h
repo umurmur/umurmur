@@ -88,6 +88,39 @@ int urandom_bytes(void *ctx, unsigned char *dest, size_t len);
 
 typedef	ssl_context SSL_handle_t;
 
+#elif defined(USE_MBEDTLS)
+#include <mbedtls/ssl.h>
+#include <mbedtls/net.h>
+#include <mbedtls/version.h>
+
+#if defined(MBEDTLS_VERSION_MAJOR)
+#if (MBEDTLS_VERSION_MAJOR < 2)
+#error mbedTLS version 2.0.0 or greater is required!
+#endif
+#else
+#error mbedTLS version 2.0.0 or greater is required!
+#endif
+
+#if defined(USE_MBEDTLS_HAVEGE)
+#include <mbedtls/havege.h>
+    #define HAVEGE_RAND (havege_random)
+    #define RAND_bytes(_dst_, _size_) do { \
+        mbedtls_havege_random(&hs, _dst_, _size_); \
+    } while (0)
+#else
+#define RAND_bytes(_dst_, _size_) do { urandom_bytes(NULL, _dst_, _size_); } while (0)
+int urandom_bytes(void *ctx, unsigned char *dest, size_t len);
+#endif
+
+#define SSLI_ERROR_WANT_READ -0x0F300 /* mbedTLS v0.x.x uses -0x0f00 -> --0x0f90, v1.x.x uses -0x7080 -> -0x7e80 */
+#define SSLI_ERROR_WANT_WRITE -0x0F310
+
+#define SSLI_ERROR_ZERO_RETURN 0
+#define SSLI_ERROR_CONNRESET MBEDTLS_ERR_NET_CONN_RESET
+#define SSLI_ERROR_SYSCALL MBEDTLS_ERR_NET_RECV_FAILED
+
+typedef	mbedtls_ssl_context SSL_handle_t;
+
 #elif defined(USE_GNUTLS)
 
 #include <gnutls/gnutls.h>
