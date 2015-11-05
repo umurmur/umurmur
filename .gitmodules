@@ -3,4 +3,4 @@
 	url = https://github.com/umurmur/umurmur-monitor.git
 [submodule "tools/numurmon"]
 	path = tools/numurmon
-	url = git@github.com:umurmur/numurmon.git
+	url = https://github.com/umurmur/numurmon.git
