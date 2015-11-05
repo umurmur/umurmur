@@ -31,5 +31,23 @@ if(USE_SHAREDMEMORY_API)
   list(APPEND SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sharedmemory.c)
 endif(USE_SHAREDMEMORY_API)
 
-set(SOURCE ${SOURCE} ${SOURCE_FILES} PARENT_SCOPE)
+configure_file(config.h.in ${CMAKE_SOURCE_DIR}/src/config.h)
 
+include_directories(${LIBCONFIG_INCLUDE_DIR}
+                    ${PROTOBUFC_INCLUDE_DIR}
+                    ${SSLIMP_INCLUDE_DIR})
+
+link_directories(${LIBCONFIG_LIB_DIR}
+                 ${PROTOBUFC_LIB_DIR}
+                 ${SSLIMP_LIB_DIR})
+
+add_executable(${PROJECT_NAME} ${SOURCE_FILES})
+
+target_link_libraries(${PROJECT_NAME}
+                      ${LIBCONFIG_LIBRARIES}
+                      ${PROTOBUFC_LIBRARIES}
+                      ${SSLIMP_LIBRARIES}
+                      ${LIBRT}
+                      ${CRYPTO_LIBRARIES})
+
+install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION "bin")
