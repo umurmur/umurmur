@@ -10,8 +10,6 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release CACHE STRING "The type of build product that should be produced." FORCE)
 endif()
 
-include(CheckLibraryExists)
-include(CheckFunctionExists)
 include(SelectTLSBackend)
 include(SelectRTBackend)
 

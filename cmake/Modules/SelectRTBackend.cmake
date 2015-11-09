@@ -1,3 +1,6 @@
+include(CheckLibraryExists)
+include(CheckFunctionExists)
+
 function(SelectRTBackend)
   check_library_exists(rt clock_gettime "time.h" HAVE_CLOCK_GETTIME_RT)
 
