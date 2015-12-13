@@ -106,7 +106,8 @@ AS_IF([test "x$with_ssl" = xmbedtls], [
 	    AC_DEFINE([USE_MBEDTLS_TESTCERT], [], [Use mbedTLS test certificate])
     ])
     AS_IF([test "x$enable_mbedtls_havege" = xyes], [
-	    AC_CHECK_LIB([mbedtls], [havege_init], [], [AC_MSG_ERROR([could not find havege_init])])
+	    AC_CHECK_HEADERS([mbedtls/havege.h], [], [AC_MSG_ERROR([could not find mbedtls/havege.h])])
+	    AC_CHECK_LIB([mbedcrypto], [mbedtls_havege_init], [], [AC_MSG_ERROR([could not find mbedtls_havege_init])])
 	    AC_DEFINE([USE_MBEDTLS_HAVEGE], [], [Use mbedTLS HAVEGE random generator])
     ])
 ])
