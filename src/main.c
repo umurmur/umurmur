@@ -322,13 +322,6 @@ int main(int argc, char **argv)
 			Log_init(false);
 			if (pidfile != NULL)
 				lockfile(pidfile);
-
-			switch_user();
-
-			/* Reopen log file. If user switch results in access denied, we catch
-			 * it early.
-			 */
-			Log_reset();
 		}
 		else Log_init(true);
 
@@ -364,6 +357,12 @@ int main(int argc, char **argv)
 		if (realtime)
 			setscheduler();
 #endif
+
+		switch_user();
+		/* Reopen log file. If user switch results in access denied, we catch
+		 * it early.
+		 */
+		Log_reset();
 
 		Server_run();
 
