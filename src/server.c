@@ -209,7 +209,7 @@ void Server_runLoop(struct pollfd* pollfds)
 
 void Server_setupTCPSockets(struct sockaddr_storage* addresses[2], struct pollfd* pollfds)
 {
-	uint8_t yes = 1;
+	int yes = 1;
 	int sockets[2];
 
 	if (hasv4) {
