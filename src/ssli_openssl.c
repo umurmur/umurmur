@@ -222,7 +222,9 @@ void SSLi_init(void)
 	SSL_load_error_strings();
 	ERR_load_crypto_strings();
 
-	context = SSL_CTX_new(TLSv1_2_server_method());
+	context = SSL_CTX_new(SSLv23_server_method());
+	SSL_CTX_set_options(context, SSL_OP_NO_SSLv2);
+	SSL_CTX_set_options(context, SSL_OP_NO_SSLv3);
 	if (context == NULL)
 	{
 		ERR_print_errors_fp(stderr);
