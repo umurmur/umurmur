@@ -1,4 +1,4 @@
-/* Copyright (C) 2015, Felix Morgner <felix.morgner@gmail.com>
+/* Copyright (C) 2015-2016, Felix Morgner <felix.morgner@gmail.com>
 
    All rights reserved.
 
@@ -38,7 +38,16 @@
 static gnutls_dh_params_t dhParameters;
 static gnutls_certificate_credentials_t certificate;
 
-static const char * ciphers = "NORMAL";
+static const char * ciphers = "NONE:"
+							  "+ECDHE-ECDSA:+ECDHE-RSA:+RSA:"
+							  "+AES-256-GCM:+AES-128-GCM:"
+							  "+AEAD:+SHA384:+SHA256:+SHA1:"
+							  "+CURVE-ALL:"
+							  "+COMP-NULL:"
+							  "+SIGN-ALL:"
+							  "+VERS-TLS1.2:+VERS-TLS1.0:"
+							  "+CTYPE-X509";
+
 static gnutls_priority_t cipherCache;
 
 void initializeCertificate()
@@ -62,31 +71,18 @@ void initializeCertificate()
 	if( error != GNUTLS_E_SUCCESS ) {
 		Log_fatal("Could not open key (%s) or certificate (%s).", keyPath, certificatePath);
 	}
-
 }
 
 void SSLi_init()
 {
-	unsigned const bitCount = gnutls_sec_param_to_pk_bits(GNUTLS_PK_DH, GNUTLS_SEC_PARAM_MEDIUM);
-
-	gnutls_priority_init(&cipherCache, ciphers, NULL);
-	initializeCertificate();
-
-	gnutls_dh_params_init(&dhParameters);
-
-	Log_info("Generating Diffie-Hellman parameters (%i bits)", bitCount);
-	int error = gnutls_dh_params_generate2(dhParameters, bitCount);
-
-	if(!error) {
-		Log_info("Successfully generated Diffie-Hellman parameters");
-	} else {
-		Log_warn("Failed to generate Diffie-Hellman parameters: %s", gnutls_strerror(error));
+	if(gnutls_priority_init(&cipherCache, ciphers, NULL) != GNUTLS_E_SUCCESS)
+	{
+		Log_fatal("Failed to set priorities");
 	}
 
-	gnutls_certificate_set_dh_params(certificate, dhParameters);
+	initializeCertificate();
 
 	Log_info("Sucessfully initialized GNUTLS version %s", gnutls_check_version(NULL));
-
 }
 
 void SSLi_deinit()

@@ -49,6 +49,8 @@ static RSA *rsa;
 static SSL_CTX *context;
 static EVP_PKEY *pkey;
 
+static char const * ciphers = "EECDH+AESGCM:AES256-SHA:AES128-SHA";
+
 static int verify_callback(int preverify_ok, X509_STORE_CTX *ctx);
 
 static int SSL_add_ext(X509 * crt, int nid, char *value) {
@@ -220,12 +222,18 @@ void SSLi_init(void)
 	SSL_load_error_strings();
 	ERR_load_crypto_strings();
 
-	context = SSL_CTX_new(SSLv23_server_method());
+	context = SSL_CTX_new(TLSv1_2_server_method());
 	if (context == NULL)
 	{
 		ERR_print_errors_fp(stderr);
 		abort();
 	}
+
+	SSL_CTX_set_cipher_list(context, ciphers);
+
+	EC_KEY *ecdhkey = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
+	SSL_CTX_set_tmp_ecdh(context, ecdhkey);
+	EC_KEY_free(ecdhkey);
 
 	char const * sslCAPath = getStrConf(CAPATH);
 	if(sslCAPath != NULL)
