@@ -47,12 +47,12 @@
 
 const int ciphers[] =
 {
-	MBEDTLS_TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-	MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-	MBEDTLS_TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-	MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-	MBEDTLS_TLS_RSA_WITH_AES_256_CBC_SHA,
-	MBEDTLS_TLS_RSA_WITH_AES_128_CBC_SHA,
+    MBEDTLS_TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+    MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+    MBEDTLS_TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+    MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+    MBEDTLS_TLS_RSA_WITH_AES_256_CBC_SHA,
+    MBEDTLS_TLS_RSA_WITH_AES_128_CBC_SHA,
     0
 };
 
@@ -63,10 +63,9 @@ static inline int x509parse_keyfile(mbedtls_pk_context *pk, const char *path, co
 
     mbedtls_pk_init(pk);
     ret = mbedtls_pk_parse_keyfile(pk, path, pwd);
-    if (ret == 0 && !mbedtls_pk_can_do(pk, MBEDTLS_PK_ECDSA) && !mbedtls_pk_can_do(pk, MBEDTLS_PK_RSA))
-	{
+    if (ret == 0 && !mbedtls_pk_can_do(pk, MBEDTLS_PK_ECDSA) && !mbedtls_pk_can_do(pk, MBEDTLS_PK_RSA)) {
         ret = MBEDTLS_ERR_PK_TYPE_MISMATCH;
-	}
+    }
 
     return ret;
 }
@@ -82,46 +81,46 @@ int urandom_fd;
 
 static void initCert()
 {
-	int rc;
-	char *crtfile = (char *)getStrConf(CERTIFICATE);
+    int rc;
+    char *crtfile = (char *)getStrConf(CERTIFICATE);
 
-	if (crtfile == NULL) {
-		Log_fatal("No certificate file specified");
-		return;
-	}
+    if (crtfile == NULL) {
+        Log_fatal("No certificate file specified");
+        return;
+    }
 
-	rc = mbedtls_x509_crt_parse_file(&certificate, crtfile);
+    rc = mbedtls_x509_crt_parse_file(&certificate, crtfile);
 
-	if (rc != 0) {
-		Log_fatal("Could not read certificate file '%s'", crtfile);
-		return;
-	}
+    if (rc != 0) {
+        Log_fatal("Could not read certificate file '%s'", crtfile);
+        return;
+    }
 }
 
 static void initKey()
 {
-	int rc;
-	char *keyfile = (char *)getStrConf(KEY);
+    int rc;
+    char *keyfile = (char *)getStrConf(KEY);
 
-	if (keyfile == NULL)
-		Log_fatal("No key file specified");
-	rc = x509parse_keyfile(&key, keyfile, NULL);
-	if (rc != 0)
-		Log_fatal("Could not read private key file %s", keyfile);
+    if (keyfile == NULL)
+        Log_fatal("No key file specified");
+    rc = x509parse_keyfile(&key, keyfile, NULL);
+    if (rc != 0)
+        Log_fatal("Could not read private key file %s", keyfile);
 }
 
 #ifndef USE_MBEDTLS_HAVEGE
 int urandom_bytes(void *ctx, unsigned char *dest, size_t len)
 {
-	int cur;
+    int cur;
 
-	while (len) {
-		cur = read(urandom_fd, dest, len);
-		if (cur < 0)
-			continue;
-		len -= cur;
-	}
-	return 0;
+    while (len) {
+        cur = read(urandom_fd, dest, len);
+        if (cur < 0)
+            continue;
+        len -= cur;
+    }
+    return 0;
 }
 #endif
 
@@ -129,58 +128,58 @@ int urandom_bytes(void *ctx, unsigned char *dest, size_t len)
 static void pssl_debug(void *ctx, int level, const char *file, int line, const char *str)
 {
     if (level <= DEBUG_LEVEL)
-		Log_info("mbedTLS [level %d]: %s", level, str);
+        Log_info("mbedTLS [level %d]: %s", level, str);
 }
 
 mbedtls_ssl_config *conf;
 
 void SSLi_init(void)
 {
-	char verstring[12];
-	int rc;
+    char verstring[12];
+    int rc;
 
-	initCert();
-	initKey();
+    initCert();
+    initKey();
 
-	/* Initialize random number generator */
+    /* Initialize random number generator */
 #ifdef USE_MBEDTLS_HAVEGE
     mbedtls_havege_init(&hs);
 #else
     urandom_fd = open("/dev/urandom", O_RDONLY);
     if (urandom_fd < 0)
-	    Log_fatal("Cannot open /dev/urandom");
+        Log_fatal("Cannot open /dev/urandom");
 #endif
 
-	/* Initialize config */
-	conf = Memory_safeCalloc(1, sizeof(mbedtls_ssl_config));
+    /* Initialize config */
+    conf = Memory_safeCalloc(1, sizeof(mbedtls_ssl_config));
 
-	if (!conf)
-		Log_fatal("Out of memory");
+    if (!conf)
+        Log_fatal("Out of memory");
 
-	mbedtls_ssl_config_init(conf);
+    mbedtls_ssl_config_init(conf);
 
-	if((rc = mbedtls_ssl_config_defaults(conf,
-			MBEDTLS_SSL_IS_SERVER,
-			MBEDTLS_SSL_TRANSPORT_STREAM,
-			MBEDTLS_SSL_PRESET_DEFAULT)) != 0)
-		Log_fatal("mbedtls_ssl_config_defaults returned %d", rc);
+    if((rc = mbedtls_ssl_config_defaults(conf,
+            MBEDTLS_SSL_IS_SERVER,
+            MBEDTLS_SSL_TRANSPORT_STREAM,
+            MBEDTLS_SSL_PRESET_DEFAULT)) != 0)
+        Log_fatal("mbedtls_ssl_config_defaults returned %d", rc);
 
-	mbedtls_ssl_conf_authmode(conf, MBEDTLS_SSL_VERIFY_OPTIONAL);
+    mbedtls_ssl_conf_authmode(conf, MBEDTLS_SSL_VERIFY_OPTIONAL);
 #ifdef USE_MBEDTLS_HAVEGE
-	mbedtls_ssl_conf_rng(conf, HAVEGE_RAND, &hs);
+    mbedtls_ssl_conf_rng(conf, HAVEGE_RAND, &hs);
 #else
-	mbedtls_ssl_conf_rng(conf, urandom_bytes, NULL);
+    mbedtls_ssl_conf_rng(conf, urandom_bytes, NULL);
 #endif
-	mbedtls_ssl_conf_dbg(conf, pssl_debug, NULL);
+    mbedtls_ssl_conf_dbg(conf, pssl_debug, NULL);
 
-	mbedtls_ssl_conf_min_version(conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_1);
+    mbedtls_ssl_conf_min_version(conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_1);
 
-	mbedtls_ssl_conf_ciphersuites(conf, (const int*)&ciphers);
+    mbedtls_ssl_conf_ciphersuites(conf, (const int*)&ciphers);
 
-	mbedtls_ssl_conf_ca_chain(conf, &certificate, NULL);
+    mbedtls_ssl_conf_ca_chain(conf, &certificate, NULL);
 
-	if((rc = mbedtls_ssl_conf_own_cert(conf, &certificate, &key)) != 0)
-		Log_fatal("mbedtls_ssl_conf_own_cert returned %d", rc);
+    if((rc = mbedtls_ssl_conf_own_cert(conf, &certificate, &key)) != 0)
+        Log_fatal("mbedtls_ssl_conf_own_cert returned %d", rc);
 
 #ifdef MBEDTLS_VERSION_FEATURES
     mbedtls_version_get_string(verstring);
@@ -192,104 +191,104 @@ void SSLi_init(void)
 
 void SSLi_deinit(void)
 {
-	mbedtls_ssl_config_free(conf);
-	free(conf);
-	mbedtls_x509_crt_free(&certificate);
-	mbedtls_pk_free(&key);
+    mbedtls_ssl_config_free(conf);
+    free(conf);
+    mbedtls_x509_crt_free(&certificate);
+    mbedtls_pk_free(&key);
 }
 
 bool_t SSLi_getSHA1Hash(SSL_handle_t *ssl, uint8_t *hash)
 {
-	mbedtls_x509_crt const *cert;
-	cert = mbedtls_ssl_get_peer_cert(ssl);
+    mbedtls_x509_crt const *cert;
+    cert = mbedtls_ssl_get_peer_cert(ssl);
 
-	if (!cert) {
-		return false;
-	}
-	mbedtls_sha1(cert->raw.p, cert->raw.len, hash);
-	return true;
+    if (!cert) {
+        return false;
+    }
+    mbedtls_sha1(cert->raw.p, cert->raw.len, hash);
+    return true;
 }
 
 SSL_handle_t *SSLi_newconnection(int *fd, bool_t *SSLready)
 {
-	mbedtls_ssl_context *ssl;
-	mbedtls_ssl_session *ssn;
-	int rc;
+    mbedtls_ssl_context *ssl;
+    mbedtls_ssl_session *ssn;
+    int rc;
 
-	ssl = Memory_safeCalloc(1, sizeof(mbedtls_ssl_context));
-	ssn = Memory_safeCalloc(1, sizeof(mbedtls_ssl_session));
+    ssl = Memory_safeCalloc(1, sizeof(mbedtls_ssl_context));
+    ssn = Memory_safeCalloc(1, sizeof(mbedtls_ssl_session));
 
-	if (!ssl || !ssn)
-		Log_fatal("Out of memory");
+    if (!ssl || !ssn)
+        Log_fatal("Out of memory");
 
-	mbedtls_ssl_init(ssl);
-	mbedtls_ssl_set_bio(ssl, fd, mbedtls_net_send, mbedtls_net_recv, NULL);
-	mbedtls_ssl_set_session(ssl, ssn);
+    mbedtls_ssl_init(ssl);
+    mbedtls_ssl_set_bio(ssl, fd, mbedtls_net_send, mbedtls_net_recv, NULL);
+    mbedtls_ssl_set_session(ssl, ssn);
 
-	if((rc = mbedtls_ssl_setup(ssl, conf)) != 0)
-		Log_fatal("mbedtls_ssl_setup returned %d", rc);
+    if((rc = mbedtls_ssl_setup(ssl, conf)) != 0)
+        Log_fatal("mbedtls_ssl_setup returned %d", rc);
 
-	return ssl;
+    return ssl;
 }
 
 int SSLi_nonblockaccept(SSL_handle_t *ssl, bool_t *SSLready)
 {
-	int rc;
+    int rc;
 
-	rc = mbedtls_ssl_handshake(ssl);
-	if (rc != 0) {
-		if (rc == MBEDTLS_ERR_SSL_WANT_READ || rc == MBEDTLS_ERR_SSL_WANT_WRITE) {
-			return 0;
-		} else if (rc == MBEDTLS_ERR_X509_CERT_VERIFY_FAILED) { /* Allow this (selfsigned etc) */
-			return 0;
-		} else {
-			Log_warn("SSL handshake failed: %d", rc);
-			return -1;
-		}
-	}
-	*SSLready = true;
-	return 0;
+    rc = mbedtls_ssl_handshake(ssl);
+    if (rc != 0) {
+        if (rc == MBEDTLS_ERR_SSL_WANT_READ || rc == MBEDTLS_ERR_SSL_WANT_WRITE) {
+            return 0;
+        } else if (rc == MBEDTLS_ERR_X509_CERT_VERIFY_FAILED) { /* Allow this (selfsigned etc) */
+            return 0;
+        } else {
+            Log_warn("SSL handshake failed: %d", rc);
+            return -1;
+        }
+    }
+    *SSLready = true;
+    return 0;
 }
 
 int SSLi_read(SSL_handle_t *ssl, uint8_t *buf, int len)
 {
-	int rc;
+    int rc;
 
-	rc = mbedtls_ssl_read(ssl, buf, len);
-	if (rc == MBEDTLS_ERR_SSL_WANT_READ)
-		return SSLI_ERROR_WANT_READ;
-	return rc;
+    rc = mbedtls_ssl_read(ssl, buf, len);
+    if (rc == MBEDTLS_ERR_SSL_WANT_READ)
+        return SSLI_ERROR_WANT_READ;
+    return rc;
 }
 
 int SSLi_write(SSL_handle_t *ssl, uint8_t *buf, int len)
 {
-	int rc;
+    int rc;
 
-	rc = mbedtls_ssl_write(ssl, buf, len);
-	if (rc == MBEDTLS_ERR_SSL_WANT_WRITE)
-		return SSLI_ERROR_WANT_WRITE;
-	return rc;
+    rc = mbedtls_ssl_write(ssl, buf, len);
+    if (rc == MBEDTLS_ERR_SSL_WANT_WRITE)
+        return SSLI_ERROR_WANT_WRITE;
+    return rc;
 }
 
 int SSLi_get_error(SSL_handle_t *ssl, int code)
 {
-	return code;
+    return code;
 }
 
 bool_t SSLi_data_pending(SSL_handle_t *ssl)
 {
-	return mbedtls_ssl_get_bytes_avail(ssl) > 0;
+    return mbedtls_ssl_get_bytes_avail(ssl) > 0;
 }
 
 void SSLi_shutdown(SSL_handle_t *ssl)
 {
-	mbedtls_ssl_close_notify(ssl);
+    mbedtls_ssl_close_notify(ssl);
 }
 
 void SSLi_free(SSL_handle_t *ssl)
 {
-	Log_debug("SSLi_free");
-	mbedtls_ssl_free(ssl);
-	free(ssl);
+    Log_debug("SSLi_free");
+    mbedtls_ssl_free(ssl);
+    free(ssl);
 }
 
