@@ -173,7 +173,7 @@ void SSLi_init(void)
 #endif
 	mbedtls_ssl_conf_dbg(conf, pssl_debug, NULL);
 
-	mbedtls_ssl_conf_min_version(conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_3);
+	mbedtls_ssl_conf_min_version(conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_1);
 
 	mbedtls_ssl_conf_ciphersuites(conf, (const int*)&ciphers);
 
