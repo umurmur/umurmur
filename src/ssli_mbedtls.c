@@ -1,6 +1,7 @@
 /* Copyright (C) 2009-2015, Martin Johansson <martin@fatbob.nu>
    Copyright (C) 2005-2015, Thorvald Natvig <thorvald@natvig.com>
    Copyright (C) 2015-2015, Szymon Pusz <szymon@pusz.net>
+   Copyright (C) 2016, Dongyu Lin <l2d4y3@gmail.com>
 
    All rights reserved.
 
