@@ -870,17 +870,21 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			sendmsg->payload.userStats->opus = target->bOpus;
 
 			/* Address */
-			sendmsg->payload.userStats->has_address = true;
-			sendmsg->payload.userStats->address.data
-				= Memory_safeMalloc(16, sizeof(uint8_t));
-			memset(sendmsg->payload.userStats->address.data, 0, 16);
-			/* ipv4 representation as ipv6 address. Supposedly correct. */
-			memset(&sendmsg->payload.userStats->address.data[10], 0xff, 2); /* IPv4 */
-      if(target->remote_tcp.ss_family == AF_INET)
-        memcpy(&sendmsg->payload.userStats->address.data[12], &((struct sockaddr_in*)&target->remote_tcp)->sin_addr, 4);
-      else
-        memcpy(&sendmsg->payload.userStats->address.data[0], &((struct sockaddr_in6*)&target->remote_tcp)->sin6_addr, 16);
-			sendmsg->payload.userStats->address.len = 16;
+			if (getBoolConf(SHOW_ADDRESSES)) {
+				sendmsg->payload.userStats->has_address = true;
+				sendmsg->payload.userStats->address.data
+					= Memory_safeMalloc(16, sizeof(uint8_t));
+				memset(sendmsg->payload.userStats->address.data, 0, 16);
+				/* ipv4 representation as ipv6 address. Supposedly correct. */
+				memset(&sendmsg->payload.userStats->address.data[10], 0xff, 2); /* IPv4 */
+				if(target->remote_tcp.ss_family == AF_INET)
+					memcpy(&sendmsg->payload.userStats->address.data[12], &((struct sockaddr_in*)&target->remote_tcp)->sin_addr, 4);
+				else
+					memcpy(&sendmsg->payload.userStats->address.data[0], &((struct sockaddr_in6*)&target->remote_tcp)->sin6_addr, 16);
+				sendmsg->payload.userStats->address.len = 16;
+			} else {
+				sendmsg->payload.userStats->has_address = false;
+			}
 		}
 		/* BW */
 		sendmsg->payload.userStats->has_bandwidth = true;

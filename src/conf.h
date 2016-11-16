@@ -57,6 +57,7 @@ typedef enum param {
 	BANFILE,
 	SYNC_BANFILE,
 	OPUS_THRESHOLD,
+	SHOW_ADDRESSES,
 } param_t;
 
 typedef struct {

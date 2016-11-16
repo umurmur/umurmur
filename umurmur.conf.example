@@ -10,6 +10,7 @@ password = "";
 # sync_banfile = false;      # Keep banfile synced. Default is false, which means it is saved to at shutdown only.
 # allow_textmessage = true;  # Default is true
 # opus_threshold = 100;      # Percentage of users supporting Opus codec for it to be chosen. Default is 100.
+# show_addresses = true;     # Whether to show client's IP addresses under user information
 max_users = 10;
 
 # bindport = 64738;

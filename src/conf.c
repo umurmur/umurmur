@@ -320,6 +320,13 @@ bool_t getBoolConf(param_t param)
 			else
 				return config_setting_get_bool(setting);
 			break;
+		case SHOW_ADDRESSES:
+			setting = config_lookup(&configuration, "show_addresses");
+			if (!setting)
+				return true;
+			else
+				return config_setting_get_bool(setting);
+			break;
 		default:
 			doAssert(false);
 	}
