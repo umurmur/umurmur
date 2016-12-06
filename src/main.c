@@ -323,6 +323,13 @@ int main(int argc, char **argv)
 			if (pidfile != NULL)
 				lockfile(pidfile);
 
+#ifdef POSIX_PRIORITY_SCHEDULING
+			/* Set the scheduling policy, has to be called after daemonizing
+			 * but before we drop privileges */
+			if (realtime)
+				setscheduler();
+#endif
+
 			switch_user();
 
 			/* Reopen log file. If user switch results in access denied, we catch
@@ -331,6 +338,15 @@ int main(int argc, char **argv)
 			Log_reset();
 		}
 		else Log_init(true);
+
+#ifdef POSIX_PRIORITY_SCHEDULING
+		/* We still want to set scheduling policy if nodaemon is specified,
+		 * but if we are daemonizing setscheduler() will be called above */
+		if (nodaemon) {
+			if (realtime)
+				setscheduler();
+		}
+#endif
 
 		signal(SIGCHLD, SIG_IGN); /* ignore child */
 		signal(SIGTSTP, SIG_IGN); /* ignore tty signals */
@@ -358,11 +374,6 @@ int main(int argc, char **argv)
 
 #ifdef USE_SHAREDMEMORY_API
     Sharedmemory_init( bindport, bindport6 );
-#endif
-
-#ifdef POSIX_PRIORITY_SCHEDULING
-		if (realtime)
-			setscheduler();
 #endif
 
 		Server_run();
