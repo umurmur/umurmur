@@ -48,9 +48,9 @@ install:
     fi
   - pushd .;
     cd /tmp;
-    wget https://github.com/protobuf-c/protobuf-c/releases/download/v1.2.1/protobuf-c-1.2.1.tar.gz;
-    tar xf protobuf-c-1.2.1.tar.gz;
-    cd protobuf-c-1.2.1/;
+    wget https://github.com/protobuf-c/protobuf-c/releases/download/v1.0.0/protobuf-c-1.0.0.tar.gz;
+    tar xf protobuf-c-1.0.0.tar.gz;
+    cd protobuf-c-1.0.0/;
     ./configure --prefix=/tmp/deps;
     make -j$(nproc);
     make install;
