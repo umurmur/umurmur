@@ -252,7 +252,10 @@ int getIntConf(param_t param)
 		case BINDPORT6:
 			setting = config_lookup(&configuration, "bindport6");
 			if (!setting)
-				return DEFAULT_BINDPORT;
+				/* If bindport6 is not specified, we default
+				 * to whatever bindport is, rather than always
+				 * default to 64738 */
+				return getIntConf(BINDPORT);
 			else {
 				return config_setting_get_int(setting);
 			}
