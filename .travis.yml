@@ -1,0 +1,45 @@
+sudo: false
+dist: trusty
+language: c
+
+compiler:
+  - clang
+  - gcc
+
+matrix:
+  include:
+    - addons:
+        apt:
+          packages:
+            - libssl-dev
+      env:
+        TLSIMPL=openssl
+    - addons:
+        apt:
+          packages:
+            - libgnutls-dev
+      env:
+        TLSIMPL=gnutls
+    - env:
+        TLSIMPL=mbedtls MBEDVERSION=2.3.0
+    - env:
+        TLSIMPL=mbedtls MBEDVERSION=2.4.0
+
+install:
+  - if [ "$TLSIMPL" == "mbedtls" ]; then
+    pushd .
+    cd /tmp
+    wget https://github.com/ARMmbed/mbedtls/archive/mbedtls-${MBEDVERSION}.tar.gz
+    tar xf mbedtls-${MBEDVERSION}.tar.gz
+    cd mbedtls-mbedtls-${MBEDVERSION}
+    make -j$(nproc)
+    export CFLAGS="-I$(pwd)/include"
+    cd library
+    export LDFLAGS="-L$(pwd)"
+    fi
+    popd
+
+script:
+  - ./autogen.sh
+  - ./configure --with-ssl=${TLSIMPL}
+  - make -j$(nproc)
