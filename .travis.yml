@@ -27,17 +27,17 @@ matrix:
 
 install:
   - if [ "$TLSIMPL" == "mbedtls" ]; then
-    pushd .
-    cd /tmp
-    wget https://github.com/ARMmbed/mbedtls/archive/mbedtls-${MBEDVERSION}.tar.gz
-    tar xf mbedtls-${MBEDVERSION}.tar.gz
-    cd mbedtls-mbedtls-${MBEDVERSION}
-    make -j$(nproc)
-    export CFLAGS="-I$(pwd)/include"
-    cd library
-    export LDFLAGS="-L$(pwd)"
+    pushd .;
+    cd /tmp;
+    wget https://github.com/ARMmbed/mbedtls/archive/mbedtls-${MBEDVERSION}.tar.gz;
+    tar xf mbedtls-${MBEDVERSION}.tar.gz;
+    cd mbedtls-mbedtls-${MBEDVERSION};
+    make -j$(nproc);
+    export CFLAGS="-I$(pwd)/include";
+    cd library;
+    export LDFLAGS="-L$(pwd)";
+    popd;
     fi
-    popd
 
 script:
   - ./autogen.sh
