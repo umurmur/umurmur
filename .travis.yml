@@ -2,9 +2,7 @@ sudo: false
 dist: trusty
 language: c
 
-compiler:
-  - clang
-  - gcc
+compiler: gcc
 
 matrix:
   include:
@@ -24,6 +22,8 @@ matrix:
         TLSIMPL=mbedtls MBEDVERSION=2.3.0
     - env:
         TLSIMPL=mbedtls MBEDVERSION=2.4.0
+  exclude:
+    - compiler: gcc
 
 install:
   - if [ "$TLSIMPL" == "mbedtls" ]; then
