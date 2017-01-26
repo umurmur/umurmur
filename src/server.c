@@ -63,7 +63,7 @@ const int on = 1;
 int nofServerSocks = 4;
 
 /* Check which IP versions are supported by the system. */
-void checkIPversions(void)
+static void checkIPversions(void)
 {
 	int testsocket = -1;
 
