@@ -39,7 +39,7 @@
 
 #include "timer.h"
 
-static uint64_t Timer_now()
+static uint64_t Timer_now(void)
 {
 	struct timespec ts;
 	uint64_t e;

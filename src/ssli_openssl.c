@@ -155,7 +155,7 @@ static void SSL_writekey(char *keyfile, RSA *rsa)
 	fclose(fp);
 }
 
-static void SSL_initializeCert() {
+static void SSL_initializeCert(void) {
 
 	char *crt = (char *)getStrConf(CERTIFICATE);
 	char *key = (char *)getStrConf(KEY);

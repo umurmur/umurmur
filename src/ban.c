@@ -98,7 +98,7 @@ void Ban_UserBan(client_t *client, char *reason)
 }
 
 
-void Ban_pruneBanned()
+void Ban_pruneBanned(void)
 {
 	struct dlist *itr;
 	ban_t *ban;

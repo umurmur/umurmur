@@ -67,12 +67,12 @@ bool_t bPreferAlpha;
 extern int* udpsocks;
 extern bool_t hasv4;
 
-void Client_init()
+void Client_init(void)
 {
 	maxBandwidth = getIntConf(MAX_BANDWIDTH) / 8; /* From bits/s -> bytes/s */
 }
 
-int Client_count()
+int Client_count(void)
 {
 	return clientcount;
 }
@@ -93,7 +93,7 @@ int Client_getfds(struct pollfd *pollfds)
 	return i;
 }
 
-void Client_janitor()
+void Client_janitor(void)
 {
 	struct dlist *itr, *save;
 	int bwTop = maxBandwidth + maxBandwidth / 4;
@@ -297,7 +297,7 @@ void recheckCodecVersions(client_t *connectingClient)
 	bOpus = enableOpus;
 }
 
-static int findFreeSessionId()
+static int findFreeSessionId(void)
 {
 	int id;
 	client_t *itr = NULL;
@@ -422,7 +422,7 @@ void Client_close(client_t *client)
 	client->shutdown_wait = true;
 }
 
-void Client_disconnect_all()
+void Client_disconnect_all(void)
 {
 	struct dlist *itr, *save;
 
