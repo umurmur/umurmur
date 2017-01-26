@@ -90,7 +90,11 @@ typedef	ssl_context SSL_handle_t;
 
 #elif defined(USE_MBEDTLS)
 #include <mbedtls/ssl.h>
+#if (MBEDTLS_VERSION_MINOR > 3)
+#include <mbedtls/net_socket.h>
+#else
 #include <mbedtls/net.h>
+#endif
 #include <mbedtls/version.h>
 
 #if defined(MBEDTLS_VERSION_MAJOR)
