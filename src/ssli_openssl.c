@@ -49,7 +49,7 @@ static RSA *rsa;
 static SSL_CTX *context;
 static EVP_PKEY *pkey;
 
-static char const * ciphers = "EECDH+AESGCM:AES256-SHA:AES128-SHA";
+static char const * ciphers = "EECDH+CHACHA20:EECDH+AESGCM:EECDH+AES+TLSv1.2:EECDH+AES:AESGCM:AES:!aNULL:!DHE:!kECDH";
 
 static int verify_callback(int preverify_ok, X509_STORE_CTX *ctx);
 
@@ -225,6 +225,7 @@ void SSLi_init(void)
 	context = SSL_CTX_new(SSLv23_server_method());
 	SSL_CTX_set_options(context, SSL_OP_NO_SSLv2);
 	SSL_CTX_set_options(context, SSL_OP_NO_SSLv3);
+	SSL_CTX_set_options(context, SSL_OP_CIPHER_SERVER_PREFERENCE);
 	if (context == NULL)
 	{
 		ERR_print_errors_fp(stderr);
