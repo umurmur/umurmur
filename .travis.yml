@@ -46,6 +46,9 @@ install:
     cd mbedtls-mbedtls-${MBEDVERSION};
     cmake . -DCMAKE_INSTALL_PREFIX=/tmp/deps -DCMAKE_BUILD_TYPE=Release -DENABLE_TESTING=Off -DUSE_SHARED_MBEDTLS_LIBRARY=On;
     make install -j$(nproc);
+    if [ "$MBEDVERSION" == "2.3.0"]; then
+    sed -e 's/<time\.h>/"platform.h"/g' -i /tmp/deps/include/mbedtls/ssl.h;
+    fi;
     popd;
     fi
   - pushd .;
