@@ -19,16 +19,6 @@ matrix:
     - addons:
         apt:
           packages:
-            - libgnutls-dev
-            - libprotobuf-dev
-            - libprotoc-dev
-            - protobuf-compiler
-            - libconfig-dev
-      env:
-        TLSIMPL=gnutls
-    - addons:
-        apt:
-          packages:
             - libprotobuf-dev
             - libprotoc-dev
             - protobuf-compiler
@@ -54,7 +44,7 @@ install:
     wget https://github.com/ARMmbed/mbedtls/archive/mbedtls-${MBEDVERSION}.tar.gz;
     tar xf mbedtls-${MBEDVERSION}.tar.gz;
     cd mbedtls-mbedtls-${MBEDVERSION};
-    cmake . -DCMAKE_INSTALL_PREFIX=/tmp/deps -DCMAKE_BUILD_TYPE=Release -DENABLE_TESTING=Off -DUSE_SHARED_MBEDTLS_LIBRARY=On
+    cmake . -DCMAKE_INSTALL_PREFIX=/tmp/deps -DCMAKE_BUILD_TYPE=Release -DENABLE_TESTING=Off -DUSE_SHARED_MBEDTLS_LIBRARY=On;
     make install -j$(nproc);
     popd;
     fi
