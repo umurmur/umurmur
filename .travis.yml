@@ -12,6 +12,7 @@ matrix:
             - libssl-dev
             - libprotobuf-dev
             - libprotoc-dev
+            - protoc
       env:
         TLSIMPL=openssl
     - addons:
@@ -20,6 +21,7 @@ matrix:
             - libgnutls-dev
             - libprotobuf-dev
             - libprotoc-dev
+            - protoc
       env:
         TLSIMPL=gnutls
     - addons:
@@ -27,6 +29,7 @@ matrix:
           packages:
             - libprotobuf-dev
             - libprotoc-dev
+            - protoc
       env:
         TLSIMPL=mbedtls MBEDVERSION=2.3.0
     - addons:
@@ -34,6 +37,7 @@ matrix:
           packages:
             - libprotobuf-dev
             - libprotoc-dev
+            - protoc
       env:
         TLSIMPL=mbedtls MBEDVERSION=2.4.0
   exclude:
