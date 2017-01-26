@@ -1,6 +1,6 @@
 sudo: false
 dist: trusty
-language: c
+language: cpp
 
 compiler: gcc
 
@@ -10,17 +10,27 @@ matrix:
         apt:
           packages:
             - libssl-dev
+            - libprotobuf-dev
       env:
         TLSIMPL=openssl
     - addons:
         apt:
           packages:
             - libgnutls-dev
+            - libprotobuf-dev
       env:
         TLSIMPL=gnutls
-    - env:
+    - addons:
+        apt:
+          packages:
+            - libprotobuf-dev
+      env:
         TLSIMPL=mbedtls MBEDVERSION=2.3.0
-    - env:
+    - addons:
+        apt:
+          packages:
+            - libprotobuf-dev
+      env:
         TLSIMPL=mbedtls MBEDVERSION=2.4.0
   exclude:
     - compiler: gcc
@@ -32,12 +42,21 @@ install:
     wget https://github.com/ARMmbed/mbedtls/archive/mbedtls-${MBEDVERSION}.tar.gz;
     tar xf mbedtls-${MBEDVERSION}.tar.gz;
     cd mbedtls-mbedtls-${MBEDVERSION};
-    make -j$(nproc);
-    export CFLAGS="-I$(pwd)/include";
-    cd library;
-    export LDFLAGS="-L$(pwd)";
+    cmake . -DCMAKE_INSTALL_PREFIX=/tmp/deps -DCMAKE_BUILD_TYPE=Release -DENABLE_TESTING=Off -DUSE_SHARED_MBEDTLS_LIBRARY=On
+    make install -j$(nproc);
     popd;
     fi
+  - pushd .;
+    cd /tmp;
+    wget https://github.com/protobuf-c/protobuf-c/releases/download/v1.2.1/protobuf-c-1.2.1.tar.gz;
+    tar xf protobuf-c-1.2.1.tar.gz;
+    cd protobuf-c-1.2.1/;
+    ./configure --prefix=/tmp/deps;
+    make -j$(nproc);
+    make install;
+    popd
+  - export CFLAGS="-I/tmp/deps/include"
+  - export LDFLAGS="-L/tmp/deps/lib"
 
 script:
   - ./autogen.sh
