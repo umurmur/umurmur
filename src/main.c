@@ -322,7 +322,6 @@ int main(int argc, char **argv)
 			Log_init(false);
 			if (pidfile != NULL)
 				lockfile(pidfile);
-
 #ifdef POSIX_PRIORITY_SCHEDULING
 			/* Set the scheduling policy, has to be called after daemonizing
 			 * but before we drop privileges */
@@ -330,12 +329,6 @@ int main(int argc, char **argv)
 				setscheduler();
 #endif
 
-			switch_user();
-
-			/* Reopen log file. If user switch results in access denied, we catch
-			 * it early.
-			 */
-			Log_reset();
 		}
 		else Log_init(true);
 
@@ -375,6 +368,16 @@ int main(int argc, char **argv)
 #ifdef USE_SHAREDMEMORY_API
     Sharedmemory_init( bindport, bindport6 );
 #endif
+
+		if(!nodaemon) {
+			/* SSL and scheduling is setup, we can drop privileges now */
+			switch_user();
+
+			/* Reopen log file. If user switch results in access denied, we catch
+			 * it early.
+			 */
+			Log_reset();
+		}
 
 		Server_run();
 
