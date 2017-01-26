@@ -1,5 +1,7 @@
 #About uMurmur
 
+Build for OpenSSL and mbed TLS 2.3/2.4: [![Build Status](https://travis-ci.org/umurmur/umurmur.svg?branch=master)](https://travis-ci.org/umurmur/umurmur)
+
 uMurmur is a minimalistic Mumble server primarily targeted to run on embedded computers, like routers, with an open OS like e.g. OpenWRT. The server part of Mumble is called Murmur, hence the name uMurmur. It is available as a precompiled package for quite a lot distributions. Check your distribution's package repository.
 
 Instructions for building from source
