@@ -55,10 +55,8 @@ install:
     make -j$(nproc);
     make install;
     popd
-  - export CFLAGS="-I/tmp/deps/include"
-  - export LDFLAGS="-L/tmp/deps/lib"
 
 script:
   - ./autogen.sh
-  - ./configure --with-ssl=${TLSIMPL}
+  - env CPPFLAGS=-I/tmp/deps/include LDFLAGS=-L/tmp/deps/lib ./configure --with-ssl=${TLSIMPL}
   - make -j$(nproc)
