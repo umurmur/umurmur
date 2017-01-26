@@ -20,6 +20,7 @@ Contributors
 * [Rawi666](https://github.com/Rawi666)
 * [snowblind](https://github.com/snowblind)
 * [c4k3](https://github.com/C4K3)
+* [l2dy](https://github.com/l2dy)
 
 Hope I didn't forget anyone... Please just send me a mail if you feel this is the case.
 
