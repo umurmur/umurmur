@@ -1,3 +1,6 @@
+#ifndef SHAREDMEMORY_STRUCT_H_655219
+#define SHAREDMEMORY_STRUCT_H_655219
+
 #include <arpa/inet.h>
 #include <stdint.h>
 #include "types.h"
@@ -27,3 +30,5 @@ typedef struct
   uint8_t alive;
   shmclient_t client[];
 } shm_t;
+
+#endif

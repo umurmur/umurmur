@@ -29,5 +29,10 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#ifndef MEMORY_H_1535778
+#define MEMORY_H_1535778
+
 void * Memory_safeMalloc(size_t nmem, size_t size);
 void * Memory_safeCalloc(size_t nmem, size_t size);
+
+#endif
