@@ -298,12 +298,12 @@ void recheckCodecVersions(client_t *connectingClient)
 	bOpus = enableOpus;
 }
 
-static int findFreeSessionId()
+static uint32_t findFreeSessionId()
 {
 	uint32_t id;
 	client_t *itr = NULL;
 
-	for (id = 1; id < UINT_MAX; id++) {
+	for (id = 1; id < UINT32_MAX; id++) {
 		itr = NULL;
 		while ((itr = Client_iterate(&itr)) != NULL) {
 			if (itr->sessionId == id)
@@ -312,7 +312,7 @@ static int findFreeSessionId()
 		if (itr == NULL) /* Found free id */
 			return id;
 	}
-	return -1;
+	return UINT32_MAX;
 }
 
 int Client_add(int fd, struct sockaddr_storage *remote)
@@ -345,7 +345,7 @@ int Client_add(int fd, struct sockaddr_storage *remote)
 	Timer_init(&newclient->connectTime);
 	Timer_init(&newclient->idleTime);
 	newclient->sessionId = findFreeSessionId();
-	if (newclient->sessionId == (uint32_t)-1)
+	if (newclient->sessionId == UINT32_MAX)
 		Log_fatal("Could not find a free session ID");
 
 	init_list_entry(&newclient->txMsgQueue);
@@ -377,9 +377,9 @@ void Client_free(client_t *client)
 	bool_t authenticatedLeft = client->authenticated;
 
 	if (client->authenticated) {
-		int leave_id;
+		uint32_t leave_id;
 		leave_id = Chan_userLeave(client);
-		if (leave_id > 0) { /* Remove temp channel */
+		if (leave_id > 0 && leave_id != UINT32_MAX) { /* Remove temp channel */
 			sendmsg = Msg_create(ChannelRemove);
 			sendmsg->payload.channelRemove->channel_id = leave_id;
 			Client_send_message_except(client, sendmsg);
@@ -946,7 +946,7 @@ int Client_voiceMsg(client_t *client, uint8_t *data, int len)
 		int i;
 		channel_t *ch;
 		/* Channels */
-		for (i = 0; i < TARGET_MAX_CHANNELS && vt->channels[i].channel != -1; i++) {
+		for (i = 0; i < TARGET_MAX_CHANNELS && vt->channels[i].channel != UINT32_MAX; i++) {
 			buffer[0] = (uint8_t) (type | 1);
 			Log_debug("Whisper channel %d", vt->channels[i]);
 			ch = Chan_fromId(vt->channels[i].channel);
@@ -992,7 +992,7 @@ int Client_voiceMsg(client_t *client, uint8_t *data, int len)
 			}
 		}
 		/* Sessions */
-		for (i = 0; i < TARGET_MAX_SESSIONS && vt->sessions[i] != (uint32_t)-1; i++) {
+		for (i = 0; i < TARGET_MAX_SESSIONS && vt->sessions[i] != UINT32_MAX; i++) {
 			client_t *c = NULL;
 			buffer[0] = (uint8_t) (type | 2);
 			Log_debug("Whisper session %d", vt->sessions[i]);

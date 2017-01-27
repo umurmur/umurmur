@@ -45,7 +45,7 @@ void Voicetarget_add_session(client_t *client, int targetId, int sessionId)
 			int i;
 			vt = list_get_entry(itr, voicetarget_t, node);
 			for (i = 0; i < TARGET_MAX_SESSIONS; i++) {
-				if (vt->sessions[i] == (uint32_t)-1) {
+				if (vt->sessions[i] == UINT32_MAX) {
 					vt->sessions[i] = sessionId;
 					Log_debug("Adding session ID %d to voicetarget ID %d", sessionId, targetId);
 					return;
@@ -66,7 +66,7 @@ void Voicetarget_add_channel(client_t *client, int targetId, int channelId,
 			int i;
 			vt = list_get_entry(itr, voicetarget_t, node);
 			for (i = 0; i < TARGET_MAX_CHANNELS; i++) {
-				if (vt->channels[i].channel == -1) {
+				if (vt->channels[i].channel == UINT32_MAX) {
 					vt->channels[i].channel = channelId;
 					vt->channels[i].linked = linked;
 					vt->channels[i].children = children;
@@ -86,9 +86,9 @@ void Voicetarget_add_id(client_t *client, int targetId)
 	Voicetarget_del_id(client, targetId);
 	newtarget = Memory_safeCalloc(1, sizeof(voicetarget_t));
 	for (i = 0; i < TARGET_MAX_CHANNELS; i++)
-		newtarget->channels[i].channel = -1;
+		newtarget->channels[i].channel = UINT32_MAX;
 	for (i = 0; i < TARGET_MAX_SESSIONS; i++)
-		newtarget->sessions[i] = -1;
+		newtarget->sessions[i] = UINT32_MAX;
 	newtarget->id = targetId;
 	list_add_tail(&newtarget->node, &client->voicetargets);
 }

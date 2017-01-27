@@ -513,7 +513,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			sendmsg = NULL;
 		}
 		if (msg->payload.userState->has_channel_id) {
-			int leave_id;
+			uint32_t leave_id;
 
 			channelJoinResult_t result = Chan_userJoin_id_test(msg->payload.userState->channel_id, target);
 
@@ -534,7 +534,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			}
 
 			leave_id = Chan_userJoin_id(msg->payload.userState->channel_id, target);
-			if (leave_id > 0) {
+			if (leave_id > 0 && leave_id != UINT32_MAX) {
 				Log_debug("Removing channel ID %d", leave_id);
 				sendmsg = Msg_create(ChannelRemove);
 				sendmsg->payload.channelRemove->channel_id = leave_id;
@@ -701,7 +701,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 	case ChannelState:
 	{
 		channel_t *ch_itr, *parent, *newchan;
-		int leave_id;
+		uint32_t leave_id;
 		/* Don't allow any changes to existing channels */
 		if (msg->payload.channelState->has_channel_id) {
 			sendPermissionDenied(client, "Not supported by uMurmur");
@@ -779,7 +779,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		Client_send_message_except(NULL, sendmsg);
 
 		leave_id = Chan_userJoin(newchan, client);
-		if (leave_id > 0) {
+		if (leave_id > 0 && leave_id != UINT32_MAX) {
 			Log_debug("Removing channel ID %d", leave_id);
 			sendmsg = Msg_create(ChannelRemove);
 			sendmsg->payload.channelRemove->channel_id = leave_id;

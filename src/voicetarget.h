@@ -39,7 +39,7 @@
 #define TARGET_MAX_SESSIONS 32
 
 typedef struct {
-	int channel;
+	uint32_t channel;
 	bool_t linked;
 	bool_t children;
 } channeltarget_t;

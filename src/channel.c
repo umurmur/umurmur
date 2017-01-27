@@ -61,11 +61,11 @@ static channel_t *createChannel(int id, const char *name, const char *desc)
 	return ch;
 }
 
-static int findFreeId()
+static uint32_t findFreeId()
 {
-	uint32_t id = 0;
-	channel_t *ch_itr = NULL;
-	for (id = 0; id < UINT_MAX; id++) {
+	uint32_t id;
+	channel_t *ch_itr;
+	for (id = 0; id < UINT32_MAX; id++) {
 		ch_itr = NULL;
 		while ((ch_itr = Chan_iterate(&ch_itr)) != NULL) {
 			if (ch_itr->id == id)
@@ -74,7 +74,7 @@ static int findFreeId()
 		if (ch_itr == NULL) /* Found free id */
 			return id;
 	}
-	return -1;
+	return UINT32_MAX;
 }
 
 #if 0
@@ -255,8 +255,8 @@ void Chan_free()
 
 channel_t *Chan_createChannel(const char *name, const char *desc)
 {
-	int id = findFreeId();
-	if (id < 0)
+	uint32_t id = findFreeId();
+	if (id == UINT32_MAX)
 		Log_fatal("No free channel ID found");
 	return createChannel(id, name, desc);
 }
@@ -279,7 +279,7 @@ void Chan_addChannel(channel_t *parent, channel_t *ch)
 int Chan_userLeave(client_t *client)
 {
 	channel_t *leaving = NULL;
-	int leaving_id = -1;
+	int leaving_id = UINT32_MAX;
 
 	if (client->channel) {
 		list_del(&client->chan_node);
@@ -316,7 +316,7 @@ int Chan_userJoin_id(uint32_t channelid, client_t *client)
 	} while (ch_itr != NULL && ch_itr->id != channelid);
 	if (ch_itr == NULL) {
 		Log_warn("Channel id %d not found - ignoring.", channelid);
-		return -1;
+		return UINT32_MAX;
 	}
 	else
 		return Chan_userJoin(ch_itr, client);
