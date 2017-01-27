@@ -303,7 +303,7 @@ static int findFreeSessionId()
 	uint32_t id;
 	client_t *itr = NULL;
 
-	for (id = 1; id < INT_MAX; id++) {
+	for (id = 1; id < UINT_MAX; id++) {
 		itr = NULL;
 		while ((itr = Client_iterate(&itr)) != NULL) {
 			if (itr->sessionId == id)
