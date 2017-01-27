@@ -65,7 +65,7 @@ static int findFreeId()
 {
 	uint32_t id = 0;
 	channel_t *ch_itr = NULL;
-	for (id = 0; id < INT_MAX; id++) {
+	for (id = 0; id < UINT_MAX; id++) {
 		ch_itr = NULL;
 		while ((ch_itr = Chan_iterate(&ch_itr)) != NULL) {
 			if (ch_itr->id == id)
