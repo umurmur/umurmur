@@ -210,14 +210,14 @@ bool_t CryptState_decrypt(cryptState_t *cs, const unsigned char *source, unsigne
 	return true;
 }
 
-static void inline XOR(subblock *dst, const subblock *a, const subblock *b) {
+static inline void XOR(subblock *dst, const subblock *a, const subblock *b) {
 	int i;
 	for (i=0;i<BLOCKSIZE;i++) {
 		dst[i] = a[i] ^ b[i];
 	}
 }
 
-static void inline S2(subblock *block) {
+static inline void S2(subblock *block) {
 	subblock carry = SWAPPED(block[0]) >> SHIFTBITS;
 	int i;
 	for (i=0;i<BLOCKSIZE-1;i++)
@@ -225,7 +225,7 @@ static void inline S2(subblock *block) {
 	block[BLOCKSIZE-1] = SWAPPED((SWAPPED(block[BLOCKSIZE-1]) << 1) ^(carry * 0x87));
 }
 
-static void inline S3(subblock *block) {
+static inline void S3(subblock *block) {
 	subblock carry = SWAPPED(block[0]) >> SHIFTBITS;
 	int i;
 	for (i=0;i<BLOCKSIZE-1;i++)
@@ -233,7 +233,7 @@ static void inline S3(subblock *block) {
 	block[BLOCKSIZE-1] ^= SWAPPED((SWAPPED(block[BLOCKSIZE-1]) << 1) ^(carry * 0x87));
 }
 
-static void inline ZERO(subblock *block) {
+static inline void ZERO(subblock *block) {
 	int i;
 	for (i=0;i<BLOCKSIZE;i++)
 		block[i]=0;
