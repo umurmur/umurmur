@@ -26,7 +26,7 @@
 #  LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 #  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-AM_CFLAGS=-std=gnu99 -Wall -Wextra -Werror -D_XOPEN_SOURCE -D_GNU_SOURCE
+AM_CFLAGS=-std=gnu99 -Wall -Wextra -Wno-unknown-warning-option -Wno-old-style-declaration -Wno-unused-result -Werror -D_XOPEN_SOURCE -D_GNU_SOURCE
 
 bin_PROGRAMS=umurmurd
 umurmurd_SOURCES=client.c main.c messages.c pds.c server.c log.c conf.c crypt.c timer.c messagehandler.c channel.c Mumble.pb-c.c voicetarget.c ban.c util.c memory.c

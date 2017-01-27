@@ -85,7 +85,7 @@ static RSA *SSL_readprivatekey(char *keyfile)
 	/* assign a callback function for the password */
 
 	/* read a private key from file */
-	if (PEM_read_RSAPrivateKey(fp, &rsa, NULL, NULL) <= 0) {
+	if (PEM_read_RSAPrivateKey(fp, &rsa, NULL, NULL) != 0) {
 		/* error reading the key - check the error stack */
 		Log_warn("Error trying to read private key.");
 		RSA_free(rsa);
