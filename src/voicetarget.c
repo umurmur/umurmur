@@ -45,7 +45,7 @@ void Voicetarget_add_session(client_t *client, int targetId, int sessionId)
 			int i;
 			vt = list_get_entry(itr, voicetarget_t, node);
 			for (i = 0; i < TARGET_MAX_SESSIONS; i++) {
-				if (vt->sessions[i] == -1) {
+				if (vt->sessions[i] == (uint32_t)-1) {
 					vt->sessions[i] = sessionId;
 					Log_debug("Adding session ID %d to voicetarget ID %d", sessionId, targetId);
 					return;

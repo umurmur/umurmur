@@ -114,6 +114,7 @@ static void initKey()
 int urandom_bytes(void *ctx, unsigned char *dest, size_t len)
 {
 	int cur;
+	(void)ctx; /* TODO: ugly hack to silence compiler. WHY are we not using this? */
 
 	while (len) {
 		cur = read(urandom_fd, dest, len);
@@ -128,6 +129,10 @@ int urandom_bytes(void *ctx, unsigned char *dest, size_t len)
 #define DEBUG_LEVEL 0
 static void pssl_debug(void *ctx, int level, const char *file, int line, const char *str)
 {
+	(void)ctx; /* TODO: ugly hack to silence compiler. WHY are we not using this? */
+	(void)file; /* TODO: ugly hack to silence compiler. WHY are we not using this? */
+	(void)line; /* TODO: ugly hack to silence compiler. WHY are we not using this? */
+
     if (level <= DEBUG_LEVEL)
 		Log_info("mbedTLS [level %d]: %s", level, str);
 }
@@ -215,6 +220,7 @@ SSL_handle_t *SSLi_newconnection(int *fd, bool_t *SSLready)
 	mbedtls_ssl_context *ssl;
 	mbedtls_ssl_session *ssn;
 	int rc;
+	(void)SSLready; /* TODO: ugly hack to silence compiler. WHY are we not using this? */
 
 	ssl = Memory_safeCalloc(1, sizeof(mbedtls_ssl_context));
 	ssn = Memory_safeCalloc(1, sizeof(mbedtls_ssl_session));
@@ -273,6 +279,7 @@ int SSLi_write(SSL_handle_t *ssl, uint8_t *buf, int len)
 
 int SSLi_get_error(SSL_handle_t *ssl, int code)
 {
+	(void)ssl; /* TODO: ugly hack to silence compiler. WHY are we not using this? */
 	return code;
 }
 

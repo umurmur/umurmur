@@ -77,7 +77,7 @@ static void sendPermissionDenied(client_t *client, const char *reason)
 
 static void addTokens(client_t *client, message_t *msg)
 {
-	int i;
+	size_t i;
 	if (client->tokencount + msg->payload.authenticate->n_tokens < MAX_TOKENS) {
 		/* Check lengths first */
 		for (i = 0; i < msg->payload.authenticate->n_tokens; i++) {
@@ -585,7 +585,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		}
 
 		if (msg->payload.textMessage->n_channel_id > 0) { /* To channel */
-			int i;
+			uint32_t i;
 			channel_t *ch_itr;
 			for (i = 0; i < msg->payload.textMessage->n_channel_id; i++) {
 				ch_itr = NULL;
@@ -607,7 +607,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			} /* for */
 		}
 		if (msg->payload.textMessage->n_session > 0) { /* To user */
-			int i;
+			uint32_t i;
 			client_t *itr;
 			for (i = 0; i < msg->payload.textMessage->n_session; i++) {
 				itr = NULL;
@@ -631,7 +631,8 @@ void Mh_handle_message(client_t *client, message_t *msg)
 
 	case VoiceTarget:
 	{
-		int i, j, count, targetId = msg->payload.voiceTarget->id;
+		size_t i, count;
+		uint32_t j, targetId = msg->payload.voiceTarget->id;
 		struct _MumbleProto__VoiceTarget__Target *target;
 
 		if (!targetId || targetId >= 0x1f)

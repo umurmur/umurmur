@@ -200,7 +200,8 @@ void Client_token_free(client_t *client)
 void recheckCodecVersions(client_t *connectingClient)
 {
 	client_t *client_itr = NULL;
-	int max = 0, version, current_version;
+	int max = 0;
+	uint32_t version = 0, current_version;
 	int users = 0, opus = 0;
 	message_t *sendmsg;
 	struct dlist codec_list, *itr, *save;
@@ -299,7 +300,7 @@ void recheckCodecVersions(client_t *connectingClient)
 
 static int findFreeSessionId()
 {
-	int id;
+	uint32_t id;
 	client_t *itr = NULL;
 
 	for (id = 1; id < INT_MAX; id++) {
@@ -344,7 +345,7 @@ int Client_add(int fd, struct sockaddr_storage *remote)
 	Timer_init(&newclient->connectTime);
 	Timer_init(&newclient->idleTime);
 	newclient->sessionId = findFreeSessionId();
-	if (newclient->sessionId < 0)
+	if (newclient->sessionId == (uint32_t)-1)
 		Log_fatal("Could not find a free session ID");
 
 	init_list_entry(&newclient->txMsgQueue);
@@ -991,8 +992,8 @@ int Client_voiceMsg(client_t *client, uint8_t *data, int len)
 			}
 		}
 		/* Sessions */
-		for (i = 0; i < TARGET_MAX_SESSIONS && vt->sessions[i] != -1; i++) {
-			client_t *c;
+		for (i = 0; i < TARGET_MAX_SESSIONS && vt->sessions[i] != (uint32_t)-1; i++) {
+			client_t *c = NULL;
 			buffer[0] = (uint8_t) (type | 2);
 			Log_debug("Whisper session %d", vt->sessions[i]);
 			while (Client_iterate(&c) != NULL) {

@@ -36,7 +36,7 @@
 #include "client.h"
 
 typedef struct channel {
-	int id;
+	uint32_t id;
 	char *name;
 	char *desc;
 	char *password;
@@ -62,7 +62,7 @@ typedef struct {
 	CHJOIN_WRONGPW,
 	CHJOIN_NOTFOUND;
 } channelJoinResult_t;
-	
+
 void Chan_init();
 void Chan_free();
 void Chan_addChannel(channel_t *parent, channel_t *sub);
@@ -70,13 +70,13 @@ void Chan_removeChannel(channel_t *c);
 void Chan_addClient(channel_t *c, client_t *client);
 void Chan_removeClient(channel_t *c, client_t *client);
 int Chan_userJoin(channel_t *ch, client_t *client);
-int Chan_userJoin_id(int channelid, client_t *client);
+int Chan_userJoin_id(uint32_t channelid, client_t *client);
 int Chan_userLeave(client_t *client);
-channelJoinResult_t Chan_userJoin_id_test(int channelid, client_t *client);
+channelJoinResult_t Chan_userJoin_id_test(uint32_t channelid, client_t *client);
 channel_t *Chan_iterate(channel_t **channelpptr);
 channel_t *Chan_iterate_siblings(channel_t *parent, channel_t **channelpptr);
 channel_t *Chan_createChannel(const char *name, const char *desc);
-channel_t *Chan_fromId(int channelid);
+channel_t *Chan_fromId(uint32_t channelid);
 void Chan_freeChannel(channel_t *ch);
 void Chan_buildTreeList(channel_t *ch, struct dlist *head);
 void Chan_freeTreeList(struct dlist *head);

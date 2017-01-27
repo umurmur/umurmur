@@ -63,7 +63,7 @@ static channel_t *createChannel(int id, const char *name, const char *desc)
 
 static int findFreeId()
 {
-	int id = 0;
+	uint32_t id = 0;
 	channel_t *ch_itr = NULL;
 	for (id = 0; id < INT_MAX; id++) {
 		ch_itr = NULL;
@@ -308,7 +308,7 @@ int Chan_userJoin(channel_t *ch, client_t *client)
 	return leaving_id;
 }
 
-int Chan_userJoin_id(int channelid, client_t *client)
+int Chan_userJoin_id(uint32_t channelid, client_t *client)
 {
 	channel_t *ch_itr = NULL;
 	do {
@@ -322,7 +322,7 @@ int Chan_userJoin_id(int channelid, client_t *client)
 		return Chan_userJoin(ch_itr, client);
 }
 
-channelJoinResult_t Chan_userJoin_id_test(int channelid, client_t *client)
+channelJoinResult_t Chan_userJoin_id_test(uint32_t channelid, client_t *client)
 {
 	channelJoinResult_t result;
 	channel_t *ch_itr = NULL;
@@ -357,7 +357,7 @@ void Chan_addChannel_id(int parentId, channel_t *ch)
 }
 #endif
 
-channel_t *Chan_fromId(int channelid)
+channel_t *Chan_fromId(uint32_t channelid)
 {
 	channel_t *ch_itr = NULL;
 	do {
