@@ -1,3 +1,20 @@
+0.2.17rc1:
+[FIX] Multiple possible NULL pointer dereferences (TinnedTuna)
+[FIX] Set scheduler policy before switching users (C4K3)
+[FIX] Setup TLS infrastructure before switching users (Nauxuron)
+[FIX] Default bindport6 to bindport if not set explicitly (C4K3)
+[FIX] Default to modern TLS suites (l2dy, adufray)
+[FIX] Do not leave garbage when setting socket options (pfmooney)
+[FIX] Replace stray bool with bool_t (andres-erbsen)
+[FIX] Restrict TLS connections to be TLS >= 1.0 (fmorgner)
+[NEW] Support for mbed TLS >= 2 (Rawi666, l2dy)
+	to enable use:
+	- '--with-ssl=mbedtls' with Autotools
+	- '-DSSL=mbedtls' with CMake
+[NEW] Configuration option to hide IP addresses from clients (C4K3)
+	use 'show_addresses = false;' to hide addresses
+[NEW] Export client hash in SHM interface (snowblind)
+
 0.2.16a:
 [FIX] Crash in SHM API during update (doctaweeks)
 [FIX] Failure to detect missing IPv6 support in FreeBSD jails (marcusball)
