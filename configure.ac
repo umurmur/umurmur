@@ -113,8 +113,8 @@ AS_IF([test "x$with_ssl" = xmbedtls], [
 ])
 AS_IF([test "x$with_ssl" = xopenssl], [
 	AC_CHECK_HEADERS([openssl/ssl.h], [], [AC_MSG_ERROR([could not find openssl/ssl.h])])
-	AC_CHECK_LIB([crypto], [BN_init], [], [AC_MSG_ERROR([could not find libcrypto])])
-	AC_CHECK_LIB([ssl], [SSL_library_init], [], [AC_MSG_ERROR([could not find libssl])])
+	AC_CHECK_LIB([crypto], [CRYPTO_new_ex_data], [], [AC_MSG_ERROR([could not find libcrypto])])
+	AC_CHECK_LIB([ssl], [SSL_new], [], [AC_MSG_ERROR([could not find libssl])])
 ])
 AS_IF([test "x$with_ssl" = xgnutls], [
 	AC_CHECK_HEADERS([gnutls/gnutls.h], [], [AC_MSG_ERROR([could not find gnutls/gnutls.h])])

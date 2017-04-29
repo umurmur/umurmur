@@ -411,7 +411,7 @@ static int verify_callback(int preverify_ok, X509_STORE_CTX *ctx)
      * it for something special
      */
     if (!preverify_ok && (err == X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT)) {
-	    X509_NAME_oneline(X509_get_issuer_name(ctx->current_cert), buf, 256);
+	    X509_NAME_oneline(X509_get_issuer_name(err_cert), buf, 256);
 	    Log_warn("issuer= %s", buf);
     }
     return 1;
