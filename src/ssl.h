@@ -89,20 +89,17 @@ int urandom_bytes(void *ctx, unsigned char *dest, size_t len);
 typedef	ssl_context SSL_handle_t;
 
 #elif defined(USE_MBEDTLS)
-#include <mbedtls/ssl.h>
-#if (MBEDTLS_VERSION_MINOR > 3)
-#include <mbedtls/net_socket.h>
-#else
-#include <mbedtls/net.h>
-#endif
 #include <mbedtls/version.h>
 
-#if defined(MBEDTLS_VERSION_MAJOR)
-#if (MBEDTLS_VERSION_MAJOR < 2)
+#if !defined(MBEDTLS_VERSION_MAJOR) || (MBEDTLS_VERSION_MAJOR < 2)
 #error mbedTLS version 2.0.0 or greater is required!
 #endif
+
+#include <mbedtls/ssl.h>
+#if (MBEDTLS_VERSION_MINOR > 3)
+#include <mbedtls/net_sockets.h>
 #else
-#error mbedTLS version 2.0.0 or greater is required!
+#include <mbedtls/net.h>
 #endif
 
 #if defined(USE_MBEDTLS_HAVEGE)
