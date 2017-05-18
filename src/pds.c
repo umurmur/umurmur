@@ -55,7 +55,7 @@ static inline void append_val(pds_t *pds, uint64_t val)
 
 void Pds_append_data(pds_t *pds, const uint8_t *data, uint32_t len)
 {
-	int left;
+	uint32_t left;
 	Pds_add_numval(pds, len);
 	left = pds->maxsize - pds->offset;
 	if (left >= len) {
@@ -71,7 +71,7 @@ void Pds_append_data(pds_t *pds, const uint8_t *data, uint32_t len)
 
 void Pds_append_data_nosize(pds_t *pds, const uint8_t *data, uint32_t len)
 {
-	int left;
+	uint32_t left;
 	left = pds->maxsize - pds->offset;
 	if (left >= len) {
 		memcpy(&pds->data[pds->offset], data, len);

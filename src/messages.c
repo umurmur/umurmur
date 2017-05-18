@@ -69,7 +69,7 @@ static void Msg_getPreamble(uint8_t *buffer, int *type, int *len)
 #define MAX_MSGSIZE (BUFSIZE - PREAMBLE_SIZE)
 int Msg_messageToNetwork(message_t *msg, uint8_t *buffer)
 {
-	int len;
+	int len = 0;
 	uint8_t *bufptr = buffer + PREAMBLE_SIZE;
 
 	Log_debug("To net: msg type %d", msg->messageType);
@@ -279,7 +279,6 @@ static message_t *Msg_create_nopayload(messageType_t messageType)
 message_t *Msg_create(messageType_t messageType)
 {
 	message_t *msg = Msg_create_nopayload(messageType);
-	int i;
 
 	switch (messageType) {
 	case Version:
@@ -444,7 +443,7 @@ void Msg_inc_ref(message_t *msg)
 
 void Msg_free(message_t *msg)
 {
-	int i;
+	size_t i;
 
 	if (msg->refcount) msg->refcount--;
 	if (msg->refcount > 0)
@@ -674,6 +673,7 @@ message_t *Msg_networkToMessage(uint8_t *data, int size)
 	message_t *msg = NULL;
 	uint8_t *msgData = &data[6];
 	int messageType, msgLen;
+	(void)size; /* TODO: ugly hack to silence compiler. WHY do we not use size? */
 
 	Msg_getPreamble(data, &messageType, &msgLen);
 

@@ -77,7 +77,7 @@ static void sendPermissionDenied(client_t *client, const char *reason)
 
 static void addTokens(client_t *client, message_t *msg)
 {
-	int i;
+	size_t i;
 	if (client->tokencount + msg->payload.authenticate->n_tokens < MAX_TOKENS) {
 		/* Check lengths first */
 		for (i = 0; i < msg->payload.authenticate->n_tokens; i++) {
@@ -513,7 +513,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			sendmsg = NULL;
 		}
 		if (msg->payload.userState->has_channel_id) {
-			int leave_id;
+			uint32_t leave_id;
 
 			channelJoinResult_t result = Chan_userJoin_id_test(msg->payload.userState->channel_id, target);
 
@@ -534,7 +534,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			}
 
 			leave_id = Chan_userJoin_id(msg->payload.userState->channel_id, target);
-			if (leave_id > 0) {
+			if (leave_id > 0 && leave_id != UINT32_MAX) {
 				Log_debug("Removing channel ID %d", leave_id);
 				sendmsg = Msg_create(ChannelRemove);
 				sendmsg->payload.channelRemove->channel_id = leave_id;
@@ -585,7 +585,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		}
 
 		if (msg->payload.textMessage->n_channel_id > 0) { /* To channel */
-			int i;
+			uint32_t i;
 			channel_t *ch_itr;
 			for (i = 0; i < msg->payload.textMessage->n_channel_id; i++) {
 				ch_itr = NULL;
@@ -607,7 +607,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			} /* for */
 		}
 		if (msg->payload.textMessage->n_session > 0) { /* To user */
-			int i;
+			uint32_t i;
 			client_t *itr;
 			for (i = 0; i < msg->payload.textMessage->n_session; i++) {
 				itr = NULL;
@@ -631,7 +631,8 @@ void Mh_handle_message(client_t *client, message_t *msg)
 
 	case VoiceTarget:
 	{
-		int i, j, count, targetId = msg->payload.voiceTarget->id;
+		size_t i, count;
+		uint32_t j, targetId = msg->payload.voiceTarget->id;
 		struct _MumbleProto__VoiceTarget__Target *target;
 
 		if (!targetId || targetId >= 0x1f)
@@ -700,7 +701,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 	case ChannelState:
 	{
 		channel_t *ch_itr, *parent, *newchan;
-		int leave_id;
+		uint32_t leave_id;
 		/* Don't allow any changes to existing channels */
 		if (msg->payload.channelState->has_channel_id) {
 			sendPermissionDenied(client, "Not supported by uMurmur");
@@ -778,7 +779,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		Client_send_message_except(NULL, sendmsg);
 
 		leave_id = Chan_userJoin(newchan, client);
-		if (leave_id > 0) {
+		if (leave_id > 0 && leave_id != UINT32_MAX) {
 			Log_debug("Removing channel ID %d", leave_id);
 			sendmsg = Msg_create(ChannelRemove);
 			sendmsg->payload.channelRemove->channel_id = leave_id;

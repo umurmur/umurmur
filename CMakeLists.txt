@@ -10,6 +10,9 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release CACHE STRING "The type of build product that should be produced." FORCE)
 endif()
 
+set(CMAKE_C_FLAGS "-std=gnu99 -Wall -Wextra")
+add_definitions("-D_XOPEN_SOURCE -D_GNU_SOURCE")
+
 include(SelectTLSBackend)
 include(SelectRTBackend)
 
