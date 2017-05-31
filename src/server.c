@@ -328,7 +328,7 @@ void Server_run()
 
 	Log_info("uMurmur version %s ('%s') protocol version %d.%d.%d",
 		UMURMUR_VERSION, UMURMUR_CODENAME, PROTVER_MAJOR, PROTVER_MINOR, PROTVER_PATCH);
-	Log_info("Visit http://code.google.com/p/umurmur/");
+	Log_info("Visit https://github.com/umurmur/umurmur");
 
 	/* Main server loop */
 	Server_runLoop(pollfds);
