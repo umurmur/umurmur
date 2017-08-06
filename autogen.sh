@@ -1567,6 +1567,15 @@ else
     $ECHO "  make"
 fi
 
+$ECHO
+$ECHO "WARNING: Building umurmur with autotools has been deprecated. In the"
+$ECHO "future, support for autotools will be dropped, please switch to"
+$ECHO "compiling with cmake instead. See the links below for information"
+$ECHO "on how to compile with cmake, and the relevant discussion."
+$ECHO
+$ECHO "https://github.com/umurmur/umurmur/wiki/Building"
+$ECHO "https://github.com/umurmur/umurmur/issues/111"
+
 
 # Local Variables:
 # mode: sh
