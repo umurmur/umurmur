@@ -70,7 +70,7 @@ typedef struct {
 	struct sockaddr_storage remote_udp;
 	uint8_t rxbuf[BUFSIZE], txbuf[BUFSIZE];
 	uint32_t rxcount, msgsize, drainleft, txcount, txsize;
-	int sessionId;
+	uint32_t sessionId;
 	uint8_t key[KEY_LENGTH];
 	char *username;
 	bool_t bUDP, authenticated, deaf, mute, self_deaf, self_mute, recording, bOpus;

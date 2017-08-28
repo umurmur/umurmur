@@ -67,32 +67,6 @@ static int SSL_add_ext(X509 * crt, int nid, char *value) {
 	return 1;
 }
 
-static X509 *SSL_readcert(char *certfile)
-{
-	FILE *fp;
-	X509 *x509;
-
-	/* open the certificate file */
-	fp = fopen(certfile, "r");
-	if (fp == NULL) {
-		Log_warn("Unable to open the X509 file %s for reading.", certfile);
-		return NULL;
-	}
-
-	/* allocate memory for the cert structure */
-	x509 = X509_new();
-
-	if (PEM_read_X509(fp, &x509, NULL, NULL) == 0) {
-		/* error reading the x509 information - check the error stack */
-		Log_warn("Error trying to read X509 info.");
-		fclose(fp);
-		X509_free(x509);
-		return NULL;
-	}
-	fclose(fp);
-	return x509;
-}
-
 static RSA *SSL_readprivatekey(char *keyfile)
 {
 	FILE *fp;
@@ -111,7 +85,7 @@ static RSA *SSL_readprivatekey(char *keyfile)
 	/* assign a callback function for the password */
 
 	/* read a private key from file */
-	if (PEM_read_RSAPrivateKey(fp, &rsa, NULL, NULL) <= 0) {
+	if (PEM_read_RSAPrivateKey(fp, &rsa, NULL, NULL) != 0) {
 		/* error reading the key - check the error stack */
 		Log_warn("Error trying to read private key.");
 		RSA_free(rsa);
@@ -215,7 +189,7 @@ void SSLi_init(void)
 	int i, offset = 0, cipherstringlen = 0;
 	STACK_OF(SSL_CIPHER) *cipherlist = NULL, *cipherlist_new = NULL;
 	SSL_CIPHER *cipher;
-	char *cipherstring;
+	char *cipherstring = NULL;
 
 	SSL_library_init();
 	OpenSSL_add_all_algorithms();
@@ -388,13 +362,11 @@ static int verify_callback(int preverify_ok, X509_STORE_CTX *ctx)
 	char    buf[256];
 	X509   *err_cert;
 	int     err, depth;
-	SSL    *ssl;
 
     err_cert = X509_STORE_CTX_get_current_cert(ctx);
     err = X509_STORE_CTX_get_error(ctx);
     depth = X509_STORE_CTX_get_error_depth(ctx);
 
-    ssl = X509_STORE_CTX_get_ex_data(ctx, SSL_get_ex_data_X509_STORE_CTX_idx());
     X509_NAME_oneline(X509_get_subject_name(err_cert), buf, 256);
 
     if (depth > 5) {

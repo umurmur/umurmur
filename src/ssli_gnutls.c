@@ -35,7 +35,6 @@
 
 #include <stdlib.h>
 
-static gnutls_dh_params_t dhParameters;
 static gnutls_certificate_credentials_t certificate;
 
 static const char * ciphers = "NONE:"
@@ -149,6 +148,7 @@ int SSLi_write(SSL_handle_t *session, uint8_t *buffer, int length)
 
 int SSLi_get_error(SSL_handle_t *session, int code)
 {
+	(void)session; /* TODO: ugly hack to silence compiler. WHY are we not using this? */
 	return code;
 }
 

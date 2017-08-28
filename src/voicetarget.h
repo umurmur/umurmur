@@ -39,7 +39,7 @@
 #define TARGET_MAX_SESSIONS 32
 
 typedef struct {
-	int channel;
+	uint32_t channel;
 	bool_t linked;
 	bool_t children;
 } channeltarget_t;
@@ -47,7 +47,7 @@ typedef struct {
 typedef struct {
 	int id;
 	channeltarget_t channels[TARGET_MAX_CHANNELS];
-	int sessions[TARGET_MAX_SESSIONS];
+	uint32_t sessions[TARGET_MAX_SESSIONS];
 	struct dlist node;
 } voicetarget_t;
 
