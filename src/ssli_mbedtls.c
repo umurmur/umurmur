@@ -42,7 +42,13 @@
 #include <mbedtls/certs.h>
 #include <mbedtls/x509.h>
 #include <mbedtls/ssl.h>
+
+#if (MBEDTLS_VERSION_MINOR > 3)
+#include <mbedtls/net_sockets.h>
+#else
 #include <mbedtls/net.h>
+#endif
+
 #include <mbedtls/sha1.h>
 
 const int ciphers[] =
@@ -75,7 +81,7 @@ static mbedtls_pk_context key;
 bool_t builtInTestCertificate;
 
 #ifdef USE_MBEDTLS_HAVEGE
-havege_state hs;
+mbedtls_havege_state hs;
 #else
 int urandom_fd;
 #endif
