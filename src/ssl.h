@@ -104,7 +104,7 @@ typedef	ssl_context SSL_handle_t;
 
 #if defined(USE_MBEDTLS_HAVEGE)
 #include <mbedtls/havege.h>
-    #define HAVEGE_RAND (havege_random)
+    #define HAVEGE_RAND (mbedtls_havege_random)
     #define RAND_bytes(_dst_, _size_) do { \
         mbedtls_havege_random(&hs, _dst_, _size_); \
     } while (0)
