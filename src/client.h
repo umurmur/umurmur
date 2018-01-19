@@ -39,7 +39,7 @@
 #include <netinet/in.h>         /* IPPROTO_TCP */
 #include <arpa/inet.h>          /* inet_addr() */
 #include <errno.h>              /* errno */
-#include <sys/poll.h>
+#include <poll.h>
 
 #include "list.h"
 #include "types.h"
