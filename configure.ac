@@ -146,7 +146,7 @@ AC_DEFINE([DEFAULT_CONFIG], ["/etc/umurmur.conf"], [Default config])
 
 # Checks for header files.
 AC_FUNC_ALLOCA
-AC_CHECK_HEADERS([arpa/inet.h fcntl.h inttypes.h limits.h netinet/tcp.h stddef.h stdint.h stdlib.h string.h sys/socket.h sys/time.h syslog.h unistd.h sys/poll.h], [], [AC_MSG_ERROR([missing a required header])])
+AC_CHECK_HEADERS([arpa/inet.h fcntl.h inttypes.h limits.h netinet/tcp.h stddef.h stdint.h stdlib.h string.h sys/socket.h sys/time.h syslog.h unistd.h poll.h], [], [AC_MSG_ERROR([missing a required header])])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
