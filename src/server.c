@@ -30,7 +30,7 @@
 */
 #include <stdio.h>
 #include <sys/time.h>
-#include <sys/poll.h>
+#include <poll.h>
 #include <netinet/tcp.h>
 #include <sys/socket.h>
 #include <errno.h>
