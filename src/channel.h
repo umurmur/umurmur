@@ -56,13 +56,6 @@ typedef struct {
 	struct dlist node;
 } channellist_t;
 
-typedef struct {
-  bool_t CHJOIN_SILENT,
-	CHJOIN_NOENTER,
-	CHJOIN_WRONGPW,
-	CHJOIN_NOTFOUND;
-} channelJoinResult_t;
-	
 void Chan_init();
 void Chan_free();
 void Chan_addChannel(channel_t *parent, channel_t *sub);
@@ -72,7 +65,6 @@ void Chan_removeClient(channel_t *c, client_t *client);
 int Chan_userJoin(channel_t *ch, client_t *client);
 int Chan_userJoin_id(int channelid, client_t *client);
 int Chan_userLeave(client_t *client);
-channelJoinResult_t Chan_userJoin_id_test(int channelid, client_t *client);
 channel_t *Chan_iterate(channel_t **channelpptr);
 channel_t *Chan_iterate_siblings(channel_t *parent, channel_t **channelpptr);
 channel_t *Chan_createChannel(const char *name, const char *desc);

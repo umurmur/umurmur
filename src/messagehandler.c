@@ -514,23 +514,21 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		}
 		if (msg->payload.userState->has_channel_id) {
 			int leave_id;
+			channel_t *chan =
+				Chan_fromId(msg->payload.userState->channel_id);
 
-			channelJoinResult_t result = Chan_userJoin_id_test(msg->payload.userState->channel_id, target);
-
-			if (result.CHJOIN_NOENTER || result.CHJOIN_NOTFOUND)
+			if (!chan || chan->noenter)
 				break;
 
-			if (result.CHJOIN_WRONGPW) {
-				if (target == client && !client->isAdmin) {
-					sendPermissionDenied(client, "Wrong channel password");
-					break;
-				}
-				/* Tricky one: if user hasn't the password, but is moved to the channel by admin then let
-				 * the user in. Also let admin user in regardless of channel password.
-				 * Take no action on other errors.
-				 */
-				else if (!client->isAdmin)
-					break;
+			/* Tricky one: if user hasn't the password, but is moved
+			 * to the channel by admin then let the user in. Also
+			 * let admin user in regardless of channel password.
+			 */
+			if (!client->isAdmin && chan->password &&
+			    !Client_token_match(target, chan->password)) {
+				sendPermissionDenied(client,
+				                     "Wrong channel password");
+				break;
 			}
 
 			leave_id = Chan_userJoin_id(msg->payload.userState->channel_id, target);
@@ -540,7 +538,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 				sendmsg->payload.channelRemove->channel_id = leave_id;
 			}
 
-			if (result.CHJOIN_SILENT) {
+			if (chan->silent) {
 				if (!target->isSuppressed) {
 				msg->payload.userState->has_suppress = true;
 				msg->payload.userState->suppress = true;
