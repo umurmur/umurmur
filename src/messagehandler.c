@@ -350,6 +350,12 @@ void Mh_handle_message(client_t *client, message_t *msg)
 				sendmsg->payload.userState->has_recording = true;
 				sendmsg->payload.userState->recording = true;
 			}
+			if (client_itr->priority_speaker) {
+				sendmsg->payload.userState->
+					has_priority_speaker = true;
+				sendmsg->payload.userState->
+					priority_speaker = true;
+			}
 			Client_send_message(client, sendmsg);
 		}
 
@@ -449,7 +455,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		}
 
 		if (msg->payload.userState->has_user_id || msg->payload.userState->has_suppress ||
-		    msg->payload.userState->has_priority_speaker || msg->payload.userState->has_texture) {
+		    msg->payload.userState->has_texture) {
 			sendPermissionDenied(client, "Not supported by uMurmur");
 			break;
 		}
@@ -461,6 +467,14 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		msg->payload.userState->session = target->sessionId;
 		msg->payload.userState->has_actor = true;
 		msg->payload.userState->actor = client->sessionId;
+
+		/* Quod licet Iovi, non licet bovi */
+		if (!client->isAdmin && (msg->payload.userState->has_deaf ||
+		    msg->payload.userState->has_mute ||
+		    msg->payload.userState->has_priority_speaker)) {
+			sendPermissionDenied(client, "Permission denied");
+			break;
+		}
 
 		if (msg->payload.userState->has_deaf) {
 			target->deaf = msg->payload.userState->deaf;
@@ -476,6 +490,10 @@ void Mh_handle_message(client_t *client, message_t *msg)
 				msg->payload.userState->deaf = false;
 				target->deaf = false;
 			}
+		}
+		if (msg->payload.userState->has_priority_speaker) {
+			target->priority_speaker =
+				msg->payload.userState->priority_speaker;
 		}
 		if (msg->payload.userState->has_self_deaf) {
 			client->self_deaf = msg->payload.userState->self_deaf;
