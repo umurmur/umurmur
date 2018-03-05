@@ -30,6 +30,7 @@
 */
 #include <stdlib.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 #include "conf.h"
 #include "log.h"
@@ -44,10 +45,8 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/safestack.h>
-static X509 *x509;
-static RSA *rsa;
+
 static SSL_CTX *context;
-static EVP_PKEY *pkey;
 
 static char const * ciphers = "EECDH+CHACHA20:EECDH+AESGCM:EECDH+AES+TLSv1.2:EECDH+AES:AESGCM:AES:!aNULL:!DHE:!kECDH";
 
@@ -101,8 +100,8 @@ static RSA *SSL_readprivatekey(char *keyfile)
 /* open the private key file for reading */
 	fp = fopen(keyfile, "r");
 	if (fp == NULL) {
-		Log_warn("Unable to open the private key file %s for reading.", keyfile);
-		return NULL;
+		Log_fatal("Unable to open private key file '%s' for reading",
+		          keyfile);
 	}
 
 /* allocate memory for the RSA structure */
@@ -113,10 +112,9 @@ static RSA *SSL_readprivatekey(char *keyfile)
 	/* read a private key from file */
 	if (PEM_read_RSAPrivateKey(fp, &rsa, NULL, NULL) <= 0) {
 		/* error reading the key - check the error stack */
-		Log_warn("Error trying to read private key.");
 		RSA_free(rsa);
 		fclose(fp);
-		return NULL;
+		Log_fatal("Could not read private key file '%s'", keyfile);
 	}
 	fclose(fp);
 	return rsa;
@@ -155,23 +153,37 @@ static void SSL_writekey(char *keyfile, RSA *rsa)
 	fclose(fp);
 }
 
+static bool_t file_exists(const char *filename)
+{
+	return (access(filename, F_OK) == 0);
+}
+
 static void SSL_initializeCert() {
 
 	char *crt = (char *)getStrConf(CERTIFICATE);
 	char *key = (char *)getStrConf(KEY);
+	EVP_PKEY *pkey = EVP_PKEY_new();
+	RSA *rsa = NULL;
 
 	if (context) {
-		bool_t did_load_cert = SSL_CTX_use_certificate_chain_file(context, crt);
-		rsa = SSL_readprivatekey(key);
+		/* Do not generate new certificate if either private key or
+		 * certificate file (or both) already exists, even though one
+		 * (or both) of them is invalid or inaccessible. */
+		if (file_exists(key) || file_exists(crt)) {
+			rsa = SSL_readprivatekey(key);
+			if (!SSL_CTX_use_certificate_chain_file(context, crt)) {
+				Log_fatal("Could not read certificate "
+				          "file '%s'", crt);
+			}
 
-		if (!rsa || !did_load_cert) {
-			Log_info("Generating new server certificate.");
+			EVP_PKEY_assign_RSA(pkey, rsa);
+		} else {
+			Log_info("Generating new server certificate");
 
 
 			CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
-			x509 = X509_new();
-			pkey = EVP_PKEY_new();
+			X509 *x509 = X509_new();
 			rsa = RSA_generate_key(4096,RSA_F4,NULL,NULL);
 			EVP_PKEY_assign_RSA(pkey, rsa);
 
@@ -196,9 +208,6 @@ static void SSL_initializeCert() {
 			SSL_writekey(key, rsa);
 
 			SSL_CTX_use_certificate(context, x509);
-		} else {
-		  pkey = EVP_PKEY_new();
-		  EVP_PKEY_assign_RSA(pkey, rsa);
 		}
 
 		SSL_CTX_use_PrivateKey(context, pkey);
