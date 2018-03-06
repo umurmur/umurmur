@@ -617,10 +617,6 @@ int Client_send_message_ver(client_t *client, message_t *msg, uint32_t version)
 
 int Client_send_message(client_t *client, message_t *msg)
 {
-	if (!client->authenticated && msg->messageType != Version) {
-		Msg_free(msg);
-		return 0;
-	}
 	if (client->txsize != 0 || !client->SSLready) {
 		/* Queue message */
 		if ((client->txQueueCount > 5 &&  msg->messageType == UDPTunnel) ||
@@ -694,7 +690,7 @@ int Client_send_message_except(client_t *client, message_t *msg)
 	int count = 0;
 
 	Msg_inc_ref(msg); /* Make sure a reference is held during the whole iteration. */
-	while (Client_iterate(&itr) != NULL) {
+	while (Client_iterate_authenticated(&itr)) {
 		if (itr != client) {
 			if (count++ > 0)
 				Msg_inc_ref(msg); /* One extra reference for each new copy */
@@ -717,7 +713,7 @@ int Client_send_message_except_ver(client_t *client, message_t *msg, uint32_t ve
 	int count = 0;
 
 	Msg_inc_ref(msg); /* Make sure a reference is held during the whole iteration. */
-	while (Client_iterate(&itr) != NULL) {
+	while (Client_iterate_authenticated(&itr)) {
 		if (itr != client) {
 			if (count++ > 0)
 				Msg_inc_ref(msg); /* One extra reference for each new copy */

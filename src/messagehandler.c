@@ -141,8 +141,6 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			goto disconnect;
 		}
 
-		client->authenticated = true;
-
 		client_itr = NULL;
 		while (Client_iterate_authenticated(&client_itr)) {
 			if (client_itr->username && strncmp(client_itr->username, msg->payload.authenticate->username, MAX_USERNAME) == 0) {
@@ -212,6 +210,8 @@ void Mh_handle_message(client_t *client, message_t *msg)
 
 		/* Channel stuff */
 		Chan_userJoin(defaultChan, client); /* Join default channel */
+
+		client->authenticated = true;
 
 		/* Codec version */
 		Log_debug("Client %d has %d CELT codecs", client->sessionId,
