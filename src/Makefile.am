@@ -27,7 +27,46 @@
 #  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 bin_PROGRAMS=umurmurd
-umurmurd_SOURCES=client.c main.c messages.c pds.c server.c log.c conf.c crypt.c timer.c messagehandler.c channel.c Mumble.pb-c.c voicetarget.c ban.c util.c memory.c
+
+umurmurd_SOURCES = \
+	Mumble.pb-c.c \
+	Mumble.pb-c.h \
+	ban.c \
+	ban.h \
+	byteorder.h \
+	channel.c \
+	channel.h \
+	client.c \
+	client.h \
+	conf.c \
+	conf.h \
+	crypt.c \
+	crypt.h \
+	list.h \
+	log.c \
+	log.h \
+	main.c \
+	memory.c \
+	memory.h \
+	messagehandler.c \
+	messagehandler.h \
+	messages.c \
+	messages.h \
+	pds.c \
+	pds.h \
+	server.c \
+	server.h \
+	sharedmemory.h \
+	sharedmemory_struct.h \
+	ssl.h \
+	timer.c \
+	timer.h \
+	types.h \
+	util.c \
+	util.h \
+	version.h \
+	voicetarget.c \
+	voicetarget.h
 
 if USE_OPENSSL
 umurmurd_SOURCES+=ssli_openssl.c
@@ -46,3 +85,7 @@ endif
 if USE_SHAREDMEMORY_API
 umurmurd_SOURCES+=sharedmemory.c
 endif
+
+EXTRA_DIST = \
+	config.h.in \
+	CMakeLists.txt
