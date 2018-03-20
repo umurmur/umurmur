@@ -283,7 +283,7 @@ int Chan_userLeave(client_t *client)
 
 	if (client->channel) {
 		list_del(&client->chan_node);
-		leaving = (channel_t *)client->channel;
+		leaving = client->channel;
 		if (leaving->temporary && list_empty(&leaving->clients)) {
 			leaving_id = leaving->id;
 			Chan_freeChannel(leaving);
@@ -297,14 +297,14 @@ int Chan_userJoin(channel_t *ch, client_t *client)
 	int leaving_id;
 
 	/* Do nothing if user already is in this channel */
-	if ((channel_t *)client->channel == ch)
+	if (client->channel == ch)
 		return 0;
 
 	Log_debug("Add user %s to channel %s", client->username, ch->name);
 	/* Only allowed in one channel at a time */
 	leaving_id = Chan_userLeave(client);
 	list_add_tail(&client->chan_node, &ch->clients);
-	client->channel = (void *)ch;
+	client->channel = ch;
 	return leaving_id;
 }
 

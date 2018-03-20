@@ -306,7 +306,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		sendmsg->payload.userState->session = client->sessionId;
 		sendmsg->payload.userState->name = strdup(client->username);
 		sendmsg->payload.userState->has_channel_id = true;
-		sendmsg->payload.userState->channel_id = ((channel_t *)client->channel)->id;
+		sendmsg->payload.userState->channel_id = client->channel->id;
 
 		if (defaultChan->silent) {
 			sendmsg->payload.userState->has_suppress = true;
@@ -324,11 +324,11 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			sendmsg->payload.userState->session = client_itr->sessionId;
 			sendmsg->payload.userState->name = strdup(client_itr->username);
 			sendmsg->payload.userState->has_channel_id = true;
-			sendmsg->payload.userState->channel_id = ((channel_t *)client_itr->channel)->id;
-			sendmsg->payload.userState->has_suppress = ((channel_t *)client_itr->channel)->silent;
-			sendmsg->payload.userState->suppress = ((channel_t *)client_itr->channel)->silent;
+			sendmsg->payload.userState->channel_id = client_itr->channel->id;
+			sendmsg->payload.userState->has_suppress = client_itr->channel->silent;
+			sendmsg->payload.userState->suppress = client_itr->channel->silent;
 
-			client_itr->isSuppressed = ((channel_t *)client_itr->channel)->silent;
+			client_itr->isSuppressed = client_itr->channel->silent;
 
 			if (client_itr->self_deaf) {
 				sendmsg->payload.userState->has_self_deaf = true;

@@ -59,6 +59,8 @@
 
 #define IS_AUTH(_a_) ((_a_)->authenticated)
 
+struct channel;
+
 typedef struct {
 	int tcpfd;
 	SSL_handle_t *ssl;
@@ -83,7 +85,7 @@ typedef struct {
 	struct dlist node;
 	struct dlist txMsgQueue;
 	int txQueueCount;
-	void *channel; /* Ugly... */
+	struct channel *channel;
 	char *context;
 	struct dlist chan_node;
 	struct dlist voicetargets;
