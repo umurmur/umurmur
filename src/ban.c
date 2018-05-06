@@ -29,6 +29,9 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
    */
 
+#define _POSIX_C_SOURCE 200809L
+#define _XOPEN_SOURCE
+
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
