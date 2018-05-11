@@ -30,12 +30,12 @@
 */
 #include <stdio.h>
 #include <sys/time.h>
-#include <sys/poll.h>
 #include <netinet/tcp.h>
 #include <sys/socket.h>
 #include <errno.h>
 #include <string.h>
 #include <limits.h>
+#include <poll.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
