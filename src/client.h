@@ -118,6 +118,7 @@ int Client_send_message_except_ver(client_t *client, message_t *msg, uint32_t ve
 int Client_count(void);
 void Client_close(client_t *client);
 client_t *Client_iterate(client_t **client);
+client_t *Client_iterate_authenticated(client_t **client_itr);
 int Client_send_message_except(client_t *client, message_t *msg);
 int Client_read_udp(int udpsock);
 void Client_disconnect_all();

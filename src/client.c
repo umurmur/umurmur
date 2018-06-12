@@ -648,10 +648,9 @@ client_t *Client_iterate(client_t **client_itr)
 {
 	client_t *c = *client_itr;
 
-	if (list_empty(&clients))
-		return NULL;
-
-	if (c == NULL) {
+	if (list_empty(&clients)) {
+		c = NULL;
+	} else if (c == NULL) {
 		c = list_get_entry(list_get_first(&clients), client_t, node);
 	} else {
 		if (list_get_next(&c->node) == &clients)
@@ -661,6 +660,14 @@ client_t *Client_iterate(client_t **client_itr)
 	}
 	*client_itr = c;
 	return c;
+}
+
+client_t *Client_iterate_authenticated(client_t **client_itr)
+{
+	while (Client_iterate(client_itr))
+		if (IS_AUTH(*client_itr))
+			break;
+	return *client_itr;
 }
 
 void Client_textmessage(client_t *client, char *text)

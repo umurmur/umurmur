@@ -61,9 +61,9 @@ void Sharedmemory_update(void)
 	if( shmptr->clientcount )
 	{
 		Timer_init( &now );
-		while( Client_iterate(&client_itr) != NULL )
+		while( Client_iterate_authenticated(&client_itr) )
 		{
-			if( client_itr->authenticated && !client_itr->shutdown_wait )
+			if( !client_itr->shutdown_wait )
 			{
 				channel_t *channel = client_itr->channel;
 
