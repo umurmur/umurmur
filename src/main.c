@@ -352,11 +352,11 @@ int main(int argc, char **argv)
 		/* Build system string */
 		if (uname(&utsbuf) == 0) {
 			snprintf(system_string, 64, "%s %s", utsbuf.sysname, utsbuf.machine);
-			snprintf(version_string, 64, "%s", utsbuf.release);
+			strncpy(version_string, utsbuf.release, sizeof(version_string) - 1);
 		}
 		else {
-			snprintf(system_string, 64, "unknown unknown");
-			snprintf(version_string, 64, "unknown");
+			strncpy(system_string, "unknown unknown", sizeof(system_string) - 1);
+			strncpy(version_string, "unknown", sizeof(version_string) - 1);
 		}
 
 		/* Initializing */
