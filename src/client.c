@@ -941,6 +941,21 @@ int Client_voiceMsg(client_t *client, uint8_t *data, int len)
 			c = list_get_entry(itr, client_t, chan_node);
 			Client_send_voice(client, c, buffer, pds->offset + 1, poslen);
 		}
+		if (!list_empty(&ch->channel_links)) { /* Speech to links */
+		    struct dlist *ch_itr;
+		    list_iterate(ch_itr, &ch->channel_links) {
+			channellist_t *chl;
+			channel_t *ch_link;
+			chl = list_get_entry(ch_itr, channellist_t, node);
+			ch_link = chl->chan;
+			list_iterate(itr, &ch_link->clients) {
+			    client_t *c;
+			    c = list_get_entry(itr, client_t, chan_node);
+			    Log_debug("Linked voice from %s -> %s", ch->name, ch_link->name);
+			    Client_send_voice(client, c, buffer, pds->offset + 1, poslen);
+			}
+		    }
+		}
 	} else if ((vt = Voicetarget_get_id(client, target)) != NULL) { /* Targeted whisper */
 		int i;
 		channel_t *ch;
@@ -956,7 +971,7 @@ int Client_voiceMsg(client_t *client, uint8_t *data, int len)
 				c = list_get_entry(itr, client_t, chan_node);
 				Client_send_voice(client, c, buffer, pds->offset + 1, poslen);
 			}
-			/* Channel links */
+			/* Whisper to channel links? */
 			if (vt->channels[i].linked && !list_empty(&ch->channel_links)) {
 				struct dlist *ch_itr;
 				list_iterate(ch_itr, &ch->channel_links) {
@@ -967,12 +982,12 @@ int Client_voiceMsg(client_t *client, uint8_t *data, int len)
 					list_iterate(itr, &ch_link->clients) {
 						client_t *c;
 						c = list_get_entry(itr, client_t, chan_node);
-						Log_debug("Linked voice from %s -> %s", ch->name, ch_link->name);
+						Log_debug("Linked whisper from %s -> %s", ch->name, ch_link->name);
 						Client_send_voice(client, c, buffer, pds->offset + 1, poslen);
 					}
 				}
 			}
-			/* children */
+			/* Whisper to children? */
 			if (vt->channels[i].children) {
 				struct dlist chanlist, *ch_itr;
 				init_list_entry(&chanlist);
@@ -983,14 +998,14 @@ int Client_voiceMsg(client_t *client, uint8_t *data, int len)
 					list_iterate(itr, &sub->clients) {
 						client_t *c;
 						c = list_get_entry(itr, client_t, chan_node);
-						Log_debug("Child voice from %s -> %s", ch->name, sub->name);
+						Log_debug("Whisper to child from %s -> %s", ch->name, sub->name);
 						Client_send_voice(client, c, buffer, pds->offset + 1, poslen);
 					}
 				}
 				Chan_freeTreeList(&chanlist);
 			}
 		}
-		/* Sessions */
+		/* Whisper to sessions (users)? */
 		for (i = 0; i < TARGET_MAX_SESSIONS && vt->sessions[i] != -1; i++) {
 			client_t *c;
 			buffer[0] = (uint8_t) (type | 2);
