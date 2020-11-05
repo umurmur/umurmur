@@ -150,14 +150,19 @@ static EVP_PKEY *SSL_generate_cert_and_key(char *key, char *crt)
 	if (!e)
 		goto err_out;
 		
-	BN_set_word(e, 65537);
+	BN_set_word(e, RSA_F4);
 	RSA_generate_key_ex(rsa, 2048, e, NULL);
 	EVP_PKEY_assign_RSA(pkey, rsa);
 	
 	X509_set_version(x509, 2);
 	ASN1_INTEGER_set(X509_get_serialNumber(x509), 1);
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	X509_gmtime_adj(X509_get_notBefore(x509), 0);
 	X509_gmtime_adj(X509_get_notAfter(x509), 60 * 60 * 24 * 365 * 20);
+#else
+	X509_gmtime_adj(X509_getm_notBefore(x509), 0);
+	X509_gmtime_adj(X509_getm_notAfter(x509), 60 * 60 * 24 * 365 * 20);
+#endif
 	X509_set_pubkey(x509, pkey);
 	
 	X509_NAME *name = X509_get_subject_name(x509);
@@ -192,6 +197,7 @@ err_out:
 		RSA_free(rsa);
 	if (pkey)
 		EVP_PKEY_free(pkey);
+	Log_fatal("Failed to generate key and/or certificate.");
 	return NULL;
 }
 
@@ -231,9 +237,10 @@ void SSLi_init(void)
 	SSL *ssl;
 	int i, offset = 0, cipherstringlen = 0;
 	STACK_OF(SSL_CIPHER) *cipherlist = NULL, *cipherlist_new = NULL;
-	SSL_CIPHER *cipher;
+	const SSL_CIPHER *cipher;
 	char *cipherstring;
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	SSL_library_init();
 	OpenSSL_add_all_algorithms();
 	SSL_load_error_strings();
@@ -242,13 +249,13 @@ void SSLi_init(void)
 	context = SSL_CTX_new(SSLv23_server_method());
 	SSL_CTX_set_options(context, SSL_OP_NO_SSLv2);
 	SSL_CTX_set_options(context, SSL_OP_NO_SSLv3);
-	SSL_CTX_set_options(context, SSL_OP_CIPHER_SERVER_PREFERENCE);
+#else
+	context = SSL_CTX_new(TLS_server_method());
+	SSL_CTX_set_min_proto_version(context, TLS1_VERSION);
+#endif
 	if (context == NULL)
-	{
-		ERR_print_errors_fp(stderr);
-		abort();
-	}
-
+		Log_fatal("Could not initialize OpenSSL.");
+	SSL_CTX_set_options(context, SSL_OP_CIPHER_SERVER_PREFERENCE);
 	SSL_CTX_set_cipher_list(context, ciphers);
 
 	EC_KEY *ecdhkey = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
@@ -307,7 +314,9 @@ void SSLi_init(void)
 void SSLi_deinit(void)
 {
 	SSL_CTX_free(context);
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	EVP_cleanup();
+#endif
 }
 
 int SSLi_nonblockaccept(SSL_handle_t *ssl, bool_t *SSLready)
