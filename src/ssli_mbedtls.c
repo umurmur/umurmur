@@ -38,12 +38,20 @@
 #include <fcntl.h>
 
 #include <mbedtls/config.h>
+#include <mbedtls/version.h>
 #include <mbedtls/havege.h>
 #include <mbedtls/certs.h>
 #include <mbedtls/x509.h>
 #include <mbedtls/ssl.h>
+
+#if MBEDTLS_VERSION_NUMBER < 0x02060000L
 #include <mbedtls/net.h>
+#else
+#include <mbedtls/net_sockets.h>
+#endif
+
 #include <mbedtls/sha1.h>
+#include <mbedtls/error.h>
 
 const int ciphers[] =
 {
@@ -83,6 +91,7 @@ int urandom_fd;
 static void initCert()
 {
 	int rc;
+	
 	char *crtfile = (char *)getStrConf(CERTIFICATE);
 
 	if (crtfile == NULL) {
@@ -93,7 +102,9 @@ static void initCert()
 	rc = mbedtls_x509_crt_parse_file(&certificate, crtfile);
 
 	if (rc != 0) {
-		Log_fatal("Could not read certificate file '%s'", crtfile);
+	    char buffer[128];
+	    mbedtls_strerror(rc, buffer, 128);
+	    Log_fatal("Could not parse certificate file %s: %s", crtfile, buffer);
 		return;
 	}
 }
@@ -106,8 +117,11 @@ static void initKey()
 	if (keyfile == NULL)
 		Log_fatal("No key file specified");
 	rc = x509parse_keyfile(&key, keyfile, NULL);
-	if (rc != 0)
-		Log_fatal("Could not read private key file %s", keyfile);
+	if (rc != 0) {
+		char buffer[128];
+		mbedtls_strerror(rc, buffer, 128);
+		Log_fatal("Could not read private key file %s: %s", keyfile, buffer);
+	}
 }
 
 #ifndef USE_MBEDTLS_HAVEGE
@@ -125,7 +139,7 @@ int urandom_bytes(void *ctx, unsigned char *dest, size_t len)
 }
 #endif
 
-#define DEBUG_LEVEL 0
+#define DEBUG_LEVEL 3
 static void pssl_debug(void *ctx, int level, const char *file, int line, const char *str)
 {
     if (level <= DEBUG_LEVEL)
@@ -206,7 +220,11 @@ bool_t SSLi_getSHA1Hash(SSL_handle_t *ssl, uint8_t *hash)
 	if (!cert) {
 		return false;
 	}
+#if MBEDTLS_VERSION_NUMBER < 0x02070000L
 	mbedtls_sha1(cert->raw.p, cert->raw.len, hash);
+#else
+	mbedtls_sha1_ret(cert->raw.p, cert->raw.len, hash);
+#endif
 	return true;
 }
 
