@@ -7,7 +7,7 @@ PIDFILE="/var/run/umurmurd.pid"
 
 start() {
         stop
-        /usr/bin/umurmurd -p $PIDFILE -c /etc/umurmur.conf
+        /usr/bin/umurmurd -p $PIDFILE
 }
 
 stop() {
