@@ -141,12 +141,8 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			goto disconnect;
 		}
 
-		client->authenticated = true;
-
 		client_itr = NULL;
-		while (Client_iterate(&client_itr) != NULL) {
-			if (!IS_AUTH(client_itr))
-				continue;
+		while (Client_iterate_authenticated(&client_itr)) {
 			if (client_itr->username && strncmp(client_itr->username, msg->payload.authenticate->username, MAX_USERNAME) == 0) {
 				char buf[64];
 				sprintf(buf, "Username already in use");
@@ -214,6 +210,8 @@ void Mh_handle_message(client_t *client, message_t *msg)
 
 		/* Channel stuff */
 		Chan_userJoin(defaultChan, client); /* Join default channel */
+
+		client->authenticated = true;
 
 		/* Codec version */
 		Log_debug("Client %d has %d CELT codecs", client->sessionId,
@@ -316,9 +314,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		Client_send_message_except(client, sendmsg);
 
 		client_itr = NULL;
-		while (Client_iterate(&client_itr) != NULL) {
-			if (!IS_AUTH(client_itr))
-				continue;
+		while (Client_iterate_authenticated(&client_itr)) {
 			sendmsg = Msg_create(UserState);
 			sendmsg->payload.userState->has_session = true;
 			sendmsg->payload.userState->session = client_itr->sessionId;
@@ -627,9 +623,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			client_t *itr;
 			for (i = 0; i < msg->payload.textMessage->n_session; i++) {
 				itr = NULL;
-				while (Client_iterate(&itr) != NULL) {
-					if (!IS_AUTH(itr))
-						continue;
+				while (Client_iterate_authenticated(&itr)) {
 					if (itr->sessionId == msg->payload.textMessage->session[i]) {
 						if (!itr->deaf && !itr->self_deaf) {
 							Msg_inc_ref(msg);
@@ -815,9 +809,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 
 		if (!msg->payload.userStats->has_session)
 			sendPermissionDenied(client, "Not supported by uMurmur");
-		while (Client_iterate(&target) != NULL) {
-			if (!IS_AUTH(target))
-				continue;
+		while (Client_iterate_authenticated(&target)) {
 			if (target->sessionId == msg->payload.userStats->session)
 				break;
 		}

@@ -617,10 +617,6 @@ int Client_send_message_ver(client_t *client, message_t *msg, uint32_t version)
 
 int Client_send_message(client_t *client, message_t *msg)
 {
-	if (!client->authenticated && msg->messageType != Version) {
-		Msg_free(msg);
-		return 0;
-	}
 	if (client->txsize != 0 || !client->SSLready) {
 		/* Queue message */
 		if ((client->txQueueCount > 5 &&  msg->messageType == UDPTunnel) ||
@@ -648,10 +644,9 @@ client_t *Client_iterate(client_t **client_itr)
 {
 	client_t *c = *client_itr;
 
-	if (list_empty(&clients))
-		return NULL;
-
-	if (c == NULL) {
+	if (list_empty(&clients)) {
+		c = NULL;
+	} else if (c == NULL) {
 		c = list_get_entry(list_get_first(&clients), client_t, node);
 	} else {
 		if (list_get_next(&c->node) == &clients)
@@ -661,6 +656,14 @@ client_t *Client_iterate(client_t **client_itr)
 	}
 	*client_itr = c;
 	return c;
+}
+
+client_t *Client_iterate_authenticated(client_t **client_itr)
+{
+	while (Client_iterate(client_itr))
+		if (IS_AUTH(*client_itr))
+			break;
+	return *client_itr;
 }
 
 void Client_textmessage(client_t *client, char *text)
@@ -687,7 +690,7 @@ int Client_send_message_except(client_t *client, message_t *msg)
 	int count = 0;
 
 	Msg_inc_ref(msg); /* Make sure a reference is held during the whole iteration. */
-	while (Client_iterate(&itr) != NULL) {
+	while (Client_iterate_authenticated(&itr)) {
 		if (itr != client) {
 			if (count++ > 0)
 				Msg_inc_ref(msg); /* One extra reference for each new copy */
@@ -710,7 +713,7 @@ int Client_send_message_except_ver(client_t *client, message_t *msg, uint32_t ve
 	int count = 0;
 
 	Msg_inc_ref(msg); /* Make sure a reference is held during the whole iteration. */
-	while (Client_iterate(&itr) != NULL) {
+	while (Client_iterate_authenticated(&itr)) {
 		if (itr != client) {
 			if (count++ > 0)
 				Msg_inc_ref(msg); /* One extra reference for each new copy */
