@@ -350,6 +350,12 @@ void Mh_handle_message(client_t *client, message_t *msg)
 				sendmsg->payload.userState->has_recording = true;
 				sendmsg->payload.userState->recording = true;
 			}
+			if (client_itr->priority_speaker) {
+				sendmsg->payload.userState->
+					has_priority_speaker = true;
+				sendmsg->payload.userState->
+					priority_speaker = true;
+			}
 			Client_send_message(client, sendmsg);
 		}
 
@@ -449,7 +455,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		}
 
 		if (msg->payload.userState->has_user_id || msg->payload.userState->has_suppress ||
-		    msg->payload.userState->has_priority_speaker || msg->payload.userState->has_texture) {
+		    msg->payload.userState->has_texture) {
 			sendPermissionDenied(client, "Not supported by uMurmur");
 			break;
 		}
@@ -461,6 +467,14 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		msg->payload.userState->session = target->sessionId;
 		msg->payload.userState->has_actor = true;
 		msg->payload.userState->actor = client->sessionId;
+
+		/* Quod licet Iovi, non licet bovi */
+		if (!client->isAdmin && (msg->payload.userState->has_deaf ||
+		    msg->payload.userState->has_mute ||
+		    msg->payload.userState->has_priority_speaker)) {
+			sendPermissionDenied(client, "Permission denied");
+			break;
+		}
 
 		if (msg->payload.userState->has_deaf) {
 			target->deaf = msg->payload.userState->deaf;
@@ -476,6 +490,10 @@ void Mh_handle_message(client_t *client, message_t *msg)
 				msg->payload.userState->deaf = false;
 				target->deaf = false;
 			}
+		}
+		if (msg->payload.userState->has_priority_speaker) {
+			target->priority_speaker =
+				msg->payload.userState->priority_speaker;
 		}
 		if (msg->payload.userState->has_self_deaf) {
 			client->self_deaf = msg->payload.userState->self_deaf;
@@ -514,23 +532,21 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		}
 		if (msg->payload.userState->has_channel_id) {
 			int leave_id;
+			channel_t *chan =
+				Chan_fromId(msg->payload.userState->channel_id);
 
-			channelJoinResult_t result = Chan_userJoin_id_test(msg->payload.userState->channel_id, target);
-
-			if (result.CHJOIN_NOENTER || result.CHJOIN_NOTFOUND)
+			if (!chan || chan->noenter)
 				break;
 
-			if (result.CHJOIN_WRONGPW) {
-				if (target == client && !client->isAdmin) {
-					sendPermissionDenied(client, "Wrong channel password");
-					break;
-				}
-				/* Tricky one: if user hasn't the password, but is moved to the channel by admin then let
-				 * the user in. Also let admin user in regardless of channel password.
-				 * Take no action on other errors.
-				 */
-				else if (!client->isAdmin)
-					break;
+			/* Tricky one: if user hasn't the password, but is moved
+			 * to the channel by admin then let the user in. Also
+			 * let admin user in regardless of channel password.
+			 */
+			if (!client->isAdmin && chan->password &&
+			    !Client_token_match(target, chan->password)) {
+				sendPermissionDenied(client,
+				                     "Wrong channel password");
+				break;
 			}
 
 			leave_id = Chan_userJoin_id(msg->payload.userState->channel_id, target);
@@ -540,7 +556,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 				sendmsg->payload.channelRemove->channel_id = leave_id;
 			}
 
-			if (result.CHJOIN_SILENT) {
+			if (chan->silent) {
 				if (!target->isSuppressed) {
 				msg->payload.userState->has_suppress = true;
 				msg->payload.userState->suppress = true;

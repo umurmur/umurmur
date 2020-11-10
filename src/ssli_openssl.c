@@ -30,6 +30,7 @@
 */
 #include <stdlib.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 #include "conf.h"
 #include "log.h"
@@ -201,6 +202,11 @@ err_out:
 	return NULL;
 }
 
+static bool_t file_exists(const char *filename)
+{
+       return (access(filename, F_OK) == 0);
+}
+
 static void SSL_initializeCert() {
 
 	char *crt = (char *)getStrConf(CERTIFICATE);
@@ -219,9 +225,15 @@ static void SSL_initializeCert() {
 		    pkey = PEM_read_PrivateKey(fp, NULL, NULL, NULL);
 		
 		if (pkey == NULL || !did_load_cert) {
+			/* Do not generate new certificate if either private key or
+			 * certificate file (or both) already exists, even though one
+			 * (or both) of them is invalid or inaccessible. */
+			if (file_exists(key) || file_exists(crt))
+				Log_fatal("Key and/or certificate file present but invalid or inaccessible. Exiting.");
+			
 			pkey = SSL_generate_cert_and_key(key, crt);
 		}
-
+		
 		SSL_CTX_use_PrivateKey(context, pkey);
 
 		if (pkey)
