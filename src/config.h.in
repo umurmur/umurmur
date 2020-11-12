@@ -11,6 +11,6 @@
 
 #cmakedefine USE_SHAREDMEMORY_API
 
-#define DEFAULT_CONFIG "${CMAKE_INSTALL_PREFIX}/etc/umurmur.conf"
+#define DEFAULT_CONFIG "${CMAKE_INSTALL_SYSCONFDIR}/etc/umurmur.conf"
 
 #endif // CONFIG_H
