@@ -47,6 +47,7 @@ AC_ARG_ENABLE(mbedtls-havege, [  --enable-mbedtls-havege  Link to mbedTLS HAVEGE
 
 # Checks for programs.
 AC_PROG_CC
+AC_PROG_CC_C99
 
 # Checks dependencies.
 AC_CHECK_HEADERS([google/protobuf-c/protobuf-c.h], [], [AC_MSG_ERROR([could not find google/protobuf-c/protobuf-c.h])])

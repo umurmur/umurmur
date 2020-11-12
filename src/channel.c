@@ -61,7 +61,7 @@ static channel_t *createChannel(int id, const char *name, const char *desc)
 	return ch;
 }
 
-static int findFreeId()
+static int findFreeId(void)
 {
 	int id = 0;
 	channel_t *ch_itr = NULL;
@@ -134,7 +134,7 @@ channel_t *Chan_iterate_siblings(channel_t *parent, channel_t **channelpptr)
 	return ch;
 }
 
-void Chan_init()
+void Chan_init(void)
 {
 	int i;
 	conf_channel_t chdesc;
@@ -230,7 +230,7 @@ void Chan_init()
 	}
 }
 
-void Chan_free()
+void Chan_free(void)
 {
 	struct dlist *itr, *save;
 	struct dlist *linkitr, *linksave;

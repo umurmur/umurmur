@@ -98,7 +98,7 @@ void Log_init(bool_t terminal)
 	init = true;
 }
 
-void Log_free()
+void Log_free(void)
 {
 	if (termprint)
 		return;
@@ -108,7 +108,7 @@ void Log_free()
 		closelog();
 }
 
-void Log_reset()
+void Log_reset(void)
 {
 	const char *logfilename;
 

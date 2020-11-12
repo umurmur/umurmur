@@ -1,8 +1,8 @@
 #include "sharedmemory.h"
 
-int shm_fd;
-shm_t *shmptr = NULL;
-char shm_file_name[128];
+static int shm_fd;
+static shm_t *shmptr = NULL;
+static char shm_file_name[128];
 
 void Sharedmemory_init( int bindport, int bindport6 )
 {

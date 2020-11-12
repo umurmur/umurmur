@@ -63,7 +63,7 @@ const int on = 1;
 int nofServerSocks = 4;
 
 /* Check which IP versions are supported by the system. */
-void checkIPversions()
+static void checkIPversions(void)
 {
 	int testsocket = -1;
 
@@ -93,7 +93,7 @@ void checkIPversions()
 }
 
 /* Initialize the address structures for IPv4 and IPv6 */
-struct sockaddr_storage** Server_setupAddressesAndPorts()
+struct sockaddr_storage** Server_setupAddressesAndPorts(void)
 {
 	struct sockaddr_storage** addresses = Memory_safeCalloc(2, sizeof(void*));
 
@@ -308,7 +308,7 @@ void Server_setupUDPSockets(struct sockaddr_storage* addresses[2], struct pollfd
 
 }
 
-void Server_run()
+void Server_run(void)
 {
 	struct pollfd *pollfds;
 
@@ -342,7 +342,7 @@ void Server_run()
 	free(udpsocks);
 }
 
-void Server_shutdown()
+void Server_shutdown(void)
 {
 	shutdown_server = true;
 }
