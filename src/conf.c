@@ -75,7 +75,7 @@ bool_t Conf_ok(const char *conffile)
 	return rc;
 }
 
-void Conf_deinit()
+void Conf_deinit(void)
 {
 	config_destroy(&configuration);
 }

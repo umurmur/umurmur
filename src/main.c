@@ -180,7 +180,7 @@ void signal_handler(int sig)
 	}
 }
 
-void daemonize()
+void daemonize(void)
 {
 	int i;
 
@@ -213,7 +213,7 @@ void daemonize()
 }
 
 #ifdef POSIX_PRIORITY_SCHEDULING
-void setscheduler()
+void setscheduler(void)
 {
 	int rc;
 	struct sched_param sp;
@@ -226,7 +226,7 @@ void setscheduler()
 }
 #endif
 
-void printhelp()
+void printhelp(void)
 {
 	printf("uMurmur version %s ('%s'). Mumble protocol %d.%d.%d\n", UMURMUR_VERSION,
 		UMURMUR_CODENAME, PROTVER_MAJOR, PROTVER_MINOR, PROTVER_PATCH);

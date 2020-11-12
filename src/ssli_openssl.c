@@ -127,6 +127,7 @@ static void SSL_writekey(char *keyfile, RSA *rsa)
 	fclose(fp);
 }
 
+
 static EVP_PKEY *SSL_generate_cert_and_key(char *key, char *crt)
 {
 	BIGNUM *e = NULL;
@@ -207,8 +208,8 @@ static bool_t file_exists(const char *filename)
        return (access(filename, F_OK) == 0);
 }
 
-static void SSL_initializeCert() {
-
+static void SSL_initializeCert(void)
+{
 	char *crt = (char *)getStrConf(CERTIFICATE);
 	char *key = (char *)getStrConf(KEY);
 	FILE *fp;
