@@ -1,4 +1,4 @@
-#About uMurmur
+# About uMurmur
 
 Build for OpenSSL and mbed TLS 2.3/2.4: [![Build Status](https://travis-ci.org/umurmur/umurmur.svg?branch=master)](https://travis-ci.org/umurmur/umurmur)
 
