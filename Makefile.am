@@ -28,3 +28,11 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 AUTOMAKE_OPTIONS=foreign
 SUBDIRS = src
+
+EXTRA_DIST = \
+	cmake \
+	openwrt \
+	CMakeLists.txt \
+	LICENSE \
+	README.md \
+	umurmur.conf.example
