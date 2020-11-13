@@ -17,15 +17,13 @@ set(SOURCE_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/memory.c
   )
 
-if(SSL MATCHES "openssl")
-  list(APPEND SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/ssli_openssl.c)
-elseif(SSL MATCHES "polarssl")
-  list(APPEND SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/ssli_polarssl.c)
-elseif(SSL MATCHES "mbedtls")
+if(SSL MATCHES "mbedtls")
   list(APPEND SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/ssli_mbedtls.c)
 elseif(SSL MATCHES "gnutls")
   list(APPEND SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/ssli_gnutls.c)
-endif(SSL MATCHES "openssl")
+else()
+  list(APPEND SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/ssli_openssl.c)
+endif(SSL MATCHES "mbedtls")
 
 if(USE_SHAREDMEMORY_API)
   list(APPEND SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sharedmemory.c)
