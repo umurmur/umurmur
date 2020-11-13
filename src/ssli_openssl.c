@@ -47,6 +47,7 @@
 #include <openssl/bn.h>
 #include <openssl/err.h>
 #include <openssl/safestack.h>
+#include <openssl/opensslv.h>
 
 static SSL_CTX *context;
 
@@ -320,7 +321,7 @@ void SSLi_init(void)
 	                   verify_callback);
 
 	SSL_free(ssl);
-	Log_info("OpenSSL library initialized");
+	Log_info("OpenSSL library initialized (version: %s)", OPENSSL_VERSION_TEXT);
 
 }
 
