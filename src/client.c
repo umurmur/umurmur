@@ -28,6 +28,7 @@
    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
    */
+#include "client.h"
 #include <sys/socket.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -38,7 +39,6 @@
 #include "log.h"
 #include "memory.h"
 #include "list.h"
-#include "client.h"
 #include "ssl.h"
 #include "messages.h"
 #include "messagehandler.h"

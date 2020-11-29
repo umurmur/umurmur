@@ -32,6 +32,8 @@
 #ifndef MEMORY_H_1535778
 #define MEMORY_H_1535778
 
+#include <stddef.h>
+
 void * Memory_safeMalloc(size_t nmem, size_t size);
 void * Memory_safeCalloc(size_t nmem, size_t size);
 

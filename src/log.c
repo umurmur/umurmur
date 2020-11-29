@@ -29,6 +29,8 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include "log.h"
+
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,7 +39,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "log.h"
 #include "conf.h"
 #include "util.h"
 

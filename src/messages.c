@@ -29,12 +29,13 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include "messages.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <arpa/inet.h>
 
-#include "messages.h"
 #include "client.h"
 #include "pds.h"
 #include "log.h"

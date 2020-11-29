@@ -77,8 +77,8 @@ void Sharedmemory_update(void)
 				strncpy( shmptr->client[cc].release, client_itr->release, 120 );
 				strncpy( shmptr->client[cc].os_version, client_itr->os_version, 120 );
 
-        strncpy( shmptr->client[cc].hash, client_itr->hash, 20 );
-        
+				memcpy( shmptr->client[cc].hash, client_itr->hash, 20 );
+
 				shmptr->client[cc].tcp_port = Util_clientAddressToPortTCP( client_itr );
 				shmptr->client[cc].udp_port = Util_clientAddressToPortUDP( client_itr );
 

@@ -28,12 +28,13 @@
    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+#include "memory.h"
+
 #include <stdint.h>
 #include <unistd.h>
 #include <stdlib.h>
 
 #include "log.h"
-#include "memory.h"
 
 void * Memory_safeMalloc(size_t nmem, size_t size) {
 	// Check if we're going to overflow.

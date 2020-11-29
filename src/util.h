@@ -27,8 +27,8 @@
    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#ifndef __UTIL_H
-#define __UTIL_H
+#ifndef UTIL_H
+#define UTIL_H
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
@@ -40,4 +40,4 @@ char* Util_clientAddressToString(client_t *client);
 int Util_clientAddressToPortTCP(client_t *client);
 int Util_clientAddressToPortUDP(client_t *client);
 
-#endif // __UTIL_H
+#endif // UTIL_H

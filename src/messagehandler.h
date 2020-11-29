@@ -31,6 +31,9 @@
 #ifndef MESSAGEHANDLER_H_8907
 #define MESSAGEHANDLER_H_8907
 
+#include "client.h"
+#include "messages.h"
+
 void Mh_handle_message(client_t *client, message_t *msg);
 
 #endif
