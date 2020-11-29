@@ -196,12 +196,7 @@ void SSLi_init(void)
 	if((rc = mbedtls_ssl_conf_own_cert(conf, &certificate, &key)) != 0)
 		Log_fatal("mbedtls_ssl_conf_own_cert returned %d", rc);
 
-#ifdef MBEDTLS_VERSION_FEATURES
-    mbedtls_version_get_string(verstring);
-    Log_info("mbedTLS library version %s initialized", verstring);
-#else
-    Log_info("mbedTLS library initialized");
-#endif
+	Log_info("mbedTLS library version %s initialized", MBEDTLS_VERSION_STRING);
 }
 
 void SSLi_deinit(void)
