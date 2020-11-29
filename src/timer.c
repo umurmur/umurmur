@@ -28,6 +28,8 @@
    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+#include "timer.h"
+
 #include <time.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -36,8 +38,6 @@
 #include <mach/clock.h>
 #include <mach/mach.h>
 #endif
-
-#include "timer.h"
 
 static uint64_t Timer_now(void)
 {

@@ -38,9 +38,9 @@
  * OCB with something else or get yourself a license.
  */
 
+#include "crypt.h"
 #include <string.h>
 #include <arpa/inet.h>
-#include "crypt.h"
 #include "ssl.h"
 
 #if defined(USE_MBEDTLS_HAVEGE)

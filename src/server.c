@@ -32,7 +32,6 @@
 #include <sys/time.h>
 #include <netinet/tcp.h>
 #include <sys/socket.h>
-#include <errno.h>
 #include <string.h>
 #include <limits.h>
 #include <poll.h>

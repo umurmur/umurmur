@@ -32,13 +32,14 @@
 #define _POSIX_C_SOURCE 200809L
 #define _XOPEN_SOURCE
 
+#include "ban.h"
+
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
 #include "log.h"
 #include "memory.h"
 #include "list.h"
-#include "ban.h"
 #include "conf.h"
 #include "ssl.h"
 #include "util.h"

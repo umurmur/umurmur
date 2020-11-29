@@ -29,9 +29,9 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include "voicetarget.h"
 #include <stdlib.h>
 #include <string.h>
-#include "voicetarget.h"
 #include "log.h"
 #include "memory.h"
 
