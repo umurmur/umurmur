@@ -423,7 +423,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		if (!msg->payload.cryptSetup->has_client_nonce) {
 			sendmsg = Msg_create(CryptSetup);
 			sendmsg->payload.cryptSetup->has_server_nonce = true;
-			sendmsg->payload.cryptSetup->server_nonce.data = client->cryptState.decrypt_iv;
+			sendmsg->payload.cryptSetup->server_nonce.data = client->cryptState.encrypt_iv;
 			sendmsg->payload.cryptSetup->server_nonce.len = AES_BLOCK_SIZE;
 			Client_send_message(client, sendmsg);
 		} else {
