@@ -39,56 +39,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#if defined(USE_POLARSSL)
-#include <polarssl/ssl.h>
-#include <polarssl/version.h>
-
-#if defined(POLARSSL_VERSION_MAJOR)
-#if (POLARSSL_VERSION_MAJOR < 1)
-#error PolarSSL version 1.0.0 or greater is required!
-#endif
-#else
-#error PolarSSL version 1.0.0 or greater is required!
-#endif
-
-#if defined(USE_POLARSSL_HAVEGE)
-#include <polarssl/havege.h>
-    #if (POLARSSL_VERSION_MINOR >= 1)
-        #define HAVEGE_RAND (havege_random)
-        #define RAND_bytes(_dst_, _size_) do { \
-	        havege_random(&hs, _dst_, _size_); \
-        } while (0)
-    #else
-        #define HAVEGE_RAND (havege_rand)
-        #define RAND_bytes(_dst_, _size_) do { \
-            int i; \
-	        for (i = 0; i < _size_; i++) { \
-	            _dst_[i] = havege_rand(&hs); \
-	        } \
-        } while (0)
-    #endif
-#else
-#define RAND_bytes(_dst_, _size_) do { urandom_bytes(NULL, _dst_, _size_); } while (0)
-int urandom_bytes(void *ctx, unsigned char *dest, size_t len);
-#endif
-
-#if (POLARSSL_VERSION_MINOR >= 2)
-    #define POLARSSL_API_V1_2_ABOVE
-#endif
-#if (POLARSSL_VERSION_MINOR == 3)
-    #define POLARSSL_API_V1_3_ABOVE
-#endif
-
-#define SSLI_ERROR_WANT_READ -0x0F300 /* PolarSSL v0.x.x uses -0x0f00 -> --0x0f90, v1.x.x uses -0x7080 -> -0x7e80 */
-#define SSLI_ERROR_WANT_WRITE -0x0F310
-
-#define SSLI_ERROR_ZERO_RETURN 0
-#define SSLI_ERROR_CONNRESET POLARSSL_ERR_NET_CONN_RESET
-#define SSLI_ERROR_SYSCALL POLARSSL_ERR_NET_RECV_FAILED
-
-typedef	ssl_context SSL_handle_t;
-
-#elif defined(USE_MBEDTLS)
+#if defined(USE_MBEDTLS)
 #include <mbedtls/version.h>
 
 #if !defined(MBEDTLS_VERSION_MAJOR) || (MBEDTLS_VERSION_MAJOR < 2)
@@ -113,7 +64,7 @@ typedef	ssl_context SSL_handle_t;
 int urandom_bytes(void *ctx, unsigned char *dest, size_t len);
 #endif
 
-#define SSLI_ERROR_WANT_READ -0x0F300 /* mbedTLS v0.x.x uses -0x0f00 -> --0x0f90, v1.x.x uses -0x7080 -> -0x7e80 */
+#define SSLI_ERROR_WANT_READ -0x0F300
 #define SSLI_ERROR_WANT_WRITE -0x0F310
 
 #define SSLI_ERROR_ZERO_RETURN 0

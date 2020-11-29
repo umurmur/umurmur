@@ -2,9 +2,6 @@
 #define CONFIG_H
 
 #cmakedefine USE_GNUTLS
-#cmakedefine USE_POLARSSL
-#cmakedefine USE_POLARSSL_TESTCERT
-#cmakedefine USE_POLARSSL_HAVEGE
 #cmakedefine USE_MBEDTLS
 #cmakedefine USE_MBEDTLS_TESTCERT
 #cmakedefine USE_MBEDTLS_HAVEGE

@@ -68,17 +68,13 @@ umurmurd_SOURCES = \
 	voicetarget.c \
 	voicetarget.h
 
-if USE_OPENSSL
-umurmurd_SOURCES+=ssli_openssl.c
-else
 if USE_GNUTLS
 umurmurd_SOURCES+=ssli_gnutls.c
 else
 if USE_MBEDTLS
 umurmurd_SOURCES+=ssli_mbedtls.c
 else
-umurmurd_SOURCES+=ssli_polarssl.c
-endif
+umurmurd_SOURCES+=ssli_openssl.c
 endif
 endif
 

@@ -1,6 +1,7 @@
 function(SelectTLSBackend SSL)
   if("${SSL}" STREQUAL "")
-    set(SSL "polarssl")
+    set(SSL "openssl")
+    message("Using default SSL-library OpenSSL")
   endif()
 
   set(LIBRARIES "")
@@ -8,6 +9,7 @@ function(SelectTLSBackend SSL)
   set(LIBRARY_DIR "")
 
   if("${SSL}" STREQUAL "openssl")
+    message("SSL-library = OpenSSL")
     find_package(OpenSSL REQUIRED)
 
     if(OPENSSL_FOUND)
@@ -19,16 +21,6 @@ function(SelectTLSBackend SSL)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-deprecated-declarations" PARENT_SCOPE)
       endif()
 
-    endif()
-  elseif("${SSL}" STREQUAL "polarssl")
-    find_package(PolarSSL REQUIRED)
-
-    if(POLARSSL_FOUND)
-      set(USE_POLARSSL ON PARENT_SCOPE)
-
-      set(LIBRARIES ${POLARSSL_LIBRARIES})
-      set(INCLUDE_DIR ${POLARSSL_INCLUDE_DIR})
-      set(LIBRARY_DIR ${POLARSSL_LIB_DIR})
     endif()
   elseif("${SSL}" STREQUAL "mbedtls")
     find_package(mbedTLS REQUIRED)
