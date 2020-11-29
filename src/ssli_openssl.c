@@ -51,7 +51,7 @@
 
 static SSL_CTX *context;
 
-static char const * ciphers = "EECDH+CHACHA20:EECDH+AESGCM:EECDH+AES+TLSv1.2:EECDH+AES:AESGCM:AES:!aNULL:!DHE:!kECDH";
+static char const * ciphers = "EECDH+AESGCM:EDH+aRSA+AESGCM:DHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA:AES256-SHA:AES128-SHA";
 
 static int verify_callback(int preverify_ok, X509_STORE_CTX *ctx);
 
