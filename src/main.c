@@ -58,7 +58,7 @@
 #include "sharedmemory.h"
 #include "ban.h"
 
-char system_string[64], version_string[64];
+char system_string[256], version_string[64];
 int bindport;
 int bindport6;
 char *bindaddr;
@@ -66,7 +66,7 @@ char *bindaddr6;
 
 void lockfile(const char *pidfile)
 {
-	int lfp, flags;
+	int lfp, flags, ret;
 	char str[16];
 
 	/* Don't use O_TRUNC here -- we want to leave the PID file
@@ -94,7 +94,9 @@ void lockfile(const char *pidfile)
 	}
 
 	snprintf(str,16,"%d\n", getpid());
-	(void)write(lfp, str, strlen(str)); /* record pid to lockfile */
+	ret = write(lfp, str, strlen(str)); /* record pid to lockfile */
+	if (ret < 0)
+		Log_fatal("Failed to write PID to file %s: %s", pidfile, strerror(errno));
 	Log_info("PID-file: %s", pidfile);
 
 	/* If uMurmur ever starts to fork()+exec(), we don't want it to
@@ -188,8 +190,7 @@ void daemonize(void)
 		return; /* already a daemon */
 	i = fork();
 	if ( i < 0) {
-		fprintf(stderr, "Fork error. Exiting\n");
-		exit(1); /* fork error */
+		Log_fatal("fork: %s", strerror(errno));
 	}
 	if ( i > 0)
 		exit(0); /* parent exits */
@@ -204,12 +205,16 @@ void daemonize(void)
 #endif
 
 	i = open("/dev/null",O_RDWR);
-	(void)dup(i);
-	(void)dup(i);
+	if (i < 0)
+		Log_fatal("Failed to open /dev/null: %s", strerror(errno));
+	if (dup(i) < 0)
+		Log_fatal("dup: %s", strerror(errno));
+	if (dup(i) < 0)
+		Log_fatal("dup: %s", strerror(errno));
 
 	umask(027); /* set newly created file permissions */
-	(void)chdir("/");
-
+	if (chdir("/") < 0)
+		Log_fatal("chdir: %s", strerror(errno));
 }
 
 #ifdef POSIX_PRIORITY_SCHEDULING
@@ -342,7 +347,7 @@ int main(int argc, char **argv)
 
 		/* Build system string */
 		if (uname(&utsbuf) == 0) {
-			snprintf(system_string, 64, "%s %s", utsbuf.sysname, utsbuf.machine);
+			snprintf(system_string, 256, "%s %s", utsbuf.sysname, utsbuf.machine);
 			strncpy(version_string, utsbuf.release, sizeof(version_string) - 1);
 		}
 		else {
