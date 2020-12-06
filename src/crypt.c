@@ -44,7 +44,7 @@
 #include "ssl.h"
 
 #if defined(USE_MBEDTLS_HAVEGE)
-extern havege_state hs;
+extern mbedtls_havege_state hs;
 #endif
 
 static void CryptState_ocb_encrypt(cryptState_t *cs, const unsigned char *plain, unsigned char *encrypted, unsigned int len, const unsigned char *nonce, unsigned char *tag);

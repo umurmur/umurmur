@@ -55,10 +55,10 @@
 
 #if defined(USE_MBEDTLS_HAVEGE)
 #include <mbedtls/havege.h>
-    #define HAVEGE_RAND (havege_random)
-    #define RAND_bytes(_dst_, _size_) do { \
+#define HAVEGE_RAND (mbedtls_havege_random)
+#define RAND_bytes(_dst_, _size_) do { \
         mbedtls_havege_random(&hs, _dst_, _size_); \
-    } while (0)
+	} while (0)
 #else
 #define RAND_bytes(_dst_, _size_) do { urandom_bytes(NULL, _dst_, _size_); } while (0)
 int urandom_bytes(void *ctx, unsigned char *dest, size_t len);
