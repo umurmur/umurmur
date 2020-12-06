@@ -83,7 +83,7 @@ static mbedtls_pk_context key;
 bool_t builtInTestCertificate;
 
 #ifdef USE_MBEDTLS_HAVEGE
-havege_state hs;
+mbedtls_havege_state hs;
 #else
 int urandom_fd;
 #endif
@@ -158,11 +158,11 @@ void SSLi_init(void)
 
 	/* Initialize random number generator */
 #ifdef USE_MBEDTLS_HAVEGE
-    mbedtls_havege_init(&hs);
+	mbedtls_havege_init(&hs);
 #else
-    urandom_fd = open("/dev/urandom", O_RDONLY);
-    if (urandom_fd < 0)
-	    Log_fatal("Cannot open /dev/urandom");
+	urandom_fd = open("/dev/urandom", O_RDONLY);
+	if (urandom_fd < 0)
+		Log_fatal("Cannot open /dev/urandom");
 #endif
 
 	/* Initialize config */
@@ -205,6 +205,12 @@ void SSLi_deinit(void)
 	free(conf);
 	mbedtls_x509_crt_free(&certificate);
 	mbedtls_pk_free(&key);
+	
+#ifdef USE_MBEDTLS_HAVEGE
+	mbedtls_havege_free(&hs);
+#else
+	close(urandom_fd);
+#endif
 }
 
 bool_t SSLi_getSHA1Hash(SSL_handle_t *ssl, uint8_t *hash)
