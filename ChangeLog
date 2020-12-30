@@ -1,3 +1,31 @@
+0.2.18:
+Lots of fixes. See the Gitlog for details, to name a few:
+o Possible segmentation fault related to authenticating clients too
+  early fixed (unterwulf)
+o Default config file location when building with CMake fixed.
+o Always forward speech to linked channels, not just when
+  whisper/scream (fatbob313)
+o Handle OpenSSL without 1.1 API support enabled (Eneas U de Queiroz)
+o mbedTLS updates with better error reporting, handle deprecated API calls
+  (fatbob313)
+o Code duplication and unused code cleanup (unterwulf)
+o Do not generate cert+key if the files a present but un[use|read]able
+ (unterwulf)
+o Compiler warnings fixes (Rosen Penev)
+o Log OpenSSL version at init time (fatbob313)
+o Update OpenSSL cipherlist (fatbob313)
+o Nonce and crypt fixes (feinerer)
+o Various fixes all over (doctaweeks)
+o Autotools deprecation warning (C4K3)
+o Various fixes (concatime)
+o Automake dist target fixed (unterwulf)
+o Protobuf files regenerated with protoc-c 1.3.3
+
+New features:
+o Support Priority speaker (unterwulf)
+o OpenSSL now handles EC-keys. Note that all clients (Mumla on
+  Android for example) doesn't handle this (fatbob313)
+
 0.2.17rc1:
 [FIX] Multiple possible NULL pointer dereferences (TinnedTuna)
 [FIX] Set scheduler policy before switching users (C4K3)
