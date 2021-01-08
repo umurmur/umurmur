@@ -18,15 +18,16 @@ SelectTLSBackend("${SSL}")
 
 include(Options)
 include(Tools)
+include(GNUInstallDirs)
 
 find_package(Libconfig REQUIRED)
 find_package(ProtobufC REQUIRED)
 
 add_subdirectory(src)
 
-find_path(OLD_CONFIG_FILE NAMES "umurmur.conf" PATHS ${CMAKE_INSTALL_PREFIX} PATH_SUFFIXES "etc")
-
-if(NOT OLD_CONFIG_FILE)
-  install(FILES "umurmur.conf.example" DESTINATION "etc" RENAME "umurmur.conf")
-endif()
-
+install(
+  FILES "umurmur.conf.example"
+  DESTINATION "/${CMAKE_INSTALL_SYSCONFDIR}/umurmur"
+  PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ
+  RENAME "umurmur.conf"
+)
