@@ -48,6 +48,9 @@
 #include <openssl/err.h>
 #include <openssl/safestack.h>
 #include <openssl/opensslv.h>
+#ifndef OPENSSL_NO_EC
+#include <openssl/ec.h>
+#endif
 
 static SSL_CTX *context;
 
@@ -271,11 +274,12 @@ void SSLi_init(void)
 		Log_fatal("Could not initialize OpenSSL.");
 	SSL_CTX_set_options(context, SSL_OP_CIPHER_SERVER_PREFERENCE);
 	SSL_CTX_set_cipher_list(context, ciphers);
-
+#ifndef OPENSSL_NO_EC
 	EC_KEY *ecdhkey = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
 	SSL_CTX_set_tmp_ecdh(context, ecdhkey);
 	EC_KEY_free(ecdhkey);
-
+#endif
+	
 	char const * sslCAPath = getStrConf(CAPATH);
 	if(sslCAPath != NULL)
 	{
