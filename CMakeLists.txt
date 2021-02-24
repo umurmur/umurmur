@@ -27,7 +27,7 @@ add_subdirectory(src)
 
 install(
   FILES "umurmur.conf.example"
-  DESTINATION "${CMAKE_INSTALL_FULL_SYSCONFDIR}/"
+  DESTINATION "${CMAKE_INSTALL_FULL_SYSCONFDIR}/umurmur"
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ
   RENAME "umurmur.conf"
 )
