@@ -46,6 +46,7 @@
 #include <openssl/pem.h>
 #include <openssl/bn.h>
 #include <openssl/err.h>
+#include <openssl/rsa.h>
 #include <openssl/safestack.h>
 #include <openssl/opensslv.h>
 #ifndef OPENSSL_NO_EC
