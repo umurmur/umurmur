@@ -1,3 +1,7 @@
+0.2.20:
+o OpenSSL: Fix compilation when building against lib without deprecated
+           API enabled (Rosen Penev)
+
 0.2.19:
 o CMake install fix of config file location (dvzrv)
 o OpenSSL: Do not use ECC when the lib is compiled without support for it
