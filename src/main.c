@@ -149,6 +149,9 @@ static void switch_user(void)
 			Log_fatal("Unknown group '%s'", groupname);
 
 		gid = grp->gr_gid;
+
+		/* initgroups() will invalidate this data */
+		grp = NULL;
 	}
 
 	if (initgroups(pwd->pw_name, gid))
@@ -160,8 +163,7 @@ static void switch_user(void)
 	if (setuid(pwd->pw_uid))
 		Log_fatal("setuid() failed: %s", strerror(errno));
 
-	if (!grp)
-		grp = getgrgid(gid);
+	grp = getgrgid(gid);
 	if (!grp)
 		Log_fatal("getgrgid() failed: %s", strerror(errno));
 
