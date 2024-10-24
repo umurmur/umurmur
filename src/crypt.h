@@ -36,7 +36,6 @@
 
 #if defined(USE_MBEDTLS)
 
-#include <mbedtls/havege.h>
 #include <mbedtls/aes.h>
 
 #define CRYPT_AES_KEY mbedtls_aes_context
