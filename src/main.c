@@ -235,11 +235,12 @@ void printhelp(void)
 {
 	printf("uMurmur version %s ('%s'). Mumble protocol %d.%d.%d\n", UMURMUR_VERSION,
 		UMURMUR_CODENAME, PROTVER_MAJOR, PROTVER_MINOR, PROTVER_PATCH);
-	printf("Usage: umurmurd [-d] [-r] [-h] [-p <pidfile>] [-t] [-c <conf file>] [-a <addr>] [-b <port>]\n");
+	printf("Usage: umurmurd [-d] [-r] [-s] [-h] [-p <pidfile>] [-t] [-c <conf file>] [-a <addr>] [-b <port>]\n");
 	printf("       -d             - Do not daemonize - run in foreground.\n");
 #ifdef POSIX_PRIORITY_SCHEDULING
 	printf("       -r             - Run with realtime priority\n");
 #endif
+	printf("       -s             - Force user switching\n");
 	printf("       -p <pidfile>   - Write PID to this file\n");
 	printf("       -c <conf file> - Specify configuration file (default %s)\n", DEFAULT_CONFIG);
 	printf("       -t             - Test config. Error message to stderr + non-zero exit code on error\n");
@@ -254,6 +255,7 @@ void printhelp(void)
 int main(int argc, char **argv)
 {
 	bool_t nodaemon = false;
+	bool_t forceswitch = false;
 #ifdef POSIX_PRIORITY_SCHEDULING
 	bool_t realtime = false;
 #endif
@@ -264,9 +266,9 @@ int main(int argc, char **argv)
 
 	/* Arguments */
 #ifdef POSIX_PRIORITY_SCHEDULING
-	while ((c = getopt(argc, argv, "drp:c:a:A:b:B:ht")) != EOF) {
+	while ((c = getopt(argc, argv, "drsp:c:a:A:b:B:ht")) != EOF) {
 #else
-		while ((c = getopt(argc, argv, "dp:c:a:A:b:B:ht")) != EOF) {
+		while ((c = getopt(argc, argv, "dsp:c:a:A:b:B:ht")) != EOF) {
 #endif
 			switch(c) {
 				case 'c':
@@ -301,6 +303,9 @@ int main(int argc, char **argv)
 					realtime = true;
 					break;
 #endif
+				case 's':
+					forceswitch = true;
+					break;
 				default:
 					fprintf(stderr, "Unrecognized option\n");
 					printhelp();
@@ -365,7 +370,7 @@ int main(int argc, char **argv)
     Sharedmemory_init( bindport, bindport6 );
 #endif
 
-		if(!nodaemon) {
+		if(!nodaemon || forceswitch) {
 			/* SSL and scheduling is setup, we can drop privileges now */
 			switch_user();
 
