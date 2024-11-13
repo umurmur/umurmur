@@ -53,6 +53,10 @@
 #include <mbedtls/net.h>
 #endif
 
+#if (MBEDTLS_VERSION_MAJOR >= 3)
+#undef USE_MBEDTLS_HAVEGE
+#endif
+
 #if defined(USE_MBEDTLS_HAVEGE)
 #include <mbedtls/havege.h>
 #define HAVEGE_RAND (mbedtls_havege_random)
