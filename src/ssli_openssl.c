@@ -142,8 +142,6 @@ static EVP_PKEY *SSL_generate_cert_and_key(char *key, char *crt)
 	
 	Log_info("Generating new server certificate.");
 	
-	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-	
 	x509 = X509_new();
 	if (!x509)
 		goto err_out;
