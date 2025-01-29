@@ -1,3 +1,8 @@
+0.3.0:
+o OpenSSL: Fix compatibility with mumble requiring TLS1.3
+           ciphers (Petre Rodan)
+o mbedTLS: Add support for Mbed TLS 3.x (Glenn Strauss)
+
 0.2.20:
 o OpenSSL: Fix compilation when building against lib without deprecated
            API enabled (Rosen Penev)
