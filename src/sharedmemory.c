@@ -73,9 +73,9 @@ void Sharedmemory_update(void)
 				strncpy( shmptr->client[cc].ipaddress, clientAddressString, INET6_ADDRSTRLEN - 1 );
 				strncpy( shmptr->client[cc].channel, channel->name, 120 );
 
-				strncpy( shmptr->client[cc].os, client_itr->os, 120 );
-				strncpy( shmptr->client[cc].release, client_itr->release, 120 );
-				strncpy( shmptr->client[cc].os_version, client_itr->os_version, 120 );
+				strncpy( shmptr->client[cc].os, client_itr->os ? client_itr->os : "(unspecified OS)", 120 );
+				strncpy( shmptr->client[cc].release, client_itr->release ? client_itr->release : "(unspecified Release)", 120 );
+				strncpy( shmptr->client[cc].os_version, client_itr->os_version ? client_itr->os_version : "(unspecified Version)", 120 );
 
 				memcpy( shmptr->client[cc].hash, client_itr->hash, 20 );
 
