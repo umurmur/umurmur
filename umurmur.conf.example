@@ -17,7 +17,7 @@ max_users = 10;
 # bindaddr = "192.168.1.1";
 
 # username and groupname for privilege dropping.
-# Will attempt to switch user if set. 
+# Will attempt to switch user if set.
 # username = "";
 # If groupname not set the user's default login group will be used
 # groupname = "";
@@ -32,47 +32,52 @@ max_users = 10;
 # Channel tree definition:
 # Root channel must always be defined first.
 # If a channel has a parent, the parent must be defined before the child channel(s).
-channels = ( {
-	 name = "Root";
-	 parent = "";
-	 description = "Root channel. No entry.";
-	 noenter = true;
-	 },
-	 {
-	 name = "Lobby";
-	 parent = "Root";
-	 description = "Lobby channel";
-	 },
-	 {
-	 name = "Silent";
-	 parent = "Root";
-	 description = "Silent channel";
-	 silent = true; # Optional. Default is false 
-	 },
-	 {
-	 name = "Red team";
-	 parent = "Lobby";
-	 description = "The Red team channel";
-     position = 0;   # Optional. Default is 0 and the channels will be shown in alphabetic order.
-     # password = "redpw";
-	 },
-	 {
-	 name = "Blue team";
-	 parent = "Lobby";
-	 description = "The Blue team channel";
-     position = 1;   # Optional. Default is 0 and the channels will be shown in alphabetic order.
-     # password = "bluepw";
-	 }
+channels = (
+	{
+		name = "Root";
+		parent = "";
+		description = "Root channel. No entry.";
+		noenter = true;
+	},
+	{
+		name = "Lobby";
+		parent = "Root";
+		description = "Lobby channel";
+	},
+	{
+		name = "Silent";
+		parent = "Root";
+		description = "Silent channel";
+		silent = true; # Optional. Default is false
+	},
+	{
+		name = "Red team";
+		parent = "Lobby";
+		description = "The Red team channel";
+		position = 0;   # Optional. Default is 0 and the channels will be shown in alphabetic order
+		# password = "redpw";
+		# By default, temporary channel creation is disallowed. Enabled on a per-channel basis.
+		allow_temp = true; # Optional. Default is false
+	},
+	{
+		name = "Blue team";
+		parent = "Lobby";
+		description = "The Blue team channel";
+		position = 1;   # Optional. Default is 0 and the channels will be shown in alphabetic order.
+		# password = "bluepw";
+	}
 );
+
 # Channel links configuration.
-channel_links = ( {
-	 source = "Lobby";
-	 destination = "Red team";
-	 },
-	 {
-	 source = "Lobby";
-	 destination = "Blue team";
-	 }
+channel_links = (
+	{
+		source = "Lobby";
+		destination = "Red team";
+	},
+	{
+		source = "Lobby";
+		destination = "Blue team";
+	}
 );
 
 # The channel in which users will appear in when connecting.
