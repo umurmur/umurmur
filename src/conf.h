@@ -65,7 +65,7 @@ typedef struct {
 	const char *name;
 	const char *description;
 	const char *password;
-	bool_t noenter, silent;
+	bool_t noenter, silent, allow_temp;
 	int position;
 } conf_channel_t;
 

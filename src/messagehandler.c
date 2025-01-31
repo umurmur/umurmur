@@ -757,6 +757,12 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			break;
 		}
 
+		/* Disallow temporary child channels unless explicitly allowed */
+		if (!parent->allow_temp) {
+			sendPermissionDenied(client, "Parent channel disallows temporary channel creation");
+			break;
+		}
+
 		/* XXX - Murmur looks for "\\w" and sends perm denied if not found.
 		 * I don't know why so I don't do that here...
 		 */

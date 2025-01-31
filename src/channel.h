@@ -41,7 +41,7 @@ typedef struct channel {
 	char *desc;
 	char *password;
 	struct channel *parent;
-	bool_t temporary, noenter, silent;
+	bool_t temporary, noenter, silent, allow_temp;
 	int position;
 	struct dlist node;
 	struct dlist subs;

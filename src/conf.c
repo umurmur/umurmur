@@ -382,6 +382,13 @@ int Conf_getNextChannel(conf_channel_t *chdesc, int index)
 	else
 		chdesc->silent = config_setting_get_bool(setting);
 
+	ret = snprintf(configstr, maxconfig, "channels.[%d].allow_temp", index);
+	setting = config_lookup(&configuration, configstr);
+	if (ret >= maxconfig || ret < 0 || setting == NULL) /* Optional */
+		chdesc->allow_temp = false;
+	else
+		chdesc->allow_temp = config_setting_get_bool(setting);
+
 	ret = snprintf(configstr, maxconfig, "channels.[%d].position", index);
 	setting = config_lookup(&configuration, configstr);
 	if (ret >= maxconfig || ret < 0 || setting == NULL) /* Optional */

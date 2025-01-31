@@ -163,6 +163,7 @@ void Chan_init(void)
 			ch->noenter = chdesc.noenter;
 			ch->position = chdesc.position;
 			ch->silent = chdesc.silent;
+			ch->allow_temp = chdesc.allow_temp;
 			if (chdesc.password) {
 				Log_info("Setting password on channel '%s'", ch->name);
 				ch->password = strdup(chdesc.password);
