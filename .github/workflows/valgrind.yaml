@@ -16,6 +16,16 @@ jobs:
       - name: Install dependencies
         run: sudo apt-get install -y valgrind cmake libconfig-dev libprotobuf-c-dev libconfig9 libprotobuf-c1 libssl3
 
+      - name: Install Mbed TLS 3.x
+        if: matrix.ssl == "mbedtls"
+        run: |
+          curl -o mbedtls.tar.bz2 -L https://github.com/Mbed-TLS/mbedtls/releases/download/mbedtls-3.6.2/mbedtls-3.6.2.tar.bz2 && \
+          tar -jxvf mbedtls.tar.bz2 && \
+          cd mbedtls-* && \
+          cmake -Bbuild -H. && \
+          cmake --build build && \
+          cmake --install build
+
       - name: Config file
         run: |
           sed 's_/etc/umurmur/__g' umurmur.conf.example > umurmur.conf
