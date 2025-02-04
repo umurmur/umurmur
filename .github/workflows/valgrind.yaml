@@ -17,14 +17,14 @@ jobs:
         run: sudo apt-get install -y valgrind cmake libconfig-dev libprotobuf-c-dev libconfig9 libprotobuf-c1 libssl3
 
       - name: Install Mbed TLS 3.x
-        if: ${{ matrix.ssl }} == "mbedtls"
+        if: ${{ matrix.ssl == 'mbedtls' }}
         run: |
           curl -o mbedtls.tar.bz2 -L https://github.com/Mbed-TLS/mbedtls/releases/download/mbedtls-3.6.2/mbedtls-3.6.2.tar.bz2 && \
           tar -jxvf mbedtls.tar.bz2 && \
           cd mbedtls-* && \
           cmake -Bbuild -H. && \
           cmake --build build && \
-          cmake --install build
+          sudo cmake --install build
 
       - name: Config file
         run: |
@@ -32,7 +32,7 @@ jobs:
 
       - name: Configure
         run: |
-          cmake -B ./build-${{ matrix.ssl }} -H. -D SSL=${{ matrix.ssl }} -D USE_SHAREDMEMORY_API=true
+          cmake -B ./build-${{ matrix.ssl }} -H. -DCMAKE_BUILD_TYPE=Debug -DSSL=${{ matrix.ssl }} -DUSE_SHAREDMEMORY_API=true
 
       - name: Build
         run: |
@@ -43,5 +43,5 @@ jobs:
         with:
           binary_path: ./build-${{ matrix.ssl }}/bin/umurmurd
           binary_args: "-c umurmur.conf -d"
-          timeout: 10s
+          timeout: 30s
 
