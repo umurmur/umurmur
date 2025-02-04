@@ -39,7 +39,7 @@ FROM debian:unstable-slim
 RUN \
 	apt update && \
 	apt install -y \
-		libconfig9 libprotobuf-c1 libssl3 && \
+		libconfig9 libprotobuf-c1 && \
 	rm -rf /var/lib/apt/lists/*
 
 # # Copy the compiled binary from the build stage

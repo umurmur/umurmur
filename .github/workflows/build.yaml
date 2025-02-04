@@ -20,7 +20,7 @@ jobs:
 
       - name: Containerized build
         run: |
-          docker build --build-arg BUILD_TYPE=${{ matrix.build}} --build-arg SHMEM=${{ matrix.shmem }} --build-arg SSL=${{ matrix.ssl }} . 
+          docker build -f Dockerfile.${{ matrix.ssl }} --build-arg BUILD_TYPE=${{ matrix.build}} --build-arg SHMEM=${{ matrix.shmem }} --build-arg SSL=${{ matrix.ssl }} . 
 
       # - name: Run Tests
       #   run: ctest --test-dir build --output-on-failure
