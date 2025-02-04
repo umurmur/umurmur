@@ -33,4 +33,5 @@ jobs:
         with:
           binary_path: ./build-${{ matrix.ssl }}/bin/umurmurd
           binary_args: "-c umurmur.conf -d"
+          timeout: 10s
 
