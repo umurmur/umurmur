@@ -1,0 +1,29 @@
+name: CMake Build and Test
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        config: [Debug, Release]  # List of configurations to test
+        shmem: [true, false]      # SHMEM API
+        ssl: [mbedtls, openssl]      # Shared vs Static libraries
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Configure CMake
+        run: |
+          cmake -B${{ matrix.config }}-${{ matrix.ssl }} -H. -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DCMAKE_SHAREDMEMORY_API=${{ matrix.shmem }} -DSSL=${{ matrix.ssl }}
+
+      - name: Build
+        run: cmake --build ${{ matrix.config }}-${{ matrix.ssl }} --config ${{ matrix.config }}
+
+      # - name: Run Tests
+      #   run: ctest --test-dir build --output-on-failure
+
