@@ -1,0 +1,36 @@
+name: Valgrind Check
+
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  valgrind:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        ssl: [ mbedtls, openssl ]  # Supported TLS libraries
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get install -y valgrind libconfig-dev libprotobuf-c-dev libconfig9 libprotobuf-c1 libssl3
+
+      - name: Config file
+        run: |
+          sed 's_/etc/umurmur/__g' umurmur.conf.example > umurmur.conf
+
+      - name: Configure
+        run: |
+          cmake -B ./build-${{ matrix.ssl }} -H. -D SSL=${{ matrix.ssl }} -D USE_SHAREDMEMORY_API=true
+
+      - name: Build
+        run: |
+          cmake --build ./build-${{ matrix.ssl }}
+
+      - name: Run Valgrind
+        uses: Ximaz/valgrind-action@v1.2.0
+        with:
+          binary_path: ./build-${{ matrix.ssl }}
+          binary_args: "-c umurmur.conf -h"
+
