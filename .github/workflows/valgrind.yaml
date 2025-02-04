@@ -31,6 +31,6 @@ jobs:
       - name: Run Valgrind
         uses: Ximaz/valgrind-action@v1.2.0
         with:
-          binary_path: ./build-${{ matrix.ssl }}
+          binary_path: ./build-${{ matrix.ssl }}/bin/umurmurd
           binary_args: "-c umurmur.conf -h"
 
