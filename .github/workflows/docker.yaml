@@ -2,7 +2,9 @@ name: CMake Build and Test
 
 on:
   push:
+    branches: [ master ]
   pull_request:
+    branches: [ master ]
   workflow_dispatch:
 
 jobs:
@@ -10,10 +12,10 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        distro: [Debian]
-        build: [Debug, Release]  # Build with debug symbols
-        shmem: [true, false]     # Enable SHMEM API
-        ssl: [mbedtls, openssl]  # Supported TLS libraries
+        distro: [ Debian ]
+        build: [ Debug, Release ]  # Build with debug symbols
+        shmem: [ true, false ]     # Enable SHMEM API
+        ssl: [ mbedtls, openssl ]  # Supported TLS libraries
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

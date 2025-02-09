@@ -8,6 +8,7 @@ jobs:
     strategy:
       matrix:
         ssl: [ mbedtls, openssl ]  # Supported TLS libraries
+      fail-fast: false
 
     steps:
       - name: Checkout code

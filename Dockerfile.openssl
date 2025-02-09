@@ -20,8 +20,9 @@ COPY cmake cmake
 COPY src src
 
 RUN \
-	cmake -Bbuild -H. -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DCMAKE_SHAREDMEMORY_API=${SHMEM} && \
+	cmake -Bbuild -H. -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DUSE_SHAREDMEMORY_API=${SHMEM} && \
         cmake --build build
+
 
 # Stage 2: Runtime
 FROM debian:unstable-slim
