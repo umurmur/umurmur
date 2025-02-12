@@ -48,4 +48,4 @@ target_link_libraries(${PROJECT_NAME}
                       ${LIBRT}
                       ${CRYPTO_LIBRARIES})
 
-install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION "bin")
+install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION "sbin")
