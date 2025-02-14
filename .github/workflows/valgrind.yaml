@@ -40,7 +40,7 @@ jobs:
           cmake --build ./build-${{ matrix.ssl }}
 
       - name: Run Valgrind
-        uses: troxor/valgrind-action@v1.2.1
+        uses: Ximaz/valgrind-action@v1.2.1
         with:
           binary_path: ./build-${{ matrix.ssl }}/bin/umurmurd
           binary_args: "-c umurmur.conf -d"
