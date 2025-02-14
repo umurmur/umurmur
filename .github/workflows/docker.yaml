@@ -1,10 +1,9 @@
-name: CMake Build and Test
+name: Build with Docker
 
 on:
   push:
     branches: [ master ]
   pull_request:
-    branches: [ master ]
   workflow_dispatch:
 
 jobs:
@@ -12,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        distro: [ Debian ]
+        distro: [ alpine, debian ]
         build: [ Debug, Release ]  # Build with debug symbols
         shmem: [ true, false ]     # Enable SHMEM API
         ssl: [ mbedtls, openssl ]  # Supported TLS libraries
@@ -22,7 +21,7 @@ jobs:
 
       - name: Containerized build
         run: |
-          docker build -f Dockerfile.${{ matrix.ssl }} --build-arg BUILD_TYPE=${{ matrix.build}} --build-arg SHMEM=${{ matrix.shmem }} --build-arg SSL=${{ matrix.ssl }} . 
+          docker build -f Dockerfile.${{ matrix.distro }} --build-arg BUILD_TYPE=${{ matrix.build }} --build-arg SHMEM=${{ matrix.shmem }} --build-arg SSL=${{ matrix.ssl }} .
 
       # - name: Run Tests
       #   run: ctest --test-dir build --output-on-failure
