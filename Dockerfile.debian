@@ -1,0 +1,61 @@
+# Stage 1: Build
+FROM gcc:latest AS build
+
+ARG SSL=openssl
+ARG BUILD_TYPE=debug
+ARG SHMEM=true
+
+RUN \
+	apt update && \
+	apt install -y \
+	cmake \
+	libconfig-dev \
+	libprotobuf-c-dev
+
+RUN \
+	test "${SSL}" = "openssl" && apt install libssl-dev ; \
+	if test "${SSL}" = "mbedtls" ; then \
+		curl -o mbedtls.tar.bz2 -L https://github.com/Mbed-TLS/mbedtls/releases/download/mbedtls-3.6.2/mbedtls-3.6.2.tar.bz2 ; \
+		tar -jxvf mbedtls.tar.bz2 ; \
+		cd mbedtls-* ; \
+		cmake -Bbuild -H. ; \
+		cmake --build build ; \
+		cmake --install build ; \
+	fi ; \
+	echo "SSL=${SSL}"
+
+WORKDIR /umurmur
+
+COPY CMakeLists.txt .
+COPY umurmur.conf.example .
+COPY cmake cmake
+COPY src src
+
+# Build against both OpenSSL and Mbed TLS
+RUN \
+	cmake -Bbuild-${SSL} -H. -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DUSE_SHAREDMEMORY_API=${SHMEM} -DSSL=${SSL} && \
+	cmake --build build-${SSL} && \
+	cmake --install build-${SSL}
+
+# Stage 2: Runtime
+FROM debian:unstable-slim
+
+ARG SSL=openssl
+
+RUN \
+	apt update && \
+	apt install -y \
+		libconfig9 \
+		libprotobuf-c1 && \
+	[ "${SSL}" == "openssl" ] && apt install libssl ; \
+	rm -rf /var/lib/apt/lists/* ; \
+	mkdir /etc/umurmur
+
+# Copy the compiled binary from the build stage, default to OpenSSL
+COPY --from=build /usr/local/bin/umurmurd /usr/local/bin/
+COPY --from=build /umurmur/umurmur.conf.example /usr/local/etc/umurmur/umurmur.conf
+
+EXPOSE 64738
+
+ENTRYPOINT ["/usr/local/bin/umurmurd", "-d"]
+

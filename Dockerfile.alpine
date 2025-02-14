@@ -1,0 +1,55 @@
+# Stage 1: Build
+FROM alpine:latest AS build
+
+ARG SSL=openssl
+ARG BUILD_TYPE=debug
+ARG SHMEM=true
+
+RUN \
+	apk update && \
+	apk add \
+		build-base \
+		cmake \
+		libconfig-dev \
+		protobuf-c-dev ; \
+	[ "${SSL}" == "openssl" ] && apk add openssl-dev ; \
+	[ "${SSL}" == "mbedtls" ] && apk add mbedtls-dev ; \
+	echo "Installed deps for building against openssl"
+
+WORKDIR /umurmur
+
+COPY CMakeLists.txt .
+COPY umurmur.conf.example .
+COPY cmake cmake
+COPY src src
+
+# Build against both OpenSSL and Mbed TLS
+RUN \
+	cmake -Bbuild-${SSL} -H. -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DUSE_SHAREDMEMORY_API=${SHMEM} -DSSL=${SSL} && \
+	cmake --build build-${SSL} && \
+	cmake --install build-${SSL}
+
+# # Stage 2: Runtime
+FROM alpine:latest
+
+ARG SSL=openssl
+
+RUN \
+	apk update && \
+	apk add \
+		libconfig \
+		protobuf-c ; \
+	[ "${SSL}" == "openssl" ] && apk add openssl-dev ; \
+	[ "${SSL}" == "mbedtls" ] && apk add mbedtls-dev ; \
+	rm -rf /var/cache/apk/* ; \
+	mkdir /etc/umurmur
+
+
+# Copy the compiled binary from the build stage, default to OpenSSL
+COPY --from=build /usr/local/bin/umurmurd/ /usr/local/bin/
+COPY --from=build /umurmur/umurmur.conf.example /usr/local/etc/umurmur/umurmur.conf
+
+EXPOSE 64738
+
+ENTRYPOINT ["/usr/local/bin/umurmurd", "-d"]
+
