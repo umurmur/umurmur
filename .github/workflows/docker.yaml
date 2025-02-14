@@ -2,8 +2,9 @@ name: Build with Docker
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
+    types: [opened, synchronize]
   workflow_dispatch:
 
 jobs:
