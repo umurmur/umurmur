@@ -13,8 +13,6 @@ jobs:
     strategy:
       matrix:
         distro: [ alpine, debian ]
-        build: [ Debug, Release ]  # Build with debug symbols
-        shmem: [ true, false ]     # Enable SHMEM API
         ssl: [ mbedtls, openssl ]  # Supported TLS libraries
     steps:
       - name: Checkout code
@@ -22,8 +20,5 @@ jobs:
 
       - name: Containerized build
         run: |
-          docker build -f Dockerfile.${{ matrix.distro }} --build-arg BUILD_TYPE=${{ matrix.build }} --build-arg SHMEM=${{ matrix.shmem }} --build-arg SSL=${{ matrix.ssl }} .
-
-      # - name: Run Tests
-      #   run: ctest --test-dir build --output-on-failure
+          docker build -f Dockerfile.${{ matrix.distro }} --build-arg SSL=${{ matrix.ssl }} .
 
