@@ -47,7 +47,7 @@ jobs:
           binary_path: ./build-${{ matrix.ssl }}/bin/umurmurd
           binary_args: "-c umurmur.conf -d"
           xml_output_file: "valgrind-output.xml"
-          timeout: 30s
+          timeout: 300s
 
       - name: Convert XML to SARIF
         uses: troxor/valgrind-sarif-action@v0.0.1
