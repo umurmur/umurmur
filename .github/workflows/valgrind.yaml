@@ -42,10 +42,11 @@ jobs:
           cmake --build ./build-${{ matrix.ssl }}
 
       - name: Run Valgrind
-        uses: Ximaz/valgrind-action@v1.2.1
+        uses: troxor/valgrind-action@v1.2.2
         with:
           binary_path: ./build-${{ matrix.ssl }}/bin/umurmurd
           binary_args: "-c umurmur.conf -d"
+          xml_output_file: "valgrind-output.xml"
           timeout: 30s
 
       - name: Convert XML to SARIF
