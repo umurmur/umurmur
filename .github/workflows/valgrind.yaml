@@ -46,6 +46,7 @@ jobs:
         with:
           binary_path: ./build-${{ matrix.ssl }}/bin/umurmurd
           binary_args: "-c umurmur.conf -d"
+          track_file_descriptors: false
           xml_output_file: "valgrind-output.xml"
           timeout: 300s
 
