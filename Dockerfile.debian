@@ -52,10 +52,10 @@ RUN \
 	mkdir /etc/umurmur
 
 # Copy the compiled binary from the build stage, default to OpenSSL
-COPY --from=build /usr/local/bin/umurmurd /usr/local/sbin/
+COPY --from=build /usr/local/sbin/umurmurd /usr/local/sbin/
 COPY --from=build /umurmur/umurmur.conf.example /usr/local/etc/umurmur/umurmur.conf
 
 EXPOSE 64738
 
-ENTRYPOINT ["/usr/local/bin/umurmurd", "-d"]
+ENTRYPOINT ["/usr/local/sbin/umurmurd", "-d"]
 
