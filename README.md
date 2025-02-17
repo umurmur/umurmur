@@ -1,8 +1,6 @@
 # About uMurmur
 
 [![Build with Docker](https://github.com/troxor/umurmur/actions/workflows/docker.yaml/badge.svg)](https://github.com/troxor/umurmur/actions/workflows/docker.yaml)
-[![Valgrind Check](https://github.com/troxor/umurmur/actions/workflows/valgrind.yaml/badge.svg)](https://github.com/troxor/umurmur/actions/workflows/valgrind.yaml)
-[![CodeQL Analysis](https://github.com/umurmur/umurmur/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/umurmur/umurmur/actions/workflows/github-code-scanning/codeql)
 
 uMurmur is a minimalistic Mumble server primarily targeted to run on embedded computers, like routers, with an open OS like e.g. OpenWRT. The server part of Mumble is called Murmur, hence the name uMurmur. It is available as a precompiled package for quite a lot distributions. Check your distribution's package repository.
 
