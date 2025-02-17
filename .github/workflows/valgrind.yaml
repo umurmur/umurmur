@@ -48,3 +48,15 @@ jobs:
           binary_args: "-c umurmur.conf -d"
           timeout: 30s
 
+      - name: Convert XML to SARIF
+        uses: troxor/valgrind-sarif-action@v0.0.1
+        with:
+          xml_input_file: valgrind-output.xml
+          sarif_output_file: valgrind-output.sarif
+
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          # Path to SARIF file relative to the root of the repository
+          sarif_file: valgrind-output.sarif
+          category: valgrind
