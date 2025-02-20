@@ -1,0 +1,24 @@
+name: Build with Docker
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    types: [opened, synchronize]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        distro: [ alpine, debian ]
+        ssl: [ mbedtls, openssl ]  # Supported TLS libraries
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Containerized build
+        run: |
+          docker build -f Dockerfile.${{ matrix.distro }} --build-arg SSL=${{ matrix.ssl }} .
+

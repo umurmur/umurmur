@@ -173,12 +173,16 @@ static void switch_user(void)
 void signal_handler(int sig)
 {
 	switch(sig) {
+		case SIGINT:
+			Log_info("INT signal received. Shutting down.");
+			Server_shutdown();
+			break;
 		case SIGHUP:
-			Log_info("HUP signal received.");
+			Log_info("HUP signal received. Reopening log file.");
 			Log_reset();
 			break;
 		case SIGTERM:
-			Log_info("TERM signal. Shutting down.");
+			Log_info("TERM signal received. Shutting down.");
 			Server_shutdown();
 			break;
 	}
@@ -344,6 +348,9 @@ int main(int argc, char **argv)
 		signal(SIGTTOU, SIG_IGN);
 		signal(SIGTTIN, SIG_IGN);
 		signal(SIGPIPE, SIG_IGN);
+		/* Docker usually requires an init process to catch Ctrl-C
+		 * Handling it here avoids this requirement */
+		signal(SIGINT, signal_handler); /* catch interrupt signal */
 		signal(SIGHUP, signal_handler); /* catch hangup signal */
 		signal(SIGTERM, signal_handler); /* catch kill signal */
 
