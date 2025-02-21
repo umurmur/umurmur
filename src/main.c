@@ -155,7 +155,7 @@ static void switch_user(void)
 	}
 
 	if (initgroups(pwd->pw_name, gid))
-		Log_fatal("initgroups() failed: %s", strerror(errno));
+		Log_fatal("Could not call initgroups() for user %s: %s", username, strerror(errno));
 
 	if (setgid(gid))
 		Log_fatal("setgid() failed: %s", strerror(errno));
