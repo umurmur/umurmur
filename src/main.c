@@ -374,10 +374,10 @@ int main(int argc, char **argv)
     Sharedmemory_init( bindport, bindport6 );
 #endif
 
-		if(!nodaemon) {
-			/* SSL and scheduling is setup, we can drop privileges now */
-			switch_user();
+		/* SSL and scheduling is setup, we can drop privileges now */
+		switch_user();
 
+		if(!nodaemon) {
 			/* Reopen log file. If user switch results in access denied, we catch
 			 * it early.
 			 */
