@@ -524,7 +524,7 @@ int Client_read(client_t *client)
 						Log_info_client(client, "Connection closed by peer");
 					else
 						Log_info_client(client,"Error: %s  - Closing connection (code %d)",
-							strerror(errno));
+							strerror(errno), errno);
 				}
 				else if (SSLi_get_error(client->ssl, rc) == SSLI_ERROR_CONNRESET) {
 					Log_info_client(client, "Connection reset by peer");
