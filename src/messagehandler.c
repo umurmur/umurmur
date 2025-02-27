@@ -521,9 +521,9 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			sendmsg->payload.textMessage->n_tree_id = 1;
 			sendmsg->payload.textMessage->tree_id = tree_id;
 			if (client->recording)
-				sprintf(message, "User %s started recording", client->username);
+				snprintf(message, strlen(client->username) + 32, "User %s started recording", client->username);
 			else
-				sprintf(message, "User %s stopped recording", client->username);
+				snprintf(message, strlen(client->username) + 32, "User %s stopped recording", client->username);
 			Client_send_message_except_ver(NULL, sendmsg, ~0x010203);
 			sendmsg = NULL;
 		}
