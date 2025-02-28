@@ -102,8 +102,8 @@ struct sockaddr_storage** Server_setupAddressesAndPorts(void)
 	v6address->ss_family = AF_INET6;
 
 #if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
-	v4address->ss_len = sizeof(struct sockaddr_storage);
-	v6address->ss_len = sizeof(struct sockaddr_storage);
+	v4address->ss_len = sizeof(struct sockaddr_in);
+	v6address->ss_len = sizeof(struct sockaddr_in6);
 #endif
 
 	int error = 0;
