@@ -17,8 +17,8 @@ RUN \
 		libprotobuf-c-dev
 
 RUN \
-	if test "${SSL}" = "openssl" ; then \
-		apt-get install -qq -y --no-install-recommends libssl-dev ; \
+	if test "${SSL}" = "gnutls" ; then \
+		apt-get install -qq -y --no-install-recommends libgnutls28-dev; \
 	fi ; \
 	if test "${SSL}" = "mbedtls" ; then \
 		curl -o mbedtls.tar.bz2 -L https://github.com/Mbed-TLS/mbedtls/releases/download/mbedtls-3.6.2/mbedtls-3.6.2.tar.bz2 ; \
@@ -27,6 +27,9 @@ RUN \
 		cmake -Bbuild -H. -DENABLE_TESTING=OFF ; \
 		cmake --build build ; \
 		cmake --install build ; \
+	fi ; \
+	if test "${SSL}" = "openssl" ; then \
+		apt-get install -qq -y --no-install-recommends libssl-dev ; \
 	fi ; \
 	echo "SSL=${SSL}"
 
@@ -53,6 +56,9 @@ RUN \
 	apt-get install -qq -y --no-install-recommends \
 		libconfig9 \
 		libprotobuf-c1 && \
+	test "${SSL}" = "gnutls" && \
+		apt-get install -qq -y --no-install-recommends \
+			libgnutls30 ; \
 	test "${SSL}" = "openssl" && \
 		apt-get install -qq -y --no-install-recommends \
 			libssl3 ; \
