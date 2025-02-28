@@ -1,24 +1,30 @@
 # Stage 1: Build
-FROM gcc:latest AS build
+FROM debian:stable-slim AS build
 
 ARG SSL=openssl
 ARG BUILD_TYPE=debug
 ARG SHMEM=true
+ARG DEBIAN_FRONTEND=noninteractive
 
 RUN \
-	apt update && \
-	apt install -y \
-	cmake \
-	libconfig-dev \
-	libprotobuf-c-dev
+	apt-get update && \
+	apt-get install -qq -y --no-install-recommends \
+		curl \
+		ca-certificates \
+		build-essential \
+		cmake \
+		libconfig-dev \
+		libprotobuf-c-dev
 
 RUN \
-	test "${SSL}" = "openssl" && apt install libssl-dev ; \
+	if test "${SSL}" = "openssl" ; then \
+		apt-get install -qq -y --no-install-recommends libssl-dev ; \
+	fi ; \
 	if test "${SSL}" = "mbedtls" ; then \
 		curl -o mbedtls.tar.bz2 -L https://github.com/Mbed-TLS/mbedtls/releases/download/mbedtls-3.6.2/mbedtls-3.6.2.tar.bz2 ; \
 		tar -jxvf mbedtls.tar.bz2 ; \
 		cd mbedtls-* ; \
-		cmake -Bbuild -H. ; \
+		cmake -Bbuild -H. -DENABLE_TESTING=OFF ; \
 		cmake --build build ; \
 		cmake --install build ; \
 	fi ; \
@@ -38,16 +44,18 @@ RUN \
 	cmake --install build-${SSL}
 
 # Stage 2: Runtime
-FROM debian:unstable-slim
+FROM debian:stable-slim
 
 ARG SSL=openssl
 
 RUN \
-	apt update && \
-	apt install -y \
+	apt-get update && \
+	apt-get install -qq -y --no-install-recommends \
 		libconfig9 \
 		libprotobuf-c1 && \
-	[ "${SSL}" == "openssl" ] && apt install libssl ; \
+	test "${SSL}" = "openssl" && \
+		apt-get install -qq -y --no-install-recommends \
+			libssl3 ; \
 	rm -rf /var/lib/apt/lists/* ; \
 	mkdir /etc/umurmur
 
