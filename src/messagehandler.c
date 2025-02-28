@@ -146,7 +146,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		while (Client_iterate_authenticated(&client_itr)) {
 			if (client_itr->username && strncmp(client_itr->username, msg->payload.authenticate->username, MAX_USERNAME) == 0) {
 				char buf[64];
-				sprintf(buf, "Username already in use");
+				snprintf(buf, sizeof(buf), "Username already in use");
 				Log_debug("Username already in use");
 				sendServerReject(client, buf, MUMBLE_PROTO__REJECT__REJECT_TYPE__UsernameInUse);
 				goto disconnect;
@@ -157,7 +157,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 				(msg->payload.authenticate->password &&
 				 strncmp(getStrConf(PASSPHRASE), msg->payload.authenticate->password, MAX_TEXT) != 0)) {
 				char buf[64];
-				sprintf(buf, "Wrong server password");
+				snprintf(buf, sizeof(buf), "Wrong server password");
 				sendServerReject(client, buf, MUMBLE_PROTO__REJECT__REJECT_TYPE__WrongServerPW);
 				Log_debug("Wrong server password: '%s'", msg->payload.authenticate->password != NULL ?
 						  msg->payload.authenticate->password : "(null)");
@@ -167,7 +167,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		if (strlen(msg->payload.authenticate->username) == 0 ||
 			strlen(msg->payload.authenticate->username) >= MAX_USERNAME) { /* XXX - other invalid names? */
 			char buf[64];
-			sprintf(buf, "Invalid username");
+			snprintf(buf, sizeof(buf), "Invalid username");
 			Log_debug("Invalid username");
 			sendServerReject(client, buf, MUMBLE_PROTO__REJECT__REJECT_TYPE__InvalidUsername);
 			goto disconnect;

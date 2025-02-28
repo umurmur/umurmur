@@ -36,6 +36,7 @@
 #include <poll.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include "log.h"
 #include "memory.h"
 #include "list.h"
