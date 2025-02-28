@@ -679,7 +679,11 @@ void Client_textmessage(client_t *client, char *text)
 	sendmsg->payload.textMessage->message = message;
 	sendmsg->payload.textMessage->n_tree_id = 1;
 	sendmsg->payload.textMessage->tree_id = tree_id;
+#ifdef HAVE_STRLCPY
 	strlcpy(message, text, strlen(text) + 1);
+#else
+	strncpy(message, text, sizeof(message) - 1);
+#endif
 	Client_send_message(client, sendmsg);
 }
 

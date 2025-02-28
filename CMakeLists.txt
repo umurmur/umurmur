@@ -20,6 +20,9 @@ include(Options)
 include(Tools)
 include(GNUInstallDirs)
 
+include(CheckFunctionExists)
+check_function_exists(strlcpy HAVE_STRLCPY)
+
 find_package(Libconfig REQUIRED)
 find_package(ProtobufC REQUIRED)
 
