@@ -2,7 +2,11 @@ name: Build with Docker
 
 on:
   push:
-    branches: [master]
+    paths:
+      - src/**
+      - cmake/**
+      - CMakeLists.txt
+      - Dockerfile.*
   pull_request:
     types: [opened, synchronize]
   workflow_dispatch:
