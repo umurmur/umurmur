@@ -1,0 +1,61 @@
+services:
+  debian-gnutls:
+    build:
+      context: .
+      args:
+        - SSL=mbedtls
+      dockerfile: Dockerfile.debian
+    volumes:
+      - ${PWD}/certificate.crt:/etc/umurmur/cert.crt:ro
+      - ${PWD}/private_key.key:/etc/umurmur/key.key:ro
+
+  debian-mbedtls:
+    build:
+      context: .
+      args:
+        - SSL=mbedtls
+      dockerfile: Dockerfile.debian
+    volumes:
+      - ${PWD}/certificate.crt:/etc/umurmur/cert.crt:ro
+      - ${PWD}/private_key.key:/etc/umurmur/key.key:ro
+
+  debian-openssl:
+    build:
+      context: .
+      args:
+        - SSL=openssl
+      dockerfile: Dockerfile.debian
+    volumes:
+      - ${PWD}/certificate.crt:/etc/umurmur/cert.crt:ro
+      - ${PWD}/private_key.key:/etc/umurmur/key.key:ro
+
+  alpine-gnutls:
+    build:
+      context: .
+      args:
+        - SSL=gnutls
+      dockerfile: Dockerfile.alpine
+    volumes:
+      - ${PWD}/certificate.crt:/etc/umurmur/cert.crt:ro
+      - ${PWD}/private_key.key:/etc/umurmur/key.key:ro
+
+  alpine-mbedtls:
+    build:
+      context: .
+      args:
+        - SSL=mbedtls
+      dockerfile: Dockerfile.alpine
+    volumes:
+      - ${PWD}/certificate.crt:/etc/umurmur/cert.crt:ro
+      - ${PWD}/private_key.key:/etc/umurmur/key.key:ro
+
+  alpine-openssl:
+    build:
+      context: .
+      args:
+        - SSL=openssl
+      dockerfile: Dockerfile.alpine
+    volumes:
+      - ${PWD}/certificate.crt:/etc/umurmur/cert.crt:ro
+      - ${PWD}/private_key.key:/etc/umurmur/key.key:ro
+
