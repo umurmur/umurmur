@@ -82,7 +82,7 @@ void SSLi_init()
 
 	initializeCertificate();
 
-	Log_info("Sucessfully initialized GNUTLS version %s", gnutls_check_version(NULL));
+	Log_info("GnuTLS library initialized (version: %s)", gnutls_check_version(NULL));
 }
 
 void SSLi_deinit()

@@ -12,8 +12,9 @@ RUN \
 		cmake \
 		libconfig-dev \
 		protobuf-c-dev ; \
-	[ "${SSL}" == "openssl" ] && apk add openssl-dev ; \
+	[ "${SSL}" == "gnutls" ] && apk add gnutls-dev ; \
 	[ "${SSL}" == "mbedtls" ] && apk add mbedtls-dev ; \
+	[ "${SSL}" == "openssl" ] && apk add openssl-dev ; \
 	echo "Installed deps for building against openssl"
 
 WORKDIR /umurmur
@@ -39,14 +40,15 @@ RUN \
 	apk add \
 		libconfig \
 		protobuf-c ; \
-	[ "${SSL}" == "openssl" ] && apk add openssl-dev ; \
-	[ "${SSL}" == "mbedtls" ] && apk add mbedtls-dev ; \
+	[ "${SSL}" == "gnutls" ] && apk add gnutls; \
+	[ "${SSL}" == "mbedtls" ] && apk add mbedtls ; \
+	[ "${SSL}" == "openssl" ] && apk add openssl ; \
 	rm -rf /var/cache/apk/* ; \
 	mkdir /etc/umurmur
 
 
 # Copy the compiled binary from the build stage, default to OpenSSL
-COPY --from=build /usr/local/sbin/umurmurd/ /usr/local/sbin/
+COPY --from=build /usr/local/sbin/umurmurd /usr/local/sbin/
 COPY --from=build /umurmur/umurmur.conf.example /usr/local/etc/umurmur/umurmur.conf
 
 EXPOSE 64738
