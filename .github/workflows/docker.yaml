@@ -17,7 +17,7 @@ jobs:
     strategy:
       matrix:
         distro: [ alpine, debian ]
-        ssl: [ mbedtls, openssl ]  # Supported TLS libraries
+        ssl: [ gnutls, mbedtls, openssl ]  # Supported TLS libraries
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
