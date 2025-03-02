@@ -144,7 +144,7 @@ void Log_warn(const char *logstring, ...)
 	int offset = 0;
 
 	if (termprint || logfile)
-		offset = sprintf(buf, "WARN: ");
+		offset = snprintf(buf, sizeof(buf), "WARN: ");
 
 	va_start(argp, logstring);
 	vsnprintf(&buf[offset], STRSIZE - offset, logstring, argp);
@@ -165,7 +165,7 @@ void Log_info(const char *logstring, ...)
 	int offset = 0;
 
 	if (termprint || logfile)
-		offset = sprintf(buf, "INFO: ");
+		offset = snprintf(buf, sizeof(buf), "INFO: ");
 
 	va_start(argp, logstring);
 	vsnprintf(&buf[offset], STRSIZE - offset, logstring, argp);
@@ -186,7 +186,7 @@ void Log_info_client(client_t *client, const char *logstring, ...)
 	int offset = 0;
 
 	if (termprint || logfile)
-		offset = sprintf(buf, "INFO: ");
+		offset = snprintf(buf, sizeof(buf), "INFO: ");
 
 	va_start(argp, logstring);
 	offset += vsnprintf(&buf[offset], STRSIZE - offset, logstring, argp);
@@ -216,7 +216,7 @@ void Log_debug(const char *logstring, ...)
 	int offset = 0;
 
 	if (termprint || logfile)
-		offset = sprintf(buf, "DEBUG: ");
+		offset = snprintf(buf, sizeof(buf), "DEBUG: ");
 
 	va_start(argp, logstring);
 	vsnprintf(&buf[offset], STRSIZE - offset, logstring, argp);
@@ -237,7 +237,7 @@ void Log_fatal(const char *logstring, ...)
 	int offset = 0;
 
 	if (termprint || logfile)
-		offset = sprintf(buf, "FATAL: ");
+		offset = snprintf(buf, sizeof(buf), "FATAL: ");
 
 	va_start(argp, logstring);
 	vsnprintf(&buf[offset], STRSIZE - offset, logstring, argp);

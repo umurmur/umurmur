@@ -1,7 +1,7 @@
 max_bandwidth = 48000;
 welcometext = "Welcome to uMurmur!";
-certificate = "/etc/umurmur/cert.crt";
-private_key = "/etc/umurmur/key.key";
+certificate = "/etc/umurmur/certificate.crt";
+private_key = "/etc/umurmur/private_key.key";
 password = "";
 # admin_password = "test";   # Set to enable admin functionality.
 # ban_length = 0;            # Length in seconds for a ban. Default is 0. 0 = forever.
