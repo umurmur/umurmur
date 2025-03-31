@@ -15,7 +15,7 @@ void Sharedmemory_init( int bindport, int bindport6 )
 		bindport = getIntConf(BINDPORT);
 	}
 
-	sprintf( shm_file_name, "/umurmurd:%i", bindport );
+	snprintf( shm_file_name, sizeof(shm_file_name), "/umurmurd:%i", bindport );
 	Log_info("SHM_API: shm_fd=\"%s\"", shm_file_name  );
 
 	shm_fd = shm_open( shm_file_name, O_CREAT | O_RDWR, 0660 );
