@@ -36,6 +36,7 @@
 #include <poll.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include "log.h"
 #include "memory.h"
 #include "list.h"
@@ -200,7 +201,7 @@ void Client_token_free(client_t *client)
 void recheckCodecVersions(client_t *connectingClient)
 {
 	client_t *client_itr = NULL;
-	int max = 0, version, current_version;
+	int max = 0, version = 0, current_version = 0;
 	int users = 0, opus = 0;
 	message_t *sendmsg;
 	struct dlist codec_list, *itr, *save;
@@ -679,7 +680,11 @@ void Client_textmessage(client_t *client, char *text)
 	sendmsg->payload.textMessage->message = message;
 	sendmsg->payload.textMessage->n_tree_id = 1;
 	sendmsg->payload.textMessage->tree_id = tree_id;
-	strcpy(message, text);
+#ifdef HAVE_STRLCPY
+	strlcpy(message, text, strlen(text) + 1);
+#else
+	strncpy(message, text, sizeof(message) - 1);
+#endif
 	Client_send_message(client, sendmsg);
 }
 

@@ -46,6 +46,16 @@ include(Options)
 include(Tools)
 include(GNUInstallDirs)
 
+include(CheckFunctionExists)
+check_function_exists(strlcpy HAVE_STRLCPY)
+
+find_package(Libconfig REQUIRED)
+find_package(ProtobufC REQUIRED)
+
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+endif()
+
 add_subdirectory(src)
 
 install(
