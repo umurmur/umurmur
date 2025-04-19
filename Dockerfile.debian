@@ -10,6 +10,7 @@ RUN \
 	apt-get update && \
 	apt-get install -qq -y --no-install-recommends \
 		curl \
+		git \
 		ca-certificates \
 		build-essential \
 		cmake \
@@ -36,8 +37,8 @@ RUN \
 WORKDIR /umurmur
 
 COPY CMakeLists.txt .
-COPY umurmur.conf.example .
 COPY cmake cmake
+COPY umurmur.conf.example .
 COPY src src
 
 # Build against both OpenSSL and Mbed TLS

@@ -45,7 +45,7 @@
 #include "log.h"
 #include "memory.h"
 #include "timer.h"
-#include "version.h"
+#include "config.h"
 #include "util.h"
 #include "sharedmemory.h"
 

@@ -44,7 +44,7 @@
 #include "messagehandler.h"
 #include "conf.h"
 #include "channel.h"
-#include "version.h"
+#include "config.h"
 #include "voicetarget.h"
 #include "ban.h"
 #include "util.h"

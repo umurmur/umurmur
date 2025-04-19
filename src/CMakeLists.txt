@@ -7,6 +7,7 @@ set(SOURCE_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/crypt.c
   ${CMAKE_CURRENT_SOURCE_DIR}/log.c
   ${CMAKE_CURRENT_SOURCE_DIR}/main.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/memory.c
   ${CMAKE_CURRENT_SOURCE_DIR}/messagehandler.c
   ${CMAKE_CURRENT_SOURCE_DIR}/messages.c
   ${CMAKE_CURRENT_SOURCE_DIR}/pds.c
@@ -14,7 +15,6 @@ set(SOURCE_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/timer.c
   ${CMAKE_CURRENT_SOURCE_DIR}/util.c
   ${CMAKE_CURRENT_SOURCE_DIR}/voicetarget.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/memory.c
   )
 
 if(SSL MATCHES "mbedtls")
@@ -48,4 +48,6 @@ target_link_libraries(${PROJECT_NAME}
                       ${LIBRT}
                       ${CRYPTO_LIBRARIES})
 
-install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION "sbin")
+install(TARGETS ${PROJECT_NAME}
+	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
