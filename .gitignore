@@ -1,23 +1,4 @@
-build
+build-*
 config.h
 config.log
 config.status
-
-src/.deps/
-src/*.o
-
-# Autotools noise
-Makefile.in
-Makefile
-aclocal.m4
-autom4te.cache/
-config.guess
-config.h.in
-config.h.in~
-config.sub
-configure
-depcomp
-install-sh
-missing
-src/Makefile.in
-src/Makefile
