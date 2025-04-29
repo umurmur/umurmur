@@ -53,7 +53,6 @@
 #include "log.h"
 #include "client.h"
 #include "conf.h"
-#include "version.h"
 #include "config.h"
 #include "sharedmemory.h"
 #include "ban.h"
