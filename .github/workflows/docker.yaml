@@ -1,4 +1,6 @@
 name: Build with Docker
+permissions:
+  contents: read
 
 on:
   push:
