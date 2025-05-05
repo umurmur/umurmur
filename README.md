@@ -10,30 +10,8 @@ Instructions for building from source
 
 Contributors
 ------------
-* [Antoine Bertin](https://github.com/Diaoul)
-* [tilman2](http://code.google.com/u/@UhZTSlBWAxNMWgU%3D/)
-* J Sisson - sisson.j ( AT ) gmail DOT com
-* [pierre.h](http://code.google.com/u/@VBRUQ1ZTAhNEXwJ9/)
-* [phr0z3nt04st](https://github.com/phr0z3nt04st)
-* [Troy C](https://github.com/troxor)
-* [Trivve](https://github.com/Trivve)
-* [hasufell](https://github.com/hasufell)
-* [fmorgner](https://github.com/fmorgner)
-* [Rawi666](https://github.com/Rawi666)
-* [snowblind](https://github.com/snowblind)
-* [c4k3](https://github.com/C4K3)
-* [l2dy](https://github.com/l2dy)
-* [unterwulf](https://github.com/unterwulf)
-* [feinerer](https://github.com/feinerer)
-* [doctaweeks](https://github.com/doctaweeks)
-* [neheb](https://github.com/neheb)
-* [jcgruenhage](https://github.com/jcgruenhage)
-* [cotequeiroz](https://github.com/cotequeiroz)
-* [concatime](https://github.com/concatime)
-* [mirolm](https://github.com/mirolm)
-* [fatbob313](https://github.com/fatbob313)
-
-Hope I didn't forget anyone...
+<!-- readme: contributors -start -->
+<!-- readme: contributors -end -->
 
 Support/Contact/Documentation
 -----------------------------
