@@ -14,7 +14,7 @@ RUN \
 		libconfig-dev \
 		protobuf-c-dev ; \
 	[ "${SSL}" == "gnutls" ] && apk add gnutls-dev ; \
-	[ "${SSL}" == "mbedtls" ] && apk add mbedtls-dev ; \
+	[ "${SSL}" == "mbedtls" ] && apk add mbedtls-dev mbedtls-static ; \
 	[ "${SSL}" == "openssl" ] && apk add openssl-dev ; \
 	echo "Installed deps for building against openssl"
 
