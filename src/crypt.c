@@ -43,10 +43,6 @@
 #include <arpa/inet.h>
 #include "ssl.h"
 
-#if defined(USE_MBEDTLS_HAVEGE)
-extern mbedtls_havege_state hs;
-#endif
-
 static void CryptState_ocb_encrypt(cryptState_t *cs, const unsigned char *plain, unsigned char *encrypted, unsigned int len, const unsigned char *nonce, unsigned char *tag);
 static void CryptState_ocb_decrypt(cryptState_t *cs, const unsigned char *encrypted, unsigned char *plain, unsigned int len, const unsigned char *nonce, unsigned char *tag);
 

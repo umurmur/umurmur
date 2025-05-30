@@ -42,34 +42,18 @@
 #if defined(USE_MBEDTLS)
 #include <mbedtls/version.h>
 
-#if !defined(MBEDTLS_VERSION_MAJOR) || (MBEDTLS_VERSION_MAJOR < 2)
-#error mbedTLS version 2.0.0 or greater is required!
+#if (MBEDTLS_VERSION_NUMBER < 0x03060000)
+#error mbedTLS version 3.6.0 or greater is required!
 #endif
 
 #include <mbedtls/ssl.h>
-#if (MBEDTLS_VERSION_MINOR > 3)
 #include <mbedtls/net_sockets.h>
-#else
-#include <mbedtls/net.h>
-#endif
 
-#if (MBEDTLS_VERSION_MAJOR >= 3)
-#undef USE_MBEDTLS_HAVEGE
-#endif
-
-#if defined(USE_MBEDTLS_HAVEGE)
-#include <mbedtls/havege.h>
-#define HAVEGE_RAND (mbedtls_havege_random)
-#define RAND_bytes(_dst_, _size_) do { \
-        mbedtls_havege_random(&hs, _dst_, _size_); \
-	} while (0)
-#else
 #define RAND_bytes(_dst_, _size_) do { urandom_bytes(NULL, _dst_, _size_); } while (0)
 int urandom_bytes(void *ctx, unsigned char *dest, size_t len);
-#endif
 
-#define SSLI_ERROR_WANT_READ -0x0F300
-#define SSLI_ERROR_WANT_WRITE -0x0F310
+#define SSLI_ERROR_WANT_READ (-0x0F300)
+#define SSLI_ERROR_WANT_WRITE (-0x0F310)
 
 #define SSLI_ERROR_ZERO_RETURN 0
 #define SSLI_ERROR_CONNRESET MBEDTLS_ERR_NET_CONN_RESET

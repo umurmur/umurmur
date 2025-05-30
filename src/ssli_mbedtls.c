@@ -44,17 +44,10 @@
 #include <mbedtls/ctr_drbg.h>
 #include <mbedtls/entropy.h>
 #endif
-#if MBEDTLS_VERSION_MAJOR < 3
-#include <mbedtls/certs.h>
-#endif
 #include <mbedtls/x509.h>
 #include <mbedtls/ssl.h>
 
-#if MBEDTLS_VERSION_NUMBER < 0x02060000L
-#include <mbedtls/net.h>
-#else
 #include <mbedtls/net_sockets.h>
-#endif
 
 #include <mbedtls/sha1.h>
 #include <mbedtls/error.h>
@@ -73,13 +66,11 @@ const int ciphers[] =
     0
 };
 
-#if MBEDTLS_VERSION_NUMBER >= 0x03000000
 #if !defined(MBEDTLS_USE_PSA_CRYPTO)
 #ifdef MBEDTLS_ENTROPY_C
 static mbedtls_entropy_context entropy;
 #ifdef MBEDTLS_CTR_DRBG_C
 static mbedtls_ctr_drbg_context ctr_drbg;
-#endif
 #endif
 #endif
 #endif
@@ -90,14 +81,10 @@ static inline int x509parse_keyfile(mbedtls_pk_context *pk, const char *path, co
     int ret;
 
     mbedtls_pk_init(pk);
-#if MBEDTLS_VERSION_NUMBER >= 0x03000000
 #if defined(MBEDTLS_USE_PSA_CRYPTO)
     ret = mbedtls_pk_parse_keyfile(pk, path, pwd, mbedtls_psa_get_random, MBEDTLS_PSA_RANDOM_STATE);
 #else
     ret = mbedtls_pk_parse_keyfile(pk, path, pwd, mbedtls_ctr_drbg_random, &ctr_drbg);
-#endif
-#else
-    ret = mbedtls_pk_parse_keyfile(pk, path, pwd);
 #endif
     if (ret == 0 && !mbedtls_pk_can_do(pk, MBEDTLS_PK_ECDSA) && !mbedtls_pk_can_do(pk, MBEDTLS_PK_RSA))
 	{
@@ -110,11 +97,7 @@ static inline int x509parse_keyfile(mbedtls_pk_context *pk, const char *path, co
 static mbedtls_pk_context key;
 bool_t builtInTestCertificate;
 
-#ifdef USE_MBEDTLS_HAVEGE
-mbedtls_havege_state hs;
-#else
 int urandom_fd;
-#endif
 
 static void initCert()
 {
@@ -152,28 +135,15 @@ static void initKey()
 	}
 }
 
-#ifndef USE_MBEDTLS_HAVEGE
 int urandom_bytes(void *ctx, unsigned char *dest, size_t len)
 {
-#if (MBEDTLS_VERSION_MAJOR >= 3)
 #if defined(MBEDTLS_USE_PSA_CRYPTO)
 	mbedtls_psa_get_random(MBEDTLS_PSA_RANDOM_STATE, dest, len);
 #else
 	mbedtls_ctr_drbg_random(&ctr_drbg, dest, len);
 #endif
-#else
-	int cur;
-
-	while (len) {
-		cur = read(urandom_fd, dest, len);
-		if (cur < 0)
-			continue;
-		len -= cur;
-	}
-#endif
 	return 0;
 }
-#endif
 
 #define DEBUG_LEVEL 3
 static void pssl_debug(void *ctx, int level, const char *file, int line, const char *str)
@@ -193,22 +163,12 @@ void SSLi_init(void)
 	initKey();
 
 	/* Initialize random number generator */
-#ifdef USE_MBEDTLS_HAVEGE
-	mbedtls_havege_init(&hs);
-#else
-#if MBEDTLS_VERSION_NUMBER >= 0x03000000
 #if defined(MBEDTLS_USE_PSA_CRYPTO)
 	psa_crypto_init();
 #else
 	mbedtls_ctr_drbg_init(&ctr_drbg);
 	mbedtls_entropy_init(&entropy);
 	mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func, &entropy, NULL, 0);
-#endif
-#else
-	urandom_fd = open("/dev/urandom", O_RDONLY);
-	if (urandom_fd < 0)
-		Log_fatal("Cannot open /dev/urandom");
-#endif
 #endif
 
 	/* Initialize config */
@@ -226,18 +186,10 @@ void SSLi_init(void)
 		Log_fatal("mbedtls_ssl_config_defaults returned %d", rc);
 
 	mbedtls_ssl_conf_authmode(conf, MBEDTLS_SSL_VERIFY_OPTIONAL);
-#ifdef USE_MBEDTLS_HAVEGE
-	mbedtls_ssl_conf_rng(conf, HAVEGE_RAND, &hs);
-#else
 	mbedtls_ssl_conf_rng(conf, urandom_bytes, NULL);
-#endif
 	mbedtls_ssl_conf_dbg(conf, pssl_debug, NULL);
 
-#if MBEDTLS_VERSION_NUMBER >= 0x03000000
 	mbedtls_ssl_conf_min_version(conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_3);
-#else
-	mbedtls_ssl_conf_min_version(conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_1);
-#endif
 
 	mbedtls_ssl_conf_ciphersuites(conf, (const int*)&ciphers);
 
@@ -256,17 +208,9 @@ void SSLi_deinit(void)
 	mbedtls_x509_crt_free(&certificate);
 	mbedtls_pk_free(&key);
 	
-#ifdef USE_MBEDTLS_HAVEGE
-	mbedtls_havege_free(&hs);
-#else
-#if MBEDTLS_VERSION_NUMBER >= 0x03000000
 #if !defined(MBEDTLS_USE_PSA_CRYPTO)
 	mbedtls_ctr_drbg_free(&ctr_drbg);
 	mbedtls_entropy_free(&entropy);
-#endif
-#else
-	close(urandom_fd);
-#endif
 #endif
 }
 
@@ -278,11 +222,7 @@ bool_t SSLi_getSHA1Hash(SSL_handle_t *ssl, uint8_t *hash)
 	if (!cert) {
 		return false;
 	}
-#if MBEDTLS_VERSION_NUMBER < 0x02070000L
-	mbedtls_sha1(cert->raw.p, cert->raw.len, hash);
-#elif MBEDTLS_VERSION_NUMBER < 0x03000000L
-	mbedtls_sha1_ret(cert->raw.p, cert->raw.len, hash);
-#elif !defined(MBEDTLS_USE_PSA_CRYPTO)
+#if !defined(MBEDTLS_USE_PSA_CRYPTO)
 	mbedtls_sha1(cert->raw.p, cert->raw.len, hash);
 #else
 	size_t hash_length;
