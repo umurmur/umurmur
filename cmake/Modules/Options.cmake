@@ -1,3 +1,8 @@
+# SSL backend select
+
+set(SSL "openssl" CACHE STRING "TLS Backend.")
+set_property(CACHE SSL PROPERTY STRINGS "openssl" "mbedtls" "gnutls")
+
 # mbedTLS
 option(USE_MBEDTLS_TESTCERT "Link to the mbedTLS test certificate and key." OFF)
 option(USE_MBEDTLS_HAVEGE "Use the mbedTLS HAVEGE random generator key." OFF)
