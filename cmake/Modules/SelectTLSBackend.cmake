@@ -23,16 +23,11 @@ function(SelectTLSBackend SSL)
     endif()
 
   elseif("${SSL}" STREQUAL "mbedtls")
-    find_package(mbedTLS REQUIRED)
+    find_package(MbedTLS 3.6 REQUIRED)
     set(SSL_VERSION "Mbed TLS ${MBEDTLS_VERSION}")
 
-    if(MBEDTLS_FOUND)
-      set(USE_MBEDTLS ON PARENT_SCOPE)
-
-      set(LIBRARIES ${MBEDTLS_LIBRARIES})
-      set(INCLUDE_DIR ${MBEDTLS_INCLUDE_DIR})
-      set(LIBRARY_DIR ${MBEDTLS_LIB_DIR})
-    endif()
+    set(USE_MBEDTLS ON PARENT_SCOPE)
+    set(LIBRARIES MbedTLS::mbedtls)
 
   elseif("${SSL}" STREQUAL "gnutls")
     find_package(GnuTLS 3 REQUIRED)
