@@ -4,14 +4,13 @@ permissions:
 
 on:
   workflow_dispatch:
-  push:
   pull_request:
     types:
       - closed
 
 jobs:
   update-contributors:
-    # if: github.event.pull_request.merged == true
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -23,7 +22,7 @@ jobs:
       - name: Update Contributors section in README.md
         uses: BobAnkh/add-contributors@v0.2.2
         with:
-          CONTRIBUTOR: '# Contributors'
+          CONTRIBUTOR: '## Contributors'
           COLUMN_PER_ROW: '8'
           ACCESS_TOKEN: ${{secrets.GITHUB_TOKEN}}
           IMG_WIDTH: '100'
