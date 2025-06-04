@@ -1,0 +1,23 @@
+name: Documentation Updates
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types:
+      - closed
+
+jobs:
+  update-contributors:
+    if: github.event.pull_request.merged == true
+    name: Update README with the latest contributors
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Contributors README Action
+        uses: akhilmhdh/contributors-readme-action@v2.3.10
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
