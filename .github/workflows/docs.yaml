@@ -4,20 +4,31 @@ permissions:
 
 on:
   workflow_dispatch:
+  push:
   pull_request:
     types:
       - closed
+      - opened
 
 jobs:
   update-contributors:
-    if: github.event.pull_request.merged == true
-    name: Update README with the latest contributors
+    # if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
     steps:
-      - name: Contributors README Action
-        uses: akhilmhdh/contributors-readme-action@v2.3.10
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Update Contributors section in README.md
+        uses: BobAnkh/add-contributors@v0.2.2
+        with:
+          CONTRIBUTOR: '# Contributors'
+          COLUMN_PER_ROW: '8'
+          ACCESS_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          IMG_WIDTH: '100'
+          FONT_SIZE: '12'
+          PATH: '/README.md'
+          COMMIT_MESSAGE: 'docs(README): update contributors'
+          AVATAR_SHAPE: 'round'
