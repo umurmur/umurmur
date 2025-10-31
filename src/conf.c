@@ -56,7 +56,7 @@ void Conf_init(const char *conffile)
 	if (conffile == NULL)
 		conffile = defaultconfig;
 	if (config_read_file(&configuration, conffile) != CONFIG_TRUE) {
-		Log_fatal("Error in config file %s line %d: %s", conffile,
+		Log_fatal("Error reading config file %s line %d: %s", conffile,
 			config_error_line(&configuration), config_error_text(&configuration));
 	}
 }
@@ -68,7 +68,7 @@ bool_t Conf_ok(const char *conffile)
 	if (conffile == NULL)
 		conffile = defaultconfig;
 	if (config_read_file(&configuration, conffile) != CONFIG_TRUE) {
-		fprintf(stderr, "Error in config file %s line %d: %s\n", conffile,
+		fprintf(stderr, "Error reading config file %s line %d: %s\n", conffile,
 			config_error_line(&configuration), config_error_text(&configuration));
 		rc = false;
 	}
