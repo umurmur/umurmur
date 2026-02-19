@@ -1,13 +1,32 @@
 services:
+  cert-init:
+    image: alpine:latest
+    command:
+      - /bin/sh
+      - -ec
+      - |
+        apk add --no-cache openssl
+        if [ ! -s /certs/certificate.crt ] || [ ! -s /certs/private_key.key ]; then
+          openssl req -x509 -newkey rsa:2048 -sha256 -days 3650 -nodes \
+            -keyout /certs/private_key.key \
+            -out /certs/certificate.crt \
+            -subj "/CN=umurmur"
+        fi
+    volumes:
+      - umurmur-certs:/certs
+    restart: "no"
+
   debian-gnutls:
     build:
       context: .
       args:
-        - SSL=mbedtls
+        - SSL=gnutls
       dockerfile: Dockerfile.debian
+    depends_on:
+      cert-init:
+        condition: service_completed_successfully
     volumes:
-      - ${PWD}/certificate.crt:/etc/umurmur/cert.crt:ro
-      - ${PWD}/private_key.key:/etc/umurmur/key.key:ro
+      - umurmur-certs:/etc/umurmur:ro
 
   debian-mbedtls:
     build:
@@ -15,9 +34,11 @@ services:
       args:
         - SSL=mbedtls
       dockerfile: Dockerfile.debian
+    depends_on:
+      cert-init:
+        condition: service_completed_successfully
     volumes:
-      - ${PWD}/certificate.crt:/etc/umurmur/cert.crt:ro
-      - ${PWD}/private_key.key:/etc/umurmur/key.key:ro
+      - umurmur-certs:/etc/umurmur:ro
 
   debian-openssl:
     build:
@@ -25,9 +46,11 @@ services:
       args:
         - SSL=openssl
       dockerfile: Dockerfile.debian
+    depends_on:
+      cert-init:
+        condition: service_completed_successfully
     volumes:
-      - ${PWD}/certificate.crt:/etc/umurmur/cert.crt:ro
-      - ${PWD}/private_key.key:/etc/umurmur/key.key:ro
+      - umurmur-certs:/etc/umurmur:ro
 
   alpine-gnutls:
     build:
@@ -35,9 +58,11 @@ services:
       args:
         - SSL=gnutls
       dockerfile: Dockerfile.alpine
+    depends_on:
+      cert-init:
+        condition: service_completed_successfully
     volumes:
-      - ${PWD}/certificate.crt:/etc/umurmur/cert.crt:ro
-      - ${PWD}/private_key.key:/etc/umurmur/key.key:ro
+      - umurmur-certs:/etc/umurmur:ro
 
   alpine-mbedtls:
     build:
@@ -45,9 +70,11 @@ services:
       args:
         - SSL=mbedtls
       dockerfile: Dockerfile.alpine
+    depends_on:
+      cert-init:
+        condition: service_completed_successfully
     volumes:
-      - ${PWD}/certificate.crt:/etc/umurmur/cert.crt:ro
-      - ${PWD}/private_key.key:/etc/umurmur/key.key:ro
+      - umurmur-certs:/etc/umurmur:ro
 
   alpine-openssl:
     build:
@@ -55,7 +82,12 @@ services:
       args:
         - SSL=openssl
       dockerfile: Dockerfile.alpine
+    depends_on:
+      cert-init:
+        condition: service_completed_successfully
     volumes:
-      - ${PWD}/certificate.crt:/etc/umurmur/cert.crt:ro
-      - ${PWD}/private_key.key:/etc/umurmur/key.key:ro
+      - umurmur-certs:/etc/umurmur:ro
+
+volumes:
+  umurmur-certs:
 
