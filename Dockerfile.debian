@@ -1,5 +1,5 @@
 # Stage 1: Build
-FROM debian:stable-slim AS build
+FROM debian:trixie-slim AS build
 
 ARG SSL=openssl
 ARG BUILD_TYPE=debug
@@ -20,18 +20,18 @@ RUN \
 RUN \
 	if test "${SSL}" = "gnutls" ; then \
 		apt-get install -qq -y --no-install-recommends libgnutls28-dev; \
-	fi ; \
+	fi && \
 	if test "${SSL}" = "mbedtls" ; then \
-		curl -o mbedtls.tar.bz2 -L https://github.com/Mbed-TLS/mbedtls/releases/download/mbedtls-3.6.2/mbedtls-3.6.2.tar.bz2 ; \
-		tar -jxvf mbedtls.tar.bz2 ; \
-		cd mbedtls-* ; \
-		cmake -Bbuild -H. -DENABLE_TESTING=OFF ; \
-		cmake --build build ; \
-		cmake --install build ; \
-	fi ; \
+		curl -o mbedtls.tar.bz2 -L https://github.com/Mbed-TLS/mbedtls/releases/download/mbedtls-3.6.5/mbedtls-3.6.5.tar.bz2 && \
+		tar -jxvf mbedtls.tar.bz2 && \
+		cd mbedtls-* && \
+		cmake -Bbuild -H. -DENABLE_TESTING=OFF && \
+		cmake --build build && \
+		cmake --install build; \
+	fi && \
 	if test "${SSL}" = "openssl" ; then \
 		apt-get install -qq -y --no-install-recommends libssl-dev ; \
-	fi ; \
+	fi && \
 	echo "SSL=${SSL}"
 
 WORKDIR /umurmur
@@ -52,22 +52,22 @@ RUN \
 	cmake --install build-${SSL}
 
 # Stage 2: Runtime
-FROM debian:stable-slim
+FROM debian:trixie-slim
 
 ARG SSL=openssl
 
 RUN \
 	apt-get update && \
 	apt-get install -qq -y --no-install-recommends \
-		libconfig9 \
+		libconfig11 \
 		libprotobuf-c1 && \
-	test "${SSL}" = "gnutls" && \
-		apt-get install -qq -y --no-install-recommends \
-			libgnutls30 ; \
-	test "${SSL}" = "openssl" && \
-		apt-get install -qq -y --no-install-recommends \
-			libssl3 ; \
-	rm -rf /var/lib/apt/lists/* ; \
+	if test "${SSL}" = "gnutls" ; then \
+		apt-get install -qq -y --no-install-recommends libgnutls30 ; \
+	fi && \
+	if test "${SSL}" = "openssl" ; then \
+		apt-get install -qq -y --no-install-recommends libssl3 ; \
+	fi && \
+	rm -rf /var/lib/apt/lists/* && \
 	mkdir /etc/umurmur
 
 # Copy the compiled binary from the build stage, default to OpenSSL
