@@ -206,6 +206,7 @@ void daemonize(void)
 		close(i); /* close all descriptors */
 
 #ifdef USE_GNUTLS
+	/* TLS backend: GnuTLS requires explicit global initialization. */
 	 gnutls_global_init();
 #endif
 

@@ -44,14 +44,10 @@
 #include <openssl/x509v3.h>
 #include <openssl/ssl.h>
 #include <openssl/pem.h>
-#include <openssl/bn.h>
 #include <openssl/err.h>
 #include <openssl/rsa.h>
 #include <openssl/safestack.h>
 #include <openssl/opensslv.h>
-#ifndef OPENSSL_NO_EC
-#include <openssl/ec.h>
-#endif
 
 static SSL_CTX *context;
 
@@ -89,7 +85,7 @@ static void SSL_writecert(char *certfile, X509 *x509)
 	fclose(fp);
 }
 
-static void SSL_writekey(char *keyfile, RSA *rsa)
+static void SSL_writekey(char *keyfile, EVP_PKEY *pkey)
 {
 	FILE *fp;
 
@@ -100,7 +96,7 @@ static void SSL_writekey(char *keyfile, RSA *rsa)
 		return;
 	}
 
-	if (PEM_write_RSAPrivateKey(fp, rsa, NULL, NULL, 0, NULL, NULL) == 0) {
+	if (PEM_write_PrivateKey(fp, pkey, NULL, NULL, 0, NULL, NULL) == 0) {
 		Log_warn("Error trying to write private key");
 	}
 	fclose(fp);
@@ -109,9 +105,8 @@ static void SSL_writekey(char *keyfile, RSA *rsa)
 
 static EVP_PKEY *SSL_generate_cert_and_key(char *key, char *crt)
 {
-	BIGNUM *e = NULL;
-	RSA *rsa;
-	EVP_PKEY *pkey;
+	EVP_PKEY_CTX *keygen_ctx = NULL;
+	EVP_PKEY *pkey = NULL;
 	X509 *x509;
 	
 	Log_info("Generating new server certificate.");
@@ -119,19 +114,15 @@ static EVP_PKEY *SSL_generate_cert_and_key(char *key, char *crt)
 	x509 = X509_new();
 	if (!x509)
 		goto err_out;
-	pkey = EVP_PKEY_new();
-	if (!pkey)
+	keygen_ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, NULL);
+	if (!keygen_ctx)
 		goto err_out;
-	rsa = RSA_new();
-	if (!rsa)
+	if (EVP_PKEY_keygen_init(keygen_ctx) <= 0)
 		goto err_out;
-	e = BN_new();
-	if (!e)
+	if (EVP_PKEY_CTX_set_rsa_keygen_bits(keygen_ctx, 2048) <= 0)
 		goto err_out;
-		
-	BN_set_word(e, RSA_F4);
-	RSA_generate_key_ex(rsa, 2048, e, NULL);
-	EVP_PKEY_assign_RSA(pkey, rsa);
+	if (EVP_PKEY_keygen(keygen_ctx, &pkey) <= 0)
+		goto err_out;
 	
 	X509_set_version(x509, 2);
 	ASN1_INTEGER_set(X509_get_serialNumber(x509), 1);
@@ -156,24 +147,21 @@ static EVP_PKEY *SSL_generate_cert_and_key(char *key, char *crt)
 	X509_sign(x509, pkey, EVP_sha1());
 	
 	SSL_writecert(crt, x509);
-	SSL_writekey(key, rsa);
+	SSL_writekey(key, pkey);
 	
 	SSL_CTX_use_certificate(context, x509);
 
-	if (e)
-		BN_free(e);
+	if (keygen_ctx)
+		EVP_PKEY_CTX_free(keygen_ctx);
 	if (x509)
 		X509_free(x509);
-	/* RSA is free'd with EVP_PKEY_free() later */
 	
 	return pkey;
 err_out:
-	if (e)
-		BN_free(e);
+	if (keygen_ctx)
+		EVP_PKEY_CTX_free(keygen_ctx);
 	if (x509)
 		X509_free(x509);
-	if (rsa)
-		RSA_free(rsa);
 	if (pkey)
 		EVP_PKEY_free(pkey);
 	Log_fatal("Failed to generate key and/or certificate.");
@@ -247,10 +235,12 @@ void SSLi_init(void)
 		Log_fatal("Could not initialize OpenSSL.");
 	SSL_CTX_set_options(context, SSL_OP_CIPHER_SERVER_PREFERENCE);
 	SSL_CTX_set_cipher_list(context, ciphers);
-#ifndef OPENSSL_NO_EC
+#if !defined(OPENSSL_NO_EC) && OPENSSL_VERSION_NUMBER < 0x30000000L
 	EC_KEY *ecdhkey = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
-	SSL_CTX_set_tmp_ecdh(context, ecdhkey);
-	EC_KEY_free(ecdhkey);
+	if (ecdhkey != NULL) {
+		SSL_CTX_set_tmp_ecdh(context, ecdhkey);
+		EC_KEY_free(ecdhkey);
+	}
 #endif
 	
 	char const * sslCAPath = getStrConf(CAPATH);

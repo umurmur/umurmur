@@ -39,6 +39,7 @@
 #include <stdio.h>
 #include <string.h>
 
+/* TLS backend: mbedTLS */
 #if defined(USE_MBEDTLS)
 #include <mbedtls/version.h>
 
@@ -77,6 +78,7 @@ int urandom_bytes(void *ctx, unsigned char *dest, size_t len);
 
 typedef	mbedtls_ssl_context SSL_handle_t;
 
+/* TLS backend: GnuTLS */
 #elif defined(USE_GNUTLS)
 
 #include <gnutls/gnutls.h>
@@ -89,7 +91,8 @@ typedef	mbedtls_ssl_context SSL_handle_t;
 
 typedef gnutls_session_t SSL_handle_t;
 
-#else /* OpenSSL */
+/* TLS backend: OpenSSL */
+#else
 #include <openssl/x509v3.h>
 #include <openssl/ssl.h>
 
@@ -118,9 +121,10 @@ void SSLi_free(SSL_handle_t *ssl);
 
 static inline void SSLi_hash2hex(uint8_t *hash, char *out)
 {
-	int i, offset = 0;
+	int i;
 	for (i = 0; i < 20; i++)
-		offset += snprintf(out + offset, sizeof(out + offset), "%02x", hash[i]);
+		snprintf(out + (i * 2), 3, "%02x", hash[i]);
+	out[40] = '\0';
 }
 
 static inline void SSLi_hex2hash(char *in, uint8_t *hash)

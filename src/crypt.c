@@ -41,6 +41,7 @@
 #include "crypt.h"
 #include <string.h>
 #include <arpa/inet.h>
+#include "log.h"
 #include "ssl.h"
 
 #if defined(USE_MBEDTLS_HAVEGE)
@@ -50,12 +51,67 @@ extern mbedtls_havege_state hs;
 static void CryptState_ocb_encrypt(cryptState_t *cs, const unsigned char *plain, unsigned char *encrypted, unsigned int len, const unsigned char *nonce, unsigned char *tag);
 static void CryptState_ocb_decrypt(cryptState_t *cs, const unsigned char *encrypted, unsigned char *plain, unsigned int len, const unsigned char *nonce, unsigned char *tag);
 
+/* OpenSSL-only key setup helpers for AES block operations. */
+#if !defined(USE_MBEDTLS) && !defined(USE_GNUTLS)
+static void CryptState_setKeyInternal(CRYPT_AES_KEY *dest, const unsigned char *source, bool_t encrypt)
+{
+	if (*dest == NULL)
+		*dest = EVP_CIPHER_CTX_new();
+	if (*dest == NULL)
+		Log_fatal("Failed to allocate AES context");
+
+	if (encrypt) {
+		if (EVP_EncryptInit_ex(*dest, EVP_aes_128_ecb(), NULL, source, NULL) != 1)
+			Log_fatal("Failed to initialize AES encrypt context");
+	} else {
+		if (EVP_DecryptInit_ex(*dest, EVP_aes_128_ecb(), NULL, source, NULL) != 1)
+			Log_fatal("Failed to initialize AES decrypt context");
+	}
+
+	if (EVP_CIPHER_CTX_set_padding(*dest, 0) != 1)
+		Log_fatal("Failed to disable AES padding");
+}
+
+void CryptState_setEncryptKey(CRYPT_AES_KEY *dest, const unsigned char *source, int size)
+{
+	(void) size;
+	CryptState_setKeyInternal(dest, source, true);
+}
+
+void CryptState_setDecryptKey(CRYPT_AES_KEY *dest, const unsigned char *source, int size)
+{
+	(void) size;
+	CryptState_setKeyInternal(dest, source, false);
+}
+
+void CryptState_aesEncrypt(const unsigned char *src, unsigned char *dst, cryptState_t *cs)
+{
+	int outlen = 0;
+
+	if (EVP_EncryptUpdate(cs->encrypt_key, dst, &outlen, src, AES_BLOCK_SIZE) != 1 || outlen != AES_BLOCK_SIZE)
+		Log_fatal("AES encryption failed");
+}
+
+void CryptState_aesDecrypt(const unsigned char *src, unsigned char *dst, cryptState_t *cs)
+{
+	int outlen = 0;
+
+	if (EVP_DecryptUpdate(cs->decrypt_key, dst, &outlen, src, AES_BLOCK_SIZE) != 1 || outlen != AES_BLOCK_SIZE)
+		Log_fatal("AES decryption failed");
+}
+#endif
+
 void CryptState_init(cryptState_t *cs)
 {
 	memset(cs->decrypt_history, 0, 0xff);
 	memset(cs->raw_key, 0, AES_BLOCK_SIZE);
 	memset(cs->encrypt_iv, 0, AES_BLOCK_SIZE);
 	memset(cs->decrypt_iv, 0, AES_BLOCK_SIZE);
+	/* OpenSSL-only context state initialization. */
+#if !defined(USE_MBEDTLS) && !defined(USE_GNUTLS)
+	cs->encrypt_key = NULL;
+	cs->decrypt_key = NULL;
+#endif
 	cs->bInit = false;
 	cs->uiGood = cs->uiLate = cs->uiLost = cs->uiResync = 0;
 	cs->uiRemoteGood = cs->uiRemoteLate = cs->uiRemoteLost = cs->uiRemoteResync = 0;
@@ -95,6 +151,22 @@ void CryptState_setKey(cryptState_t *cs, const unsigned char *rkey, const unsign
 void CryptState_setDecryptIV(cryptState_t *cs, const unsigned char *iv)
 {
 	memcpy(cs->decrypt_iv, iv, AES_BLOCK_SIZE);
+}
+
+void CryptState_cleanup(cryptState_t *cs)
+{
+	/* OpenSSL-only EVP context cleanup. */
+#if !defined(USE_MBEDTLS) && !defined(USE_GNUTLS)
+	if (cs->encrypt_key) {
+		EVP_CIPHER_CTX_free(cs->encrypt_key);
+		cs->encrypt_key = NULL;
+	}
+	if (cs->decrypt_key) {
+		EVP_CIPHER_CTX_free(cs->decrypt_key);
+		cs->decrypt_key = NULL;
+	}
+#endif
+	cs->bInit = false;
 }
 
 void CryptState_encrypt(cryptState_t *cs, const unsigned char *source, unsigned char *dst, unsigned int plain_length)
