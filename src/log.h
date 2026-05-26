@@ -56,6 +56,7 @@ void Log_info_client(client_t *client, const char *logstring, ...);
 void Log_fatal(const char *logstring, ...) __attribute__((__noreturn__));
 
 void Log_init(bool_t terminal);
+bool_t Log_preflight(void);
 void Log_reset(void);
 void Log_free(void);
 

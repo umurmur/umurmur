@@ -38,6 +38,10 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <errno.h>
+#include <pwd.h>
+#include <grp.h>
+#include <sys/stat.h>
 
 #include "conf.h"
 #include "util.h"
@@ -47,12 +51,108 @@
 static bool_t termprint, init;
 static FILE *logfile;
 
+static bool_t preparelogfdforprivdrop(int fd, const char *logfilename)
+{
+	const char *username, *groupname;
+	struct passwd *pwd;
+	struct group *grp;
+	uid_t uid;
+	gid_t gid;
+	struct stat st;
+	mode_t mode;
+
+	/* Nothing to do unless we're root and privilege dropping is configured. */
+	if (geteuid() != 0)
+		return true;
+
+	username = getStrConf(USERNAME);
+	groupname = getStrConf(GROUPNAME);
+	if (username == NULL || !*username)
+		return true;
+
+	pwd = getpwnam(username);
+	if (!pwd) {
+		fprintf(stderr, "Unknown user '%s' while preparing log file '%s'\n", username, logfilename);
+		return false;
+	}
+
+	uid = pwd->pw_uid;
+	gid = pwd->pw_gid;
+	if (groupname != NULL && *groupname) {
+		grp = getgrnam(groupname);
+		if (!grp) {
+			fprintf(stderr, "Unknown group '%s' while preparing log file '%s'\n", groupname, logfilename);
+			return false;
+		}
+		gid = grp->gr_gid;
+	}
+
+	if (fchown(fd, uid, gid) < 0) {
+		fprintf(stderr, "Failed to set ownership on log file '%s': %s\n", logfilename, strerror(errno));
+		return false;
+	}
+
+	if (fstat(fd, &st) < 0) {
+		fprintf(stderr, "Failed to stat log file '%s': %s\n", logfilename, strerror(errno));
+		return false;
+	}
+
+	mode = st.st_mode & 0777;
+	if ((mode & S_IWUSR) == 0 || (mode & S_IRUSR) == 0) {
+		mode |= S_IWUSR | S_IRUSR;
+		if (fchmod(fd, mode) < 0) {
+			fprintf(stderr, "Failed to set permissions on log file '%s': %s\n", logfilename, strerror(errno));
+			return false;
+		}
+	}
+
+	return true;
+}
+
+static int openlogfd(const char *logfilename)
+{
+	int fd = open(logfilename, O_WRONLY | O_APPEND | O_CREAT, 0640);
+	if (fd < 0 && (errno == EACCES || errno == EPERM))
+		fd = open(logfilename, O_WRONLY | O_APPEND);
+	return fd;
+}
+
+bool_t Log_preflight(void)
+{
+	const char *logfilename;
+	int fd;
+
+	logfilename = getStrConf(LOGFILE);
+	if (logfilename == NULL)
+		return true;
+
+	fd = openlogfd(logfilename);
+	if (fd < 0) {
+		fprintf(stderr, "Cannot open log file '%s' for writing: %s\n", logfilename, strerror(errno));
+		return false;
+	}
+	if (!preparelogfdforprivdrop(fd, logfilename)) {
+		close(fd);
+		return false;
+	}
+
+	close(fd);
+	return true;
+}
+
 static void openlogfile(const char *logfilename)
 {
 	int fd, flags;
-	logfile = fopen(logfilename, "a");
-	if (logfile == NULL) {
+
+	fd = openlogfd(logfilename);
+	if (fd < 0) {
 		Log_fatal("Failed to open log file '%s' for writing: %s\n", logfilename, strerror(errno));
+	}
+
+	logfile = fdopen(fd, "a");
+	if (logfile == NULL) {
+		close(fd);
+		Log_fatal("fdopen() failed for log file '%s': %s\n", logfilename, strerror(errno));
 	}
 
 	/* Set the stream as line buffered */

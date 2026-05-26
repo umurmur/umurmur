@@ -329,6 +329,8 @@ int main(int argc, char **argv)
 		/* Logging to terminal if not daemonizing, otherwise to syslog or log file.
 		*/
 		if (!nodaemon) {
+			if (!Log_preflight())
+				exit(1);
 			daemonize();
 			Log_init(false);
 			if (pidfile != NULL)
