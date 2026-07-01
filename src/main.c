@@ -267,6 +267,9 @@ int main(int argc, char **argv)
 	char *conffile = NULL, *pidfile = NULL;
 	int c;
 	struct utsname utsbuf;
+#ifdef __OpenBSD__
+	bool_t needs_filesystem = false;
+#endif
 
 	/* Arguments */
 #ifdef POSIX_PRIORITY_SCHEDULING
@@ -385,6 +388,34 @@ int main(int argc, char **argv)
 			 */
 			Log_reset();
 		}
+
+#ifdef __OpenBSD__
+		if (getBoolConf(ENABLE_BAN)) {
+			const char *banfile_path = getStrConf(BANFILE);
+			if (banfile_path && *banfile_path) {
+				if (unveil(banfile_path, "rwc") == -1)
+					Log_fatal("unveil banfile (%s) failed: %s", banfile_path, strerror(errno));
+				needs_filesystem = true;
+			}
+		}
+
+		const char *logfile_path = getStrConf(LOGFILE);
+		if (logfile_path && *logfile_path) {
+			if (unveil(logfile_path, "rwc") == -1)
+				Log_fatal("unveil logfile (%s) failed: %s", logfile_path, strerror(errno));
+			needs_filesystem = true;
+		}
+
+		if (unveil(NULL, NULL) == -1)
+			Log_fatal("unveil lock failed: %s", strerror(errno));
+
+		const char *pledge_promises = "stdio inet";
+		if (needs_filesystem)
+			pledge_promises = "stdio inet rpath wpath cpath";
+
+		if (pledge(pledge_promises, NULL) == -1)
+			Log_fatal("pledge (%s) failed: %s", pledge_promises, strerror(errno));
+#endif
 
 		Server_run();
 
