@@ -93,11 +93,19 @@ else()
 endif()
 
 foreach(v ${_MBEDTLS_COMPONENTS})
-  find_library(MbedTLS_${v}_LIBRARY
-    NAMES ${v}-3 ${v}   # Some Linux distributions offers mbedtls-2 and mbedtls-3 simultaneously, prefer mbedtls-3
-    PATHS /usr/pkg /usr/local /usr
-  )
-  mark_as_advanced(MbedTLS_mbedtls_LIBRARY)
+  if(v STREQUAL "mbedcrypto")
+    # Mbed TLS 4.x ships libtfpsacrypto; some distros omit the libmbedcrypto.so symlink
+    find_library(MbedTLS_${v}_LIBRARY
+      NAMES ${v}-3 ${v} tfpsacrypto tfpsacrypto-1
+      PATHS /usr/pkg /usr/local /usr
+    )
+  else()
+    find_library(MbedTLS_${v}_LIBRARY
+      NAMES ${v}-3 ${v}   # Some Linux distributions offers mbedtls-2 and mbedtls-3 simultaneously, prefer mbedtls-3
+      PATHS /usr/pkg /usr/local /usr
+    )
+  endif()
+  mark_as_advanced(MbedTLS_${v}_LIBRARY)
 endforeach()
 
 find_package_handle_standard_args(MbedTLS REQUIRED_VARS MbedTLS_mbedtls_LIBRARY MbedTLS_INCLUDE_DIR)
