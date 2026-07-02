@@ -27,7 +27,7 @@ function(SelectTLSBackend SSL)
     set(SSL_VERSION "MbedTLS ${MbedTLS_VERSION}")
 
     set(USE_MBEDTLS ON PARENT_SCOPE)
-    set(LIBRARIES MbedTLS::mbedtls MbedTLS::mbedcrypto MbedTLS::mbedx509)
+    set(LIBRARIES MbedTLS::mbedtls MbedTLS::mbedx509 MbedTLS::tfpsacrypto)
 
   elseif("${SSL}" STREQUAL "gnutls")
     find_package(GnuTLS 3 REQUIRED)
