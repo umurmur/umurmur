@@ -10,11 +10,12 @@ RUN \
 	apk add \
 		build-base \
 		cmake \
+		curl \
 		git \
 		libconfig-dev \
 		protobuf-c-dev ; \
 	[ "${SSL}" == "gnutls" ] && apk add gnutls-dev ; \
-	[ "${SSL}" == "mbedtls" ] && apk add mbedtls-dev ; \
+  [ "${SSL}" == "mbedtls" ] && apk add mbedtls-dev ; \
 	[ "${SSL}" == "openssl" ] && apk add openssl-dev ; \
 	echo "Installed deps for building against ${SSL}"
 
@@ -46,7 +47,6 @@ RUN \
 		libconfig \
 		protobuf-c ; \
 	[ "${SSL}" == "gnutls" ] && apk add gnutls; \
-	[ "${SSL}" == "mbedtls" ] && apk add mbedtls ; \
 	[ "${SSL}" == "openssl" ] && apk add openssl ; \
 	rm -rf /var/cache/apk/* ; \
 	mkdir /etc/umurmur
