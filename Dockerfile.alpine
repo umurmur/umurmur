@@ -1,5 +1,5 @@
 # Stage 1: Build
-FROM alpine:latest AS build
+FROM alpine:3.23 AS build
 
 ARG SSL=openssl
 ARG BUILD_TYPE=debug
@@ -36,7 +36,7 @@ RUN \
 	cmake --install build-${SSL}
 
 # # Stage 2: Runtime
-FROM alpine:latest
+FROM alpine:3.23
 
 ARG SSL=openssl
 
