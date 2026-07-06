@@ -390,19 +390,25 @@ int main(int argc, char **argv)
 		}
 
 #ifdef __OpenBSD__
+		if (pidfile && *pidfile) {
+			if (unveil(pidfile, "rwc") == -1)
+				Log_fatal("unveil pidfile (%s) failed: %s", pidfile, strerror(errno));
+			needs_filesystem = true;
+		}
+
 		if (getBoolConf(ENABLE_BAN)) {
-			const char *banfile_path = getStrConf(BANFILE);
-			if (banfile_path && *banfile_path) {
-				if (unveil(banfile_path, "rwc") == -1)
-					Log_fatal("unveil banfile (%s) failed: %s", banfile_path, strerror(errno));
+			const char *banfile = getStrConf(BANFILE);
+			if (banfile && *banfile) {
+				if (unveil(banfile, "rwc") == -1)
+					Log_fatal("unveil banfile (%s) failed: %s", banfile, strerror(errno));
 				needs_filesystem = true;
 			}
 		}
 
-		const char *logfile_path = getStrConf(LOGFILE);
-		if (logfile_path && *logfile_path) {
-			if (unveil(logfile_path, "rwc") == -1)
-				Log_fatal("unveil logfile (%s) failed: %s", logfile_path, strerror(errno));
+		const char *logfile = getStrConf(LOGFILE);
+		if (logfile && *logfile) {
+			if (unveil(logfile, "rwc") == -1)
+				Log_fatal("unveil logfile (%s) failed: %s", logfile, strerror(errno));
 			needs_filesystem = true;
 		}
 
