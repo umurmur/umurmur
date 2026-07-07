@@ -391,7 +391,7 @@ int main(int argc, char **argv)
 
 #ifdef __OpenBSD__
 		if (pidfile && *pidfile) {
-			if (unveil(pidfile, "rwc") == -1)
+			if (unveil(pidfile, "c") == -1)
 				Log_fatal("unveil pidfile (%s) failed: %s", pidfile, strerror(errno));
 			needs_filesystem = true;
 		}
@@ -399,7 +399,7 @@ int main(int argc, char **argv)
 		if (getBoolConf(ENABLE_BAN)) {
 			const char *banfile = getStrConf(BANFILE);
 			if (banfile && *banfile) {
-				if (unveil(banfile, "rwc") == -1)
+				if (unveil(banfile, "wc") == -1)
 					Log_fatal("unveil banfile (%s) failed: %s", banfile, strerror(errno));
 				needs_filesystem = true;
 			}
@@ -407,7 +407,7 @@ int main(int argc, char **argv)
 
 		const char *logfile = getStrConf(LOGFILE);
 		if (logfile && *logfile) {
-			if (unveil(logfile, "rwc") == -1)
+			if (unveil(logfile, "w") == -1)
 				Log_fatal("unveil logfile (%s) failed: %s", logfile, strerror(errno));
 			needs_filesystem = true;
 		}
@@ -417,7 +417,7 @@ int main(int argc, char **argv)
 
 		const char *pledge_promises = "stdio inet";
 		if (needs_filesystem)
-			pledge_promises = "stdio inet rpath wpath cpath";
+			pledge_promises = "stdio inet wpath cpath";
 
 		if (pledge(pledge_promises, NULL) == -1)
 			Log_fatal("pledge (%s) failed: %s", pledge_promises, strerror(errno));
