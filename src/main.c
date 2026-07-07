@@ -264,12 +264,13 @@ int main(int argc, char **argv)
 	bool_t realtime = false;
 #endif
 	bool_t testconfig = false;
+#ifdef __OpenBSD__
+	bool_t needs_filesystem = false;
+	const char *pledge_promises;
+#endif
 	char *conffile = NULL, *pidfile = NULL;
 	int c;
 	struct utsname utsbuf;
-#ifdef __OpenBSD__
-	bool_t needs_filesystem = false;
-#endif
 
 	/* Arguments */
 #ifdef POSIX_PRIORITY_SCHEDULING
@@ -415,7 +416,7 @@ int main(int argc, char **argv)
 		if (unveil(NULL, NULL) == -1)
 			Log_fatal("unveil lock failed: %s", strerror(errno));
 
-		const char *pledge_promises = "stdio inet";
+		pledge_promises = "stdio inet";
 		if (needs_filesystem)
 			pledge_promises = "stdio inet wpath cpath";
 
