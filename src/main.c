@@ -413,6 +413,12 @@ int main(int argc, char **argv)
 			needs_filesystem = true;
 		}
 
+#ifdef USE_SHAREDMEMORY_API
+		if (unveil("/tmp", "c") == -1)
+			Log_fatal("unveil shared memory directory (/tmp) failed: %s", strerror(errno));
+		needs_filesystem = true;
+#endif
+
 		if (unveil(NULL, NULL) == -1)
 			Log_fatal("unveil lock failed: %s", strerror(errno));
 
