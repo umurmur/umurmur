@@ -408,7 +408,7 @@ int main(int argc, char **argv)
 
 		const char *logfile = getStrConf(LOGFILE);
 		if (logfile && *logfile) {
-			if (unveil(logfile, "w") == -1)
+			if (unveil(logfile, "wc") == -1)
 				Log_fatal("unveil logfile (%s) failed: %s", logfile, strerror(errno));
 			needs_filesystem = true;
 		}
