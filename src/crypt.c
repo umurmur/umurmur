@@ -38,14 +38,74 @@
  * OCB with something else or get yourself a license.
  */
 
-#include "crypt.h"
-#include <string.h>
-#include <arpa/inet.h>
 #include "log.h"
-#include "ssl.h"
+#include "crypt.h"
 
-#if defined(USE_MBEDTLS_HAVEGE)
-extern mbedtls_havege_state hs;
+#if defined(USE_MBEDTLS)
+#include <psa/crypto.h>
+
+static psa_key_id_t CryptState_importAesKey(const unsigned char *source)
+{
+	psa_key_attributes_t attributes = PSA_KEY_ATTRIBUTES_INIT;
+	psa_key_id_t key_id;
+	psa_status_t status;
+
+	psa_set_key_usage_flags(&attributes, PSA_KEY_USAGE_ENCRYPT | PSA_KEY_USAGE_DECRYPT);
+	psa_set_key_algorithm(&attributes, PSA_ALG_ECB_NO_PADDING);
+	psa_set_key_type(&attributes, PSA_KEY_TYPE_AES);
+	psa_set_key_bits(&attributes, 128);
+
+	status = psa_import_key(&attributes, source, AES_BLOCK_SIZE, &key_id);
+	psa_reset_key_attributes(&attributes);
+	if (status != PSA_SUCCESS)
+		Log_fatal("Failed to import AES key: %d", (int)status);
+
+	return key_id;
+}
+
+static void CryptState_destroyAesKey(psa_key_id_t *key_id)
+{
+	if (*key_id != PSA_KEY_ID_NULL) {
+		psa_destroy_key(*key_id);
+		*key_id = PSA_KEY_ID_NULL;
+	}
+}
+
+void CryptState_setEncryptKey(CRYPT_AES_KEY *dest, const unsigned char *source, int size)
+{
+	(void)size;
+	CryptState_destroyAesKey(dest);
+	*dest = CryptState_importAesKey(source);
+}
+
+void CryptState_setDecryptKey(CRYPT_AES_KEY *dest, const unsigned char *source, int size)
+{
+	(void)size;
+	CryptState_destroyAesKey(dest);
+	*dest = CryptState_importAesKey(source);
+}
+
+void CryptState_aesEncrypt(const unsigned char *src, unsigned char *dst, cryptState_t *cs)
+{
+	size_t out_len;
+	psa_status_t status;
+
+	status = psa_cipher_encrypt(cs->encrypt_key, PSA_ALG_ECB_NO_PADDING,
+				    src, AES_BLOCK_SIZE, dst, AES_BLOCK_SIZE, &out_len);
+	if (status != PSA_SUCCESS || out_len != AES_BLOCK_SIZE)
+		Log_fatal("AES encryption failed: %d", (int)status);
+}
+
+void CryptState_aesDecrypt(const unsigned char *src, unsigned char *dst, cryptState_t *cs)
+{
+	size_t out_len;
+	psa_status_t status;
+
+	status = psa_cipher_decrypt(cs->decrypt_key, PSA_ALG_ECB_NO_PADDING,
+				    src, AES_BLOCK_SIZE, dst, AES_BLOCK_SIZE, &out_len);
+	if (status != PSA_SUCCESS || out_len != AES_BLOCK_SIZE)
+		Log_fatal("AES decryption failed: %d", (int)status);
+}
 #endif
 
 static void CryptState_ocb_encrypt(cryptState_t *cs, const unsigned char *plain, unsigned char *encrypted, unsigned int len, const unsigned char *nonce, unsigned char *tag);
@@ -107,8 +167,10 @@ void CryptState_init(cryptState_t *cs)
 	memset(cs->raw_key, 0, AES_BLOCK_SIZE);
 	memset(cs->encrypt_iv, 0, AES_BLOCK_SIZE);
 	memset(cs->decrypt_iv, 0, AES_BLOCK_SIZE);
-	/* OpenSSL-only context state initialization. */
-#if !defined(USE_MBEDTLS) && !defined(USE_GNUTLS)
+#if defined(USE_MBEDTLS)
+	cs->encrypt_key = PSA_KEY_ID_NULL;
+	cs->decrypt_key = PSA_KEY_ID_NULL;
+#elif !defined(USE_GNUTLS)
 	cs->encrypt_key = NULL;
 	cs->decrypt_key = NULL;
 #endif
@@ -155,8 +217,14 @@ void CryptState_setDecryptIV(cryptState_t *cs, const unsigned char *iv)
 
 void CryptState_cleanup(cryptState_t *cs)
 {
-	/* OpenSSL-only EVP context cleanup. */
-#if !defined(USE_MBEDTLS) && !defined(USE_GNUTLS)
+#if defined(USE_MBEDTLS)
+	if (cs->encrypt_key != PSA_KEY_ID_NULL)
+		psa_destroy_key(cs->encrypt_key);
+	if (cs->decrypt_key != PSA_KEY_ID_NULL)
+		psa_destroy_key(cs->decrypt_key);
+	cs->encrypt_key = PSA_KEY_ID_NULL;
+	cs->decrypt_key = PSA_KEY_ID_NULL;
+#elif !defined(USE_GNUTLS)
 	if (cs->encrypt_key) {
 		EVP_CIPHER_CTX_free(cs->encrypt_key);
 		cs->encrypt_key = NULL;
