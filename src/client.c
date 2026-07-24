@@ -475,11 +475,19 @@ int Client_read(client_t *client)
 	}
 
 	do {
+		size_t to_read;
+
 		errno = 0;
-		if (!client->msgsize)
-			rc = SSLi_read(client->ssl, &client->rxbuf[client->rxcount], 6 - client->rxcount);
-		else
-			rc = SSLi_read(client->ssl, &client->rxbuf[client->rxcount], client->msgsize);
+		if (!client->msgsize) {
+			// Read 6-byte Mumble header
+			to_read = 6 - client->rxcount;
+		} else {
+			// Read message payload, calculate remaining bytes
+			to_read = (size_t)client->msgsize + 6 - client->rxcount;
+			if (to_read > (size_t)(BUFSIZE - client->rxcount))
+				to_read = (size_t)(BUFSIZE - client->rxcount);
+		}
+		rc = SSLi_read(client->ssl, &client->rxbuf[client->rxcount], (int)to_read);
 		if (rc > 0) {
 			message_t *msg;
 			client->rxcount += rc;
@@ -487,17 +495,13 @@ int Client_read(client_t *client)
 				uint32_t msgLen;
 				memcpy(&msgLen, &client->rxbuf[2], sizeof(uint32_t));
 				client->msgsize = ntohl(msgLen);
-			}
-			if (client->msgsize > BUFSIZE - 6) {
-				/* XXX - figure out how to handle this. A large size here can represent two cases:
-				 * 1. A valid size. The only message that is this big is UserState message with a big texture
-				 * 2. An invalid size = protocol error, e.g. connecting with a 1.1.x client
-				 */
-				//		  Log_warn("Too big message received (%d bytes). Playing safe and disconnecting client %s:%d",
-				//			   client->msgsize, inet_ntoa(client->remote_tcp.sin_addr), ntohs(client->remote_tcp.sin_port));
-				Client_free(client);
-				return -1;
-				/* client->rxcount = client->msgsize = 0; */
+
+				// Reject messages that are too large for our buffer.
+				if (client->msgsize > BUFSIZE - 6) {
+					Log_warn("Too big message received (%u bytes). Disconnecting client.", client->msgsize);
+					Client_free(client);
+					return -1;
+				}
 			}
 			else if (client->rxcount == client->msgsize + 6) { /* Got all of the message */
 				msg = Msg_networkToMessage(client->rxbuf, client->msgsize + 6);
