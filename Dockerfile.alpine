@@ -1,5 +1,5 @@
 # Stage 1: Build
-FROM alpine:latest AS build
+FROM alpine:3.24 AS build
 
 ARG SSL=openssl
 ARG BUILD_TYPE=debug
@@ -37,7 +37,7 @@ RUN \
 	cmake --install build-${SSL}
 
 # # Stage 2: Runtime
-FROM alpine:latest
+FROM alpine:3.24
 
 ARG SSL=openssl
 
@@ -47,6 +47,7 @@ RUN \
 		libconfig \
 		protobuf-c ; \
 	[ "${SSL}" == "gnutls" ] && apk add gnutls; \
+	[ "${SSL}" == "mbedtls" ] && apk add mbedtls; \
 	[ "${SSL}" == "openssl" ] && apk add openssl ; \
 	rm -rf /var/cache/apk/* ; \
 	mkdir /etc/umurmur
