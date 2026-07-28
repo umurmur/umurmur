@@ -264,6 +264,10 @@ int main(int argc, char **argv)
 	bool_t realtime = false;
 #endif
 	bool_t testconfig = false;
+#ifdef __OpenBSD__
+	bool_t needs_filesystem = false;
+	const char *pledge_promises;
+#endif
 	char *conffile = NULL, *pidfile = NULL;
 	int c;
 	struct utsname utsbuf;
@@ -385,6 +389,46 @@ int main(int argc, char **argv)
 			 */
 			Log_reset();
 		}
+
+#ifdef __OpenBSD__
+		if (pidfile && *pidfile) {
+			if (unveil(pidfile, "c") == -1)
+				Log_fatal("unveil pidfile (%s) failed: %s", pidfile, strerror(errno));
+			needs_filesystem = true;
+		}
+
+		if (getBoolConf(ENABLE_BAN)) {
+			const char *banfile = getStrConf(BANFILE);
+			if (banfile && *banfile) {
+				if (unveil(banfile, "wc") == -1)
+					Log_fatal("unveil banfile (%s) failed: %s", banfile, strerror(errno));
+				needs_filesystem = true;
+			}
+		}
+
+		const char *logfile = getStrConf(LOGFILE);
+		if (logfile && *logfile) {
+			if (unveil(logfile, "wc") == -1)
+				Log_fatal("unveil logfile (%s) failed: %s", logfile, strerror(errno));
+			needs_filesystem = true;
+		}
+
+#ifdef USE_SHAREDMEMORY_API
+		if (unveil("/tmp", "c") == -1)
+			Log_fatal("unveil shared memory directory (/tmp) failed: %s", strerror(errno));
+		needs_filesystem = true;
+#endif
+
+		if (unveil(NULL, NULL) == -1)
+			Log_fatal("unveil lock failed: %s", strerror(errno));
+
+		pledge_promises = "stdio inet";
+		if (needs_filesystem)
+			pledge_promises = "stdio inet wpath cpath";
+
+		if (pledge(pledge_promises, NULL) == -1)
+			Log_fatal("pledge (%s) failed: %s", pledge_promises, strerror(errno));
+#endif
 
 		Server_run();
 
