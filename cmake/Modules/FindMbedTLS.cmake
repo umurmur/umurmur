@@ -22,8 +22,10 @@ IMPORTED Targets
 
 include(FindPackageHandleStandardArgs)
 
+# find_path returns the directory containing mbedtls/ (e.g. /usr/include),
+# which is the correct -I path for #include <mbedtls/...>.
 find_path(MbedTLS_INCLUDE_DIR mbedtls/version.h
-  HINTS /usr/pkg/include /usr/local/include /usr/include
+  HINTS /usr/pkg/include
 )
 
 mark_as_advanced(MbedTLS_INCLUDE_DIR)
@@ -42,20 +44,18 @@ if(MbedTLS_VERSION AND MbedTLS_VERSION VERSION_LESS "4.0.0")
   message(FATAL_ERROR "Mbed TLS 4.0 or greater is required (found ${MbedTLS_VERSION})")
 endif()
 
-get_filename_component(MbedTLS_INCLUDE_PARENT "${MbedTLS_INCLUDE_DIR}" DIRECTORY)
-
 list(APPEND _MBEDTLS_COMPONENTS mbedtls mbedx509 tfpsacrypto)
 
 foreach(v ${_MBEDTLS_COMPONENTS})
   if(v STREQUAL "tfpsacrypto")
     find_library(MbedTLS_${v}_LIBRARY
       NAMES tfpsacrypto tfpsacrypto-1 mbedcrypto-3 mbedcrypto
-      PATHS /usr/pkg /usr/local /usr
+      PATHS /usr/pkg
     )
   else()
     find_library(MbedTLS_${v}_LIBRARY
       NAMES ${v}-3 ${v}
-      PATHS /usr/pkg /usr/local /usr
+      PATHS /usr/pkg
     )
   endif()
   mark_as_advanced(MbedTLS_${v}_LIBRARY)
@@ -73,7 +73,7 @@ foreach(v ${_MBEDTLS_COMPONENTS})
     add_library(MbedTLS::${v} UNKNOWN IMPORTED)
     set_target_properties(MbedTLS::${v} PROPERTIES
       IMPORTED_LOCATION "${MbedTLS_${v}_LIBRARY}"
-      INTERFACE_INCLUDE_DIRECTORIES "${MbedTLS_INCLUDE_PARENT}"
+      INTERFACE_INCLUDE_DIRECTORIES "${MbedTLS_INCLUDE_DIR}"
     )
   endif()
 endforeach()
@@ -83,7 +83,7 @@ if(MbedTLS_FOUND AND TARGET MbedTLS::tfpsacrypto AND NOT TARGET MbedTLS::mbedcry
 endif()
 
 if(MbedTLS_FOUND)
-  set(MbedTLS_INCLUDE_DIRS ${MbedTLS_INCLUDE_PARENT})
+  set(MbedTLS_INCLUDE_DIRS ${MbedTLS_INCLUDE_DIR})
   set(MbedTLS_LIBRARIES
     ${MbedTLS_mbedtls_LIBRARY}
     ${MbedTLS_mbedx509_LIBRARY}
