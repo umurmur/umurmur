@@ -108,6 +108,7 @@ typedef SSL SSL_handle_t;
 
 void SSLi_init(void);
 void SSLi_deinit(void);
+void SSLi_reload_cert(void);
 SSL_handle_t *SSLi_newconnection(int *fd, bool_t *SSLready);
 bool_t SSLi_getSHA1Hash(SSL_handle_t *ssl, uint8_t *hash);
 void SSLi_closeconnection(SSL_handle_t *ssl);
