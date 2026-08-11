@@ -392,18 +392,15 @@ int main(int argc, char **argv)
 			if (unveil(pidfile, "c") == -1)
 				Log_fatal("unveil pidfile (%s) failed: %s", pidfile, strerror(errno));
 
-		if (getBoolConf(ENABLE_BAN)) {
-			const char *banfile = getStrConf(BANFILE);
-			if (banfile && *banfile)
-				if (unveil(banfile, "wc") == -1)
-					Log_fatal("unveil banfile (%s) failed: %s", banfile, strerror(errno));
-		}
+		const char *banfile = getStrConf(BANFILE);
+		if (getBoolConf(ENABLE_BAN) && banfile && *banfile)
+			if (unveil(banfile, "wc") == -1)
+				Log_fatal("unveil banfile (%s) failed: %s", banfile, strerror(errno));
 
 		const char *logfile = getStrConf(LOGFILE);
-		if (logfile && *logfile) {
+		if (logfile && *logfile)
 			if (unveil(logfile, "wc") == -1)
 				Log_fatal("unveil logfile (%s) failed: %s", logfile, strerror(errno));
-		}
 
 		const char *crtfile = getStrConf(CERTIFICATE);
 		if (crtfile && *crtfile)
