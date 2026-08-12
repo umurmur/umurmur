@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0](https://github.com/umurmur/umurmur/compare/v0.3.1...v0.4.0) (2026-08-12)
+
+
+### Added
+
+* Add CodeRabbit AI ([#237](https://github.com/umurmur/umurmur/issues/237)) ([4d1a8bc](https://github.com/umurmur/umurmur/commit/4d1a8bc7d95d8ed367e4c742c4171a804bb9ace2))
+* Adjust logfile ownership for privilege dropping ([#231](https://github.com/umurmur/umurmur/issues/231)) ([aa98d6a](https://github.com/umurmur/umurmur/commit/aa98d6a2745007b67618c0f879c795a28765accf))
+* implement pledge and unveil for OpenBSD ([#239](https://github.com/umurmur/umurmur/issues/239)) ([8011c8b](https://github.com/umurmur/umurmur/commit/8011c8b03a4026e9059a92182bf6a3d851e77898))
+* Prepare README for better automation ([#217](https://github.com/umurmur/umurmur/issues/217)) ([81a42f0](https://github.com/umurmur/umurmur/commit/81a42f0238f2aac134d530962a8b5afa0050af73))
+* Remove OpenWrt related files to simplify ([#223](https://github.com/umurmur/umurmur/issues/223)) ([209edb5](https://github.com/umurmur/umurmur/commit/209edb5c887e5a5d3ab2c95ab4a8aeb8c1e6e8f3))
+* Stricter compiler flags ([#232](https://github.com/umurmur/umurmur/issues/232)) ([9c94175](https://github.com/umurmur/umurmur/commit/9c9417507e3302f452814f194d951fefd6e2beb7))
+* Switch auto-contributors action ([#218](https://github.com/umurmur/umurmur/issues/218)) ([69b8d98](https://github.com/umurmur/umurmur/commit/69b8d98204cdbfd045881585dd00bff0a0b38ada))
+
+
+### Fixed
+
+* bound TCP body reads to remaining buffer space ([#245](https://github.com/umurmur/umurmur/issues/245)) ([8bfaed4](https://github.com/umurmur/umurmur/commit/8bfaed4f857a6c2f0a80efa5fdc4fb2828e3d2be))
+* Fork PRs get read-only tokens from GitHub ([#234](https://github.com/umurmur/umurmur/issues/234)) ([1685d0e](https://github.com/umurmur/umurmur/commit/1685d0ec3dbe03a2d1857131859025f5a7c58c8d))
+* Send text messages to deafened users ([#221](https://github.com/umurmur/umurmur/issues/221)) ([15b76cb](https://github.com/umurmur/umurmur/commit/15b76cb35d4da38a685a80d7bb2bbf09d2dd19bf))
+* Update error message from config_read_file() ([#227](https://github.com/umurmur/umurmur/issues/227)) ([209a3e5](https://github.com/umurmur/umurmur/commit/209a3e5c10240d94120eb13c8850c0a351ba07cb))
+* Work around Alpine latest shipping Mbed TLS 4.x ([#238](https://github.com/umurmur/umurmur/issues/238)) ([6e559ae](https://github.com/umurmur/umurmur/commit/6e559ae74129d2f19af06956125f610eaf96a962))
+
 ## [0.3.1] - 2025-04-15
 
 ### Added
