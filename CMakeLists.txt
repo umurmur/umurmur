@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(umurmurd VERSION 0.3.1 LANGUAGES C) # x-release-please-version
+project(umurmurd VERSION 0.4.0 LANGUAGES C) # x-release-please-version
 
 # Custom CMake modules
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules")
