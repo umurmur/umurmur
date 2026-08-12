@@ -70,7 +70,7 @@ static void Msg_getPreamble(uint8_t *buffer, int *type, int *len)
 #define MAX_MSGSIZE (BUFSIZE - PREAMBLE_SIZE)
 int Msg_messageToNetwork(message_t *msg, uint8_t *buffer)
 {
-	int len;
+	int len = 0;
 	uint8_t *bufptr = buffer + PREAMBLE_SIZE;
 
 	Log_debug("To net: msg type %d", msg->messageType);
