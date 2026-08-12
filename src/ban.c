@@ -183,11 +183,6 @@ bool_t Ban_isBannedAddr(struct sockaddr_storage *address)
 	return false;
 }
 
-int Ban_getBanCount(void)
-{
-	return bancount;
-}
-
 message_t *Ban_getBanList(void)
 {
 	int i = 0;

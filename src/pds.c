@@ -53,22 +53,6 @@ static inline void append_val(pds_t *pds, uint64_t val)
 	}
 }
 
-void Pds_append_data(pds_t *pds, const uint8_t *data, uint32_t len)
-{
-	uint32_t left;
-	Pds_add_numval(pds, len);
-	left = pds->maxsize - pds->offset;
-	if (left >= len) {
-		memcpy(&pds->data[pds->offset], data, len);
-		pds->offset += len;
-	} else {
-		memset(&pds->data[pds->offset], 0, left);
-		pds->offset += left;
-		pds->overshoot += len - left;
-		pds->bOk = false;
-	}
-}
-
 void Pds_append_data_nosize(pds_t *pds, const uint8_t *data, uint32_t len)
 {
 	uint32_t left;
@@ -131,21 +115,6 @@ void Pds_free(pds_t *pds)
 	free(pds);
 }
 
-void Pds_add_double(pds_t *pds, double value)
-{
-	double64u_t u;
-
-	u.dval = value;
-
-	Pds_add_numval(pds, u.u64);
-}
-
-double Pds_get_double(pds_t *pds)
-{
-	double64u_t u;
-	u.u64 = Pds_get_numval(pds);
-	return u.dval;
-}
 void Pds_add_numval(pds_t *pds, const uint64_t value)
 {
 	uint64_t i = value;
@@ -236,35 +205,4 @@ uint64_t Pds_get_numval(pds_t *pds)
 		i=(v & 0x1F) << 16 | next(pds) << 8 | next(pds);
 	}
 	return i;
-}
-
-void Pds_add_string(pds_t *pds, const char *str)
-{
-	Pds_append_data(pds, (uint8_t *)str, strlen(str));
-}
-
-void Pds_get_string(pds_t *pds, char *str, int maxlen)
-{
-	int len = Pds_get_numval(pds);
-	if (len < maxlen) {
-		memcpy(str, &pds->data[pds->offset], len);
-		str[len] = '\0';
-		pds->offset += len;
-	} else {
-		Log_warn("Too long string from network");
-		strcpy(str, "N/A");
-	}
-}
-
-int Pds_get_data(pds_t *pds, uint8_t *data, int maxlen)
-{
-	int len = Pds_get_numval(pds);
-	if (len < maxlen) {
-		memcpy(data, &pds->data[pds->offset], len);
-		pds->offset += len;
-		return len;
-	} else {
-		Log_warn("Pds_get_data: Too much data from network");
-		return -1;
-	}
 }

@@ -51,7 +51,6 @@ void Ban_UserBan(client_t *client, char *reason);
 void Ban_pruneBanned();
 bool_t Ban_isBanned(client_t *client);
 bool_t Ban_isBannedAddr(struct sockaddr_storage *address);
-int Ban_getBanCount(void);
 message_t *Ban_getBanList(void);
 void Ban_putBanList(message_t *msg, int n_bans);
 void Ban_clearBanList(void);

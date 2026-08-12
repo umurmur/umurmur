@@ -355,11 +355,6 @@ bool_t SSLi_getSHA1Hash(SSL_handle_t *ssl, uint8_t *hash)
 	return true;
 }
 
-void SSLi_closeconnection(SSL_handle_t *ssl)
-{
-	SSL_free(ssl);
-}
-
 void SSLi_shutdown(SSL_handle_t *ssl)
 {
 	SSL_shutdown(ssl);
