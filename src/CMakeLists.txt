@@ -51,6 +51,10 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
   _GNU_SOURCE
   _XOPEN_SOURCE=700
 )
+# _XOPEN_SOURCE hides BSD APIs on Darwin (initgroups).
+if(APPLE)
+  target_compile_definitions(${PROJECT_NAME} PRIVATE _DARWIN_C_SOURCE)
+endif()
 
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
   target_compile_options(${PROJECT_NAME} PRIVATE

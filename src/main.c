@@ -202,7 +202,12 @@ void daemonize(void)
 
 	/* child (daemon) continues */
 	setsid(); /* obtain a new process group */
-	for (i = getdtablesize(); i >= 0; --i)
+
+    /* Number of open files per user id */
+    i = (int)sysconf(_SC_OPEN_MAX);
+	if (i <= 0)
+		i = 1024;
+	for (; i >= 0; --i)
 		close(i); /* close all descriptors */
 
 #ifdef USE_GNUTLS
