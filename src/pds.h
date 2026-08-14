@@ -42,17 +42,11 @@ typedef struct {
 	bool_t bOk;
 } pds_t;
 
-void Pds_append_data(pds_t *pds, const uint8_t *data, uint32_t len);
 void Pds_append_data_nosize(pds_t *pds, const uint8_t *data, uint32_t len);
 uint64_t Pds_get_numval(pds_t *pds);
 void Pds_add_numval(pds_t *pds, const uint64_t value);
 pds_t *Pds_create(uint8_t *buf, int size);
 void Pds_free(pds_t *pds);
-void Pds_add_string(pds_t *pds, const char *str);
-void Pds_get_string(pds_t *pds, char *str, int maxlen);
-void Pds_add_double(pds_t *pds, double value);
-double Pds_get_double(pds_t *pds);
-int Pds_get_data(pds_t *pds, uint8_t *data, int maxlen);
 uint8_t Pds_next8(pds_t *pds);
 int Pds_skip(pds_t *pds, int offset);
 

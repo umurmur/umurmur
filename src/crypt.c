@@ -136,23 +136,6 @@ void CryptState_genKey(cryptState_t *cs)
 	cs->bInit = true;
 }
 
-void CryptState_setKey(cryptState_t *cs, const unsigned char *rkey, const unsigned char *eiv, const unsigned char *div)
-{
-	memcpy(cs->raw_key, rkey, AES_BLOCK_SIZE);
-	memcpy(cs->encrypt_iv, eiv, AES_BLOCK_SIZE);
-	memcpy(cs->decrypt_iv, div, AES_BLOCK_SIZE);
-
-	CRYPT_SET_ENC_KEY(&cs->encrypt_key, cs->raw_key, 128);
-	CRYPT_SET_DEC_KEY(&cs->decrypt_key, cs->raw_key, 128);
-
-	cs->bInit = true;
-}
-
-void CryptState_setDecryptIV(cryptState_t *cs, const unsigned char *iv)
-{
-	memcpy(cs->decrypt_iv, iv, AES_BLOCK_SIZE);
-}
-
 void CryptState_cleanup(cryptState_t *cs)
 {
 	/* OpenSSL-only EVP context cleanup. */

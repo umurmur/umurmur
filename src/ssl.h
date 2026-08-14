@@ -110,7 +110,6 @@ void SSLi_init(void);
 void SSLi_deinit(void);
 SSL_handle_t *SSLi_newconnection(int *fd, bool_t *SSLready);
 bool_t SSLi_getSHA1Hash(SSL_handle_t *ssl, uint8_t *hash);
-void SSLi_closeconnection(SSL_handle_t *ssl);
 int SSLi_nonblockaccept(SSL_handle_t *ssl, bool_t *SSLready);
 int SSLi_read(SSL_handle_t *ssl, uint8_t *buf, int len);
 int SSLi_write(SSL_handle_t *ssl, uint8_t *buf, int len);

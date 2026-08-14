@@ -77,25 +77,6 @@ static int findFreeId(void)
 	return -1;
 }
 
-#if 0
-/* Might be used when tree traversal becomes neccessary */
-static channel_t *first_subchannel(channel_t *ch)
-{
-	if (list_empty(&ch->subs))
-		return NULL;
-	else
-		return list_get_entry(list_get_first(&ch->subs), channel_t, node);
-}
-
-static channel_t *next_channel(channel_t *ch)
-{
-	if (list_get_next(&ch->node) == &list_get_entry(&ch->node, channel_t, node)->parent->subs)
-		return NULL;
-	else
-		return list_get_entry(list_get_next(&ch->node), channel_t, node);
-}
-#endif
-
 channel_t *Chan_iterate(channel_t **channelpptr)
 {
 	channel_t *ch = *channelpptr;
@@ -323,20 +304,6 @@ int Chan_userJoin_id(int channelid, client_t *client)
 		return Chan_userJoin(ch_itr, client);
 }
 
-#if 0
-void Chan_addChannel_id(int parentId, channel_t *ch)
-{
-	channel_t *ch_itr = NULL;
-	do {
-		Chan_iterate(&ch_itr);
-	} while (ch_itr != NULL && ch_itr->id != parentId);
-	if (ch_itr == NULL)
-		Log_warn("Chan_addChannel_id: Channel id %d not found - ignoring.", parentId);
-	else
-		list_add_tail(&ch->node, &ch_itr->subs);
-}
-#endif
-
 channel_t *Chan_fromId(int channelid)
 {
 	channel_t *ch_itr = NULL;
@@ -346,11 +313,6 @@ channel_t *Chan_fromId(int channelid)
 	if (ch_itr == NULL)
 		Log_warn("Chan_fromId: Channel id %d not found.", channelid);
 	return ch_itr;
-}
-
-void Chan_removeChannel(channel_t *ch)
-{
-	list_del(&ch->node);
 }
 
 void Chan_buildTreeList(channel_t *ch, struct dlist *head)

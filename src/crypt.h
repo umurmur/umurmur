@@ -124,8 +124,6 @@ struct CryptState {
 void CryptState_init(cryptState_t *cs);
 bool_t CryptState_isValid(cryptState_t *cs);
 void CryptState_genKey(cryptState_t *cs);
-void CryptState_setKey(cryptState_t *cs, const unsigned char *rkey, const unsigned char *eiv, const unsigned char *div);
-void CryptState_setDecryptIV(cryptState_t *cs, const unsigned char *iv);
 void CryptState_cleanup(cryptState_t *cs);
 
 bool_t CryptState_decrypt(cryptState_t *cs, const unsigned char *source, unsigned char *dst, unsigned int crypted_length);
