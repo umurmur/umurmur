@@ -55,22 +55,6 @@ uMurmur is a minimalistic Mumble server primarily targeted to run on embedded co
         </a>
     </td>
     <td align="center" style="word-wrap: break-word; width: 150.0; height: 150.0">
-        <a href=https://github.com/dvzrv>
-            <img src=https://avatars.githubusercontent.com/u/432519?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=David Runge/>
-            <br />
-            <sub style="font-size:12px"><b>David Runge</b></sub>
-        </a>
-    </td>
-    <td align="center" style="word-wrap: break-word; width: 150.0; height: 150.0">
-        <a href=https://github.com/Rawi666>
-            <img src=https://avatars.githubusercontent.com/u/5843854?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=Szymon Pusz/>
-            <br />
-            <sub style="font-size:12px"><b>Szymon Pusz</b></sub>
-        </a>
-    </td>
-</tr>
-<tr>
-    <td align="center" style="word-wrap: break-word; width: 150.0; height: 150.0">
         <a href=https://github.com/concatime>
             <img src=https://avatars.githubusercontent.com/u/26262387?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=Issam E. Maghni/>
             <br />
@@ -84,11 +68,20 @@ uMurmur is a minimalistic Mumble server primarily targeted to run on embedded co
             <sub style="font-size:12px"><b>Andrew Kloet</b></sub>
         </a>
     </td>
+</tr>
+<tr>
     <td align="center" style="word-wrap: break-word; width: 150.0; height: 150.0">
-        <a href=https://github.com/Trivve>
-            <img src=https://avatars.githubusercontent.com/u/6183628?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=Andreas/>
+        <a href=https://github.com/Rawi666>
+            <img src=https://avatars.githubusercontent.com/u/5843854?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=Szymon Pusz/>
             <br />
-            <sub style="font-size:12px"><b>Andreas</b></sub>
+            <sub style="font-size:12px"><b>Szymon Pusz</b></sub>
+        </a>
+    </td>
+    <td align="center" style="word-wrap: break-word; width: 150.0; height: 150.0">
+        <a href=https://github.com/dvzrv>
+            <img src=https://avatars.githubusercontent.com/u/432519?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=David Runge/>
+            <br />
+            <sub style="font-size:12px"><b>David Runge</b></sub>
         </a>
     </td>
     <td align="center" style="word-wrap: break-word; width: 150.0; height: 150.0">
@@ -99,31 +92,38 @@ uMurmur is a minimalistic Mumble server primarily targeted to run on embedded co
         </a>
     </td>
     <td align="center" style="word-wrap: break-word; width: 150.0; height: 150.0">
-        <a href=https://github.com/omar-polo>
-            <img src=https://avatars.githubusercontent.com/u/47739920?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=Omar Polo/>
+        <a href=https://github.com/Trivve>
+            <img src=https://avatars.githubusercontent.com/u/6183628?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=Andreas/>
             <br />
-            <sub style="font-size:12px"><b>Omar Polo</b></sub>
+            <sub style="font-size:12px"><b>Andreas</b></sub>
         </a>
     </td>
     <td align="center" style="word-wrap: break-word; width: 150.0; height: 150.0">
-        <a href=https://github.com/omor1>
-            <img src=https://avatars.githubusercontent.com/u/4326436?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=Omri Mor/>
+        <a href=https://github.com/l2dybot>
+            <img src=https://avatars.githubusercontent.com/u/24496265?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=l2dybot/>
             <br />
-            <sub style="font-size:12px"><b>Omri Mor</b></sub>
+            <sub style="font-size:12px"><b>l2dybot</b></sub>
         </a>
     </td>
     <td align="center" style="word-wrap: break-word; width: 150.0; height: 150.0">
-        <a href=https://github.com/pfmooney>
-            <img src=https://avatars.githubusercontent.com/u/1555070?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=Patrick Mooney/>
+        <a href=https://github.com/adufray>
+            <img src=https://avatars.githubusercontent.com/u/19627310?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=adufray/>
             <br />
-            <sub style="font-size:12px"><b>Patrick Mooney</b></sub>
+            <sub style="font-size:12px"><b>adufray</b></sub>
         </a>
     </td>
     <td align="center" style="word-wrap: break-word; width: 150.0; height: 150.0">
-        <a href=https://github.com/rodan>
-            <img src=https://avatars.githubusercontent.com/u/1022777?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=rodan/>
+        <a href=https://github.com/l2dy>
+            <img src=https://avatars.githubusercontent.com/u/14329097?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=Zero King/>
             <br />
-            <sub style="font-size:12px"><b>rodan</b></sub>
+            <sub style="font-size:12px"><b>Zero King</b></sub>
+        </a>
+    </td>
+    <td align="center" style="word-wrap: break-word; width: 150.0; height: 150.0">
+        <a href=https://github.com/wfdewith>
+            <img src=https://avatars.githubusercontent.com/u/2306085?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=Wim de With/>
+            <br />
+            <sub style="font-size:12px"><b>Wim de With</b></sub>
         </a>
     </td>
 </tr>
@@ -136,31 +136,31 @@ uMurmur is a minimalistic Mumble server primarily targeted to run on embedded co
         </a>
     </td>
     <td align="center" style="word-wrap: break-word; width: 150.0; height: 150.0">
-        <a href=https://github.com/wfdewith>
-            <img src=https://avatars.githubusercontent.com/u/2306085?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=Wim de With/>
+        <a href=https://github.com/rodan>
+            <img src=https://avatars.githubusercontent.com/u/1022777?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=rodan/>
             <br />
-            <sub style="font-size:12px"><b>Wim de With</b></sub>
+            <sub style="font-size:12px"><b>rodan</b></sub>
         </a>
     </td>
     <td align="center" style="word-wrap: break-word; width: 150.0; height: 150.0">
-        <a href=https://github.com/l2dy>
-            <img src=https://avatars.githubusercontent.com/u/14329097?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=Zero King/>
+        <a href=https://github.com/pfmooney>
+            <img src=https://avatars.githubusercontent.com/u/1555070?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=Patrick Mooney/>
             <br />
-            <sub style="font-size:12px"><b>Zero King</b></sub>
+            <sub style="font-size:12px"><b>Patrick Mooney</b></sub>
         </a>
     </td>
     <td align="center" style="word-wrap: break-word; width: 150.0; height: 150.0">
-        <a href=https://github.com/adufray>
-            <img src=https://avatars.githubusercontent.com/u/19627310?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=adufray/>
+        <a href=https://github.com/omor1>
+            <img src=https://avatars.githubusercontent.com/u/4326436?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=Omri Mor/>
             <br />
-            <sub style="font-size:12px"><b>adufray</b></sub>
+            <sub style="font-size:12px"><b>Omri Mor</b></sub>
         </a>
     </td>
     <td align="center" style="word-wrap: break-word; width: 150.0; height: 150.0">
-        <a href=https://github.com/l2dybot>
-            <img src=https://avatars.githubusercontent.com/u/24496265?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=l2dybot/>
+        <a href=https://github.com/omar-polo>
+            <img src=https://avatars.githubusercontent.com/u/47739920?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=Omar Polo/>
             <br />
-            <sub style="font-size:12px"><b>l2dybot</b></sub>
+            <sub style="font-size:12px"><b>Omar Polo</b></sub>
         </a>
     </td>
     <td align="center" style="word-wrap: break-word; width: 150.0; height: 150.0">
