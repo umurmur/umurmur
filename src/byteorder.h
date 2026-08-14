@@ -35,17 +35,19 @@
 
 #include <stdint.h>
 
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
-#include <endian.h>
-#if BYTE_ORDER == BIG_ENDIAN
-#define BYTE_ORDER_BIG_ENDIAN
-#endif // BYTE_ORDER == BIG_ENDIAN
+#if defined(__APPLE__)
+#include <machine/endian.h>
+#include <libkern/OSByteOrder.h>
+#elif defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
+#include <sys/endian.h>
 #elif defined(LINUX)
 #include <endian.h>
-#if __BYTE_ORDER == __BIG_ENDIAN
+#endif
+
+/* Compiler builtins, not header BYTE_ORDER: _XOPEN_SOURCE hides the latter on BSD. */
+#if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 #define BYTE_ORDER_BIG_ENDIAN
-#endif // __BYTE_ORDER == __BIG_ENDIAN
-#endif // defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
+#endif
 
 #if defined(__LP64__)
 #define BLOCKSIZE 2
@@ -55,6 +57,8 @@ typedef uint64_t subblock;
 #define SWAPPED(x) (x)
 #elif defined( __x86_64__)
 #define SWAPPED(x) ({register uint64_t __out, __in = (x); __asm__("bswap %q0" : "=r"(__out) : "0"(__in)); __out;})
+#elif defined(__APPLE__)
+#define SWAPPED(x) OSSwapHostToBigInt64(x)
 #elif defined(LINUX)
 #include <byteswap.h>
 #define SWAPPED(x) bswap_64(x)
