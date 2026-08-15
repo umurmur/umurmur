@@ -596,7 +596,7 @@ int Client_write(client_t *client)
 			else {
 				Log_info_client(client, "SSL error: %d - Closing connection.", SSLi_get_error(client->ssl, rc));
 			}
-			Client_free(client);
+			Client_close(client);
 			return -1;
 		}
 	}
