@@ -57,7 +57,10 @@
 #include "sharedmemory.h"
 #include "ban.h"
 
-char system_string[256], version_string[64];
+#define SYSTEM_STRING_LEN (sizeof(((struct utsname){0}).sysname) + \
+                           sizeof(((struct utsname){0}).machine) + 2)
+
+char system_string[SYSTEM_STRING_LEN], version_string[64];
 int bindport;
 int bindport6;
 char *bindaddr;
@@ -367,12 +370,14 @@ int main(int argc, char **argv)
 
 		/* Build system string */
 		if (uname(&utsbuf) == 0) {
-			snprintf(system_string, 256, "%s %s", utsbuf.sysname, utsbuf.machine);
+			snprintf(system_string, sizeof(system_string), "%s %s",
+			         utsbuf.sysname, utsbuf.machine);
 			strncpy(version_string, utsbuf.release, sizeof(version_string) - 1);
+			version_string[sizeof(version_string) - 1] = '\0';
 		}
 		else {
-			strncpy(system_string, "unknown unknown", sizeof(system_string) - 1);
-			strncpy(version_string, "unknown", sizeof(version_string) - 1);
+			snprintf(system_string, sizeof(system_string), "unknown unknown");
+			snprintf(version_string, sizeof(version_string), "unknown");
 		}
 
 		/* Initializing */
