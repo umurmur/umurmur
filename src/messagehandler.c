@@ -108,6 +108,12 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		goto out;
 	}
 
+	if (client->codec_recheck_pending && client->authenticated &&
+	    msg->messageType != Authenticate) {
+		client->codec_recheck_pending = false;
+		recheckCodecVersions(client);
+	}
+
 	switch (msg->messageType) {
 	case UDPTunnel:
 	case Ping:
@@ -207,7 +213,8 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		sendmsg->payload.cryptSetup->has_client_nonce = true;
 		sendmsg->payload.cryptSetup->client_nonce.data = client->cryptState.decrypt_iv;
 		sendmsg->payload.cryptSetup->client_nonce.len = AES_BLOCK_SIZE;
-		Client_send_message(client, sendmsg);
+		if (Client_send_message(client, sendmsg) == -1)
+			goto disconnect;
 
 		/* Channel stuff */
 		Chan_userJoin(defaultChan, client); /* Join default channel */
@@ -236,7 +243,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		if (msg->payload.authenticate->opus)
 			client->bOpus = true;
 
-		recheckCodecVersions(client);
+		client->codec_recheck_pending = true;
 
 		sendmsg = Msg_create(CodecVersion);
 		sendmsg->payload.codecVersion->alpha = iCodecAlpha;

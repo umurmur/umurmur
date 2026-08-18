@@ -76,6 +76,7 @@ typedef struct {
 	uint8_t key[KEY_LENGTH];
 	char *username;
 	bool_t bUDP, authenticated, deaf, mute, self_deaf, self_mute, recording, bOpus;
+	bool_t codec_recheck_pending;
 	bool_t priority_speaker;
 	char *os, *release, *os_version;
 	uint32_t version;

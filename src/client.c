@@ -213,6 +213,8 @@ void recheckCodecVersions(client_t *connectingClient)
 
 	while (Client_iterate(&client_itr) != NULL) {
 		codec_itr = NULL;
+		if (client_itr->shutdown_wait)
+			continue;
 		if (client_itr->codec_count == 0 && !client_itr->bOpus)
 			continue;
 		while (Client_codec_iterate(client_itr, &codec_itr) != NULL) {
@@ -508,6 +510,8 @@ int Client_read(client_t *client)
 				/* pass messsage to handler */
 				if (msg)
 					Mh_handle_message(client, msg);
+				if (client->shutdown_wait)
+					return 0;
 				client->rxcount = client->msgsize = 0;
 			}
 		} else /* rc <= 0 */ {
@@ -622,6 +626,10 @@ int Client_send_message_ver(client_t *client, message_t *msg, uint32_t version)
 
 int Client_send_message(client_t *client, message_t *msg)
 {
+	if (client->shutdown_wait) {
+		Msg_free(msg);
+		return -1;
+	}
 	if (client->txsize != 0 || !client->SSLready) {
 		/* Queue message */
 		if ((client->txQueueCount > 5 &&  msg->messageType == UDPTunnel) ||
@@ -632,17 +640,18 @@ int Client_send_message(client_t *client, message_t *msg)
 		client->txQueueCount++;
 		list_add_tail(&msg->node, &client->txMsgQueue);
 		Log_debug("Queueing message");
+		return 0;
 	} else {
-		int len;
+		int len, rc;
 		len = Msg_messageToNetwork(msg, client->txbuf);
 		doAssert(len < BUFSIZE);
 
 		client->txsize = len;
 		client->txcount = 0;
-		Client_write(client);
+		rc = Client_write(client);
 		Msg_free(msg);
+		return rc;
 	}
-	return 0;
 }
 
 client_t *Client_iterate(client_t **client_itr)
