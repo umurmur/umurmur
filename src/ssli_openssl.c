@@ -32,6 +32,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include <sys/stat.h>
+
 #include "conf.h"
 #include "log.h"
 #include "memory.h"
@@ -83,6 +85,10 @@ static void SSL_writecert(char *certfile, X509 *x509)
 		Log_warn("Error trying to write X509 info.");
 	}
 	fclose(fp);
+
+	if (chmod(certfile, 0644) < 0) {
+		Log_warn("Failed to set permissions on certificate file %s", certfile);
+	}
 }
 
 static void SSL_writekey(char *keyfile, EVP_PKEY *pkey)
@@ -298,6 +304,52 @@ void SSLi_deinit(void)
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
 	EVP_cleanup();
 #endif
+}
+
+void SSLi_reload_cert(void)
+{
+	char *crt = (char *)getStrConf(CERTIFICATE);
+	FILE *fp;
+	X509 *new_cert = NULL;
+	EVP_PKEY *pkey = NULL;
+
+	if (!crt)
+		return;
+
+	/* OpenSSL >= 1.1.0 */
+	pkey = SSL_CTX_get0_privatekey(context);
+	if (!pkey) {
+		Log_warn("SSL: No private key found in current context.");
+		return;
+	}
+
+	fp = fopen(crt, "r");
+	if (!fp) {
+		Log_warn("Failed to open certificate file %s", crt);
+		return;
+	}
+	new_cert = PEM_read_X509(fp, NULL, NULL, NULL);
+	fclose(fp);
+	if (!new_cert) {
+		Log_warn("Failed to parse certificate file.");
+		return;
+	}
+
+	if (X509_check_private_key(new_cert, pkey) != 1) {
+		Log_warn("New certificate does not match private key.");
+		goto cleanup;
+	}
+
+	if (SSL_CTX_use_certificate(context, new_cert) != 1) {
+		Log_warn("Failed to apply new certificate to context.");
+		goto cleanup;
+	}
+
+	Log_info("Certificate reloaded.");
+
+cleanup:
+	X509_free(new_cert);
+	return;
 }
 
 int SSLi_nonblockaccept(SSL_handle_t *ssl, bool_t *SSLready)

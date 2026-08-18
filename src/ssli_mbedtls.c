@@ -273,6 +273,12 @@ void SSLi_deinit(void)
 #endif
 }
 
+/* stub */
+void SSLi_reload_cert(void)
+{
+	return;
+}
+
 bool_t SSLi_getSHA1Hash(SSL_handle_t *ssl, uint8_t *hash)
 {
 	mbedtls_x509_crt const *cert;

@@ -91,6 +91,12 @@ void SSLi_deinit()
 	gnutls_global_deinit();
 }
 
+/* stub */
+void SSLi_reload_cert(void)
+{
+	return;
+}
+
 SSL_handle_t * SSLi_newconnection( int * fileDescriptor, bool_t * isSSLReady )
 {
 	gnutls_session_t * session

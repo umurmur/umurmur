@@ -177,8 +177,9 @@ void signal_handler(int sig)
 			Server_shutdown();
 			break;
 		case SIGHUP:
-			Log_info("HUP signal received. Reopening log file.");
+			Log_info("HUP signal received. Reopening log file and reloading certificate.");
 			Log_reset();
+			SSLi_reload_cert();
 			break;
 		case SIGTERM:
 			Log_info("TERM signal received. Shutting down.");
@@ -269,10 +270,6 @@ int main(int argc, char **argv)
 	bool_t realtime = false;
 #endif
 	bool_t testconfig = false;
-#ifdef __OpenBSD__
-	bool_t needs_filesystem = false;
-	const char *pledge_promises;
-#endif
 	char *conffile = NULL, *pidfile = NULL;
 	int c;
 	struct utsname utsbuf;
@@ -396,43 +393,36 @@ int main(int argc, char **argv)
 		}
 
 #ifdef __OpenBSD__
-		if (pidfile && *pidfile) {
+		if (pidfile && *pidfile)
 			if (unveil(pidfile, "c") == -1)
 				Log_fatal("unveil pidfile (%s) failed: %s", pidfile, strerror(errno));
-			needs_filesystem = true;
-		}
 
-		if (getBoolConf(ENABLE_BAN)) {
-			const char *banfile = getStrConf(BANFILE);
-			if (banfile && *banfile) {
-				if (unveil(banfile, "wc") == -1)
-					Log_fatal("unveil banfile (%s) failed: %s", banfile, strerror(errno));
-				needs_filesystem = true;
-			}
-		}
+		const char *banfile = getStrConf(BANFILE);
+		if (getBoolConf(ENABLE_BAN) && banfile && *banfile)
+			if (unveil(banfile, "wc") == -1)
+				Log_fatal("unveil banfile (%s) failed: %s", banfile, strerror(errno));
 
 		const char *logfile = getStrConf(LOGFILE);
-		if (logfile && *logfile) {
+		if (logfile && *logfile)
 			if (unveil(logfile, "wc") == -1)
 				Log_fatal("unveil logfile (%s) failed: %s", logfile, strerror(errno));
-			needs_filesystem = true;
-		}
+
+		const char *crtfile = getStrConf(CERTIFICATE);
+		if (crtfile && *crtfile)
+			if (unveil(crtfile, "r") == -1)
+				Log_fatal("unveil certificate (%s) failed: %s", crtfile, strerror(errno));
+
 
 #ifdef USE_SHAREDMEMORY_API
 		if (unveil("/tmp", "c") == -1)
 			Log_fatal("unveil shared memory directory (/tmp) failed: %s", strerror(errno));
-		needs_filesystem = true;
 #endif
 
 		if (unveil(NULL, NULL) == -1)
 			Log_fatal("unveil lock failed: %s", strerror(errno));
 
-		pledge_promises = "stdio inet";
-		if (needs_filesystem)
-			pledge_promises = "stdio inet wpath cpath";
-
-		if (pledge(pledge_promises, NULL) == -1)
-			Log_fatal("pledge (%s) failed: %s", pledge_promises, strerror(errno));
+		if (pledge("stdio inet wpath cpath", NULL) == -1)
+			Log_fatal("pledge failed: %s", strerror(errno));
 #endif
 
 		Server_run();
