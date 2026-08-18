@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1](https://github.com/umurmur/umurmur/compare/v0.4.0...v0.4.1) (2026-08-18)
+
+
+### Fixed
+
+* builds on MacOS ([#250](https://github.com/umurmur/umurmur/issues/250)) ([ae30ccf](https://github.com/umurmur/umurmur/commit/ae30ccf040e81c89cdac62acb0ed6248a00f2d81))
+* Correct endian header and fix non-Linux LP64 build ([#246](https://github.com/umurmur/umurmur/issues/246)) ([392f3a2](https://github.com/umurmur/umurmur/commit/392f3a21a10c80c0f39f9eca0bac91f9ca22048a))
+* Use-after-free crash when client is freed inside message handler ([#251](https://github.com/umurmur/umurmur/issues/251)) ([01b0dea](https://github.com/umurmur/umurmur/commit/01b0dea1bfa17ec4dd192ae63db91a0d315cd1a6))
+* Wsometimes-uninitialized ([#247](https://github.com/umurmur/umurmur/issues/247)) ([0ebaaf9](https://github.com/umurmur/umurmur/commit/0ebaaf9494ff24677bd488285393d7b0c177c06f))
+
 ## [0.4.0](https://github.com/umurmur/umurmur/compare/v0.3.1...v0.4.0) (2026-08-12)
 
 
