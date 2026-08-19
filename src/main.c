@@ -382,7 +382,7 @@ int main(int argc, char **argv)
 		Ban_init();
 
 #ifdef USE_SHAREDMEMORY_API
-    Sharedmemory_init( bindport, bindport6 );
+    Sharedmemory_init( bindport );
 #endif
 
 		/* SSL and scheduling is setup, we can drop privileges now */
