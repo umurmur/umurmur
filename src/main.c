@@ -383,6 +383,7 @@ int main(int argc, char **argv)
 
 #ifdef USE_SHAREDMEMORY_API
   Sharedmemory_init( bindport );
+#endif
 
 	/* SSL and scheduling is setup, we can drop privileges now */
 	switch_user();
