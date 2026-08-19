@@ -21,21 +21,21 @@ void Sharedmemory_init( int bindport )
 	shm_fd = shm_open( shm_file_name, O_CREAT | O_RDWR, 0660 );
 	if(shm_fd == -1)
 	{
-		Log_fatal( "SHM_API: Open failed:%s\n", strerror(errno));
+		Log_fatal("SHM_API: Open failed: %s", strerror(errno));
 		exit(EXIT_FAILURE);
 	}
 
 	if( ftruncate( shm_fd, shmtotal_size ) == -1 )
 	{
 		Sharedmemory_deinit();
-		Log_fatal( "SHM_API: ftruncate : %s\n", strerror(errno));
+		Log_fatal("SHM_API: ftruncate: %s", strerror(errno));
 		exit(EXIT_FAILURE);
 	}
 
 	shmptr = mmap( 0, shmtotal_size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0 );
 	if (shmptr == MAP_FAILED)
 	{
-		Log_fatal( "SHM_API: mmap failed : %s\n", strerror(errno));
+		Log_fatal("SHM_API: mmap failed: %s", strerror(errno));
 		exit(EXIT_FAILURE);
 	}
 

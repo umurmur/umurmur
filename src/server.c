@@ -181,7 +181,7 @@ void Server_runLoop(struct pollfd* pollfds)
 				fcntl(tcpfd, F_SETFL, O_NONBLOCK);
 				setsockopt(tcpfd, IPPROTO_TCP, TCP_NODELAY, (char *) &on, sizeof(int));
 				char *addressString = Util_addressToString(&remote);
-				Log_debug("Connection from %s port %d\n", addressString, Util_addressToPort(&remote));
+				Log_debug("Connection from %s port %d", addressString, Util_addressToPort(&remote));
 				free(addressString);
 				if (Client_add(tcpfd, &remote) < 0)
 					close(tcpfd);

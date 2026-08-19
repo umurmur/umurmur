@@ -146,18 +146,18 @@ static void openlogfile(const char *logfilename)
 
 	fd = openlogfd(logfilename);
 	if (fd < 0) {
-		Log_fatal("Failed to open log file '%s' for writing: %s\n", logfilename, strerror(errno));
+		Log_fatal("Failed to open log file '%s' for writing: %s", logfilename, strerror(errno));
 	}
 
 	logfile = fdopen(fd, "a");
 	if (logfile == NULL) {
 		close(fd);
-		Log_fatal("fdopen() failed for log file '%s': %s\n", logfilename, strerror(errno));
+		Log_fatal("fdopen() failed for log file '%s': %s", logfilename, strerror(errno));
 	}
 
 	/* Set the stream as line buffered */
 	if (setvbuf(logfile, NULL, _IOLBF, 0) < 0)
-		Log_fatal("setvbuf() failed: %s\n", strerror(errno));
+		Log_fatal("setvbuf() failed: %s", strerror(errno));
 
 	/* XXX - Is it neccessary/appropriate that logging to file is non-blocking?
 	 * If not, there's a risk that execution blocks, meaning that voice blocks
