@@ -50,6 +50,8 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 target_compile_definitions(${PROJECT_NAME} PRIVATE
   _GNU_SOURCE
   _BSD_SOURCE
+  _NETBSD_SOURCE
+  _DARWIN_C_SOURCE
   _XOPEN_SOURCE=700
 )
 
