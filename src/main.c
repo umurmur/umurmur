@@ -281,174 +281,173 @@ int main(int argc, char **argv)
 #ifdef POSIX_PRIORITY_SCHEDULING
 	while ((c = getopt(argc, argv, "drp:c:a:A:b:B:ht")) != EOF) {
 #else
-		while ((c = getopt(argc, argv, "dp:c:a:A:b:B:ht")) != EOF) {
+	while ((c = getopt(argc, argv, "dp:c:a:A:b:B:ht")) != EOF) {
 #endif
-			switch(c) {
-				case 'c':
-					conffile = optarg;
-					break;
-				case 'p':
-					pidfile = optarg;
-					break;
-				case 'a':
-					bindaddr = optarg;
-					break;
-				case 'A':
-					bindaddr6 = optarg;
-					break;
-				case 'b':
-					bindport = atoi(optarg);
-					break;
-				case 'B':
-					bindport6 = atoi(optarg);
-					break;
-				case 'd':
-					nodaemon = true;
-					break;
-				case 'h':
-					printhelp();
-					break;
-				case 't':
-					testconfig = true;
-					break;
+		switch(c) {
+			case 'c':
+				conffile = optarg;
+				break;
+			case 'p':
+				pidfile = optarg;
+				break;
+			case 'a':
+				bindaddr = optarg;
+				break;
+			case 'A':
+				bindaddr6 = optarg;
+				break;
+			case 'b':
+				bindport = atoi(optarg);
+				break;
+			case 'B':
+				bindport6 = atoi(optarg);
+				break;
+			case 'd':
+				nodaemon = true;
+				break;
+			case 'h':
+				printhelp();
+				break;
+			case 't':
+				testconfig = true;
+				break;
 #ifdef POSIX_PRIORITY_SCHEDULING
-				case 'r':
-					realtime = true;
-					break;
+			case 'r':
+				realtime = true;
+				break;
 #endif
-				default:
-					fprintf(stderr, "Unrecognized option\n");
-					printhelp();
-					break;
-			}
+			default:
+				fprintf(stderr, "Unrecognized option\n");
+				printhelp();
+				break;
 		}
+	}
 
-		if (testconfig) {
-			if (!Conf_ok(conffile))
-				exit(1);
-			else
-				exit(0);
-		}
+	if (testconfig) {
+		if (!Conf_ok(conffile))
+			exit(1);
+		else
+			exit(0);
+	}
 
-		/* Initialize the config subsystem early;
-		 * switch_user() will need to read some config variables as well as logging.
-		 */
-		Conf_init(conffile);
+	/* Initialize the config subsystem early;
+	 * switch_user() will need to read some config variables as well as logging.
+	 */
+	Conf_init(conffile);
 
-		/* Logging to terminal if not daemonizing, otherwise to syslog or log file.
-		*/
-		if (!nodaemon) {
-			if (!Log_preflight())
-				exit(1);
-			daemonize();
-			Log_init(false);
-			if (pidfile != NULL)
-				lockfile(pidfile);
-		}
-		else Log_init(true);
+	/* Logging to terminal if not daemonizing, otherwise to syslog or log file.
+	*/
+	if (!nodaemon) {
+		if (!Log_preflight())
+			exit(1);
+		daemonize();
+		Log_init(false);
+		if (pidfile != NULL)
+			lockfile(pidfile);
+	}
+	else Log_init(true);
 
 #ifdef POSIX_PRIORITY_SCHEDULING
-		/* Set the scheduling policy, has to be called after daemonizing
-		 * but before we drop privileges */
-		if (realtime)
-			setscheduler();
+	/* Set the scheduling policy, has to be called after daemonizing
+	 * but before we drop privileges */
+	if (realtime)
+		setscheduler();
 #endif
 
-		signal(SIGCHLD, SIG_IGN); /* ignore child */
-		signal(SIGTSTP, SIG_IGN); /* ignore tty signals */
-		signal(SIGTTOU, SIG_IGN);
-		signal(SIGTTIN, SIG_IGN);
-		signal(SIGPIPE, SIG_IGN);
-		/* Docker usually requires an init process to catch Ctrl-C
-		 * Handling it here avoids this requirement */
-		signal(SIGINT, signal_handler); /* catch interrupt signal */
-		signal(SIGHUP, signal_handler); /* catch hangup signal */
-		signal(SIGTERM, signal_handler); /* catch kill signal */
+	signal(SIGCHLD, SIG_IGN); /* ignore child */
+	signal(SIGTSTP, SIG_IGN); /* ignore tty signals */
+	signal(SIGTTOU, SIG_IGN);
+	signal(SIGTTIN, SIG_IGN);
+	signal(SIGPIPE, SIG_IGN);
+	/* Docker usually requires an init process to catch Ctrl-C
+	 * Handling it here avoids this requirement */
+	signal(SIGINT, signal_handler); /* catch interrupt signal */
+	signal(SIGHUP, signal_handler); /* catch hangup signal */
+	signal(SIGTERM, signal_handler); /* catch kill signal */
 
-		/* Build system string */
-		if (uname(&utsbuf) == 0) {
-			snprintf(system_string, 256, "%s %s", utsbuf.sysname, utsbuf.machine);
-			strncpy(version_string, utsbuf.release, sizeof(version_string) - 1);
-		}
-		else {
-			strncpy(system_string, "unknown unknown", sizeof(system_string) - 1);
-			strncpy(version_string, "unknown", sizeof(version_string) - 1);
-		}
+	/* Build system string */
+	if (uname(&utsbuf) == 0) {
+		snprintf(system_string, 256, "%s %s", utsbuf.sysname, utsbuf.machine);
+		strncpy(version_string, utsbuf.release, sizeof(version_string) - 1);
+	}
+	else {
+		strncpy(system_string, "unknown unknown", sizeof(system_string) - 1);
+		strncpy(version_string, "unknown", sizeof(version_string) - 1);
+	}
 
-		/* Initializing */
-		SSLi_init();
-		Chan_init();
-		Client_init();
-		Ban_init();
+	/* Initializing */
+	SSLi_init();
+	Chan_init();
+	Client_init();
+	Ban_init();
 
 #ifdef USE_SHAREDMEMORY_API
-    Sharedmemory_init( bindport );
-#endif
+  Sharedmemory_init( bindport );
 
-		/* SSL and scheduling is setup, we can drop privileges now */
-		switch_user();
+	/* SSL and scheduling is setup, we can drop privileges now */
+	switch_user();
 
-		if(!nodaemon) {
-			/* Reopen log file. If user switch results in access denied, we catch
-			 * it early.
-			 */
-			Log_reset();
-		}
+	if(!nodaemon) {
+		/* Reopen log file. If user switch results in access denied, we catch
+		 * it early.
+		 */
+		Log_reset();
+	}
 
 #ifdef __OpenBSD__
-		if (pidfile && *pidfile) {
-			if (unveil(pidfile, "c") == -1)
-				Log_fatal("unveil pidfile (%s) failed: %s", pidfile, strerror(errno));
-			needs_filesystem = true;
-		}
-
-		if (getBoolConf(ENABLE_BAN)) {
-			const char *banfile = getStrConf(BANFILE);
-			if (banfile && *banfile) {
-				if (unveil(banfile, "wc") == -1)
-					Log_fatal("unveil banfile (%s) failed: %s", banfile, strerror(errno));
-				needs_filesystem = true;
-			}
-		}
-
-		const char *logfile = getStrConf(LOGFILE);
-		if (logfile && *logfile) {
-			if (unveil(logfile, "wc") == -1)
-				Log_fatal("unveil logfile (%s) failed: %s", logfile, strerror(errno));
-			needs_filesystem = true;
-		}
-
-#ifdef USE_SHAREDMEMORY_API
-		if (unveil("/tmp", "c") == -1)
-			Log_fatal("unveil shared memory directory (/tmp) failed: %s", strerror(errno));
+	if (pidfile && *pidfile) {
+		if (unveil(pidfile, "c") == -1)
+			Log_fatal("unveil pidfile (%s) failed: %s", pidfile, strerror(errno));
 		needs_filesystem = true;
-#endif
+	}
 
-		if (unveil(NULL, NULL) == -1)
-			Log_fatal("unveil lock failed: %s", strerror(errno));
+	if (getBoolConf(ENABLE_BAN)) {
+		const char *banfile = getStrConf(BANFILE);
+		if (banfile && *banfile) {
+			if (unveil(banfile, "wc") == -1)
+				Log_fatal("unveil banfile (%s) failed: %s", banfile, strerror(errno));
+			needs_filesystem = true;
+		}
+	}
 
-		pledge_promises = "stdio inet";
-		if (needs_filesystem)
-			pledge_promises = "stdio inet wpath cpath";
-
-		if (pledge(pledge_promises, NULL) == -1)
-			Log_fatal("pledge (%s) failed: %s", pledge_promises, strerror(errno));
-#endif
-
-		Server_run();
+	const char *logfile = getStrConf(LOGFILE);
+	if (logfile && *logfile) {
+		if (unveil(logfile, "wc") == -1)
+			Log_fatal("unveil logfile (%s) failed: %s", logfile, strerror(errno));
+		needs_filesystem = true;
+	}
 
 #ifdef USE_SHAREDMEMORY_API
-    Sharedmemory_deinit();
+	if (unveil("/tmp", "c") == -1)
+		Log_fatal("unveil shared memory directory (/tmp) failed: %s", strerror(errno));
+	needs_filesystem = true;
 #endif
 
-		Ban_deinit();
-		SSLi_deinit();
-		Chan_free();
-		Log_free();
-		Conf_deinit();
+	if (unveil(NULL, NULL) == -1)
+		Log_fatal("unveil lock failed: %s", strerror(errno));
 
-		if (pidfile != NULL)
-			unlink(pidfile);
+	pledge_promises = "stdio inet";
+	if (needs_filesystem)
+		pledge_promises = "stdio inet wpath cpath";
 
-		return 0;
-	}
+	if (pledge(pledge_promises, NULL) == -1)
+		Log_fatal("pledge (%s) failed: %s", pledge_promises, strerror(errno));
+#endif
+
+	Server_run();
+
+#ifdef USE_SHAREDMEMORY_API
+	Sharedmemory_deinit();
+#endif
+
+	Ban_deinit();
+	SSLi_deinit();
+	Chan_free();
+	Log_free();
+	Conf_deinit();
+
+	if (pidfile != NULL)
+		unlink(pidfile);
+
+	return 0;
+}
