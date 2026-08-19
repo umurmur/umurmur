@@ -404,7 +404,7 @@ static int verify_callback(int preverify_ok, X509_STORE_CTX *ctx)
         X509_STORE_CTX_set_error(ctx, err);
     }
     if (!preverify_ok) {
-	    Log_warn("SSL: verify error:num=%d:%s:depth=%d:%s\n", err,
+	    Log_warn("SSL: verify error:num=%d:%s:depth=%d:%s", err,
 	             X509_verify_cert_error_string(err), depth, buf);
     }
     /*
