@@ -4,7 +4,7 @@ static int shm_fd;
 static shm_t *shmptr = NULL;
 static char shm_file_name[128];
 
-void Sharedmemory_init( int bindport, int bindport6 )
+void Sharedmemory_init( int bindport )
 {
 
 	int server_max_clients = getIntConf(MAX_CLIENTS);
