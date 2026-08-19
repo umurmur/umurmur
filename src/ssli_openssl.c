@@ -269,7 +269,8 @@ void SSLi_init(void)
 		}
 		cipherstring = Memory_safeMalloc(1, cipherstringlen + 1);
 		for (i = 0; (cipher = sk_SSL_CIPHER_value(cipherlist_new, i)) != NULL; i++) {
-			offset += sprintf(cipherstring + offset, "%s:", SSL_CIPHER_get_name(cipher));
+			offset += snprintf(cipherstring + offset, cipherstringlen + 1 - offset,
+			                   "%s:", SSL_CIPHER_get_name(cipher));
 		}
 	}
 
