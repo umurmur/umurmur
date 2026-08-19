@@ -42,18 +42,20 @@
 	} while (0)
 
 
-void logthis(const char *logstring, ...);
+#define PRINTF_LIKE(fmt, arg) __attribute__((__format__(__printf__, fmt, arg)))
+
+void logthis(const char *logstring, ...) PRINTF_LIKE(1, 2);
 
 #ifdef DEBUG
-void Log_debug(const char *logstring, ...);
+void Log_debug(const char *logstring, ...) PRINTF_LIKE(1, 2);
 #else
 #define Log_debug(_args_, ...) ((void)0)
 #endif
 
-void Log_warn(const char *logstring, ...);
-void Log_info(const char *logstring, ...);
-void Log_info_client(client_t *client, const char *logstring, ...);
-void Log_fatal(const char *logstring, ...) __attribute__((__noreturn__));
+void Log_warn(const char *logstring, ...) PRINTF_LIKE(1, 2);
+void Log_info(const char *logstring, ...) PRINTF_LIKE(1, 2);
+void Log_info_client(client_t *client, const char *logstring, ...) PRINTF_LIKE(2, 3);
+void Log_fatal(const char *logstring, ...) PRINTF_LIKE(1, 2) __attribute__((__noreturn__));
 
 void Log_init(bool_t terminal);
 bool_t Log_preflight(void);
