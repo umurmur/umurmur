@@ -612,8 +612,6 @@ void Msg_free(message_t *msg)
 
 				free(msg->payload.userStats->version);
 			}
-			if (msg->payload.userStats->celt_versions)
-				free(msg->payload.userStats->celt_versions);
 			if (msg->payload.userStats->certificates) {
 				if (msg->payload.userStats->certificates->data)
 					free(msg->payload.userStats->certificates->data);

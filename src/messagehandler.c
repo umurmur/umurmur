@@ -47,14 +47,10 @@
 #define MAX_TEXT 512
 #define MAX_USERNAME 128
 
-#define NO_CELT_MESSAGE "<strong>WARNING:</strong> Your client doesn't support the CELT codec, you won't be able to talk to or hear most clients. Please make sure your client was built with CELT support."
+#define OPUS_CLIENT_UNSUPPORTED "<strong>WARNING:</strong> Your client doesn't support the Opus codec the server is using, you won't be able to talk or hear anyone. Please upgrade your Mumble client."
 
 
 extern channel_t *defaultChan;
-extern int iCodecAlpha, iCodecBeta;
-extern bool_t bPreferAlpha, bOpus;
-
-static bool_t fake_celt_support;
 
 static void sendServerReject(client_t *client, const char *reason, MumbleProto__Reject__RejectType type)
 {
@@ -106,12 +102,6 @@ void Mh_handle_message(client_t *client, message_t *msg)
 	if (!client->authenticated && !(msg->messageType == Authenticate ||
 									msg->messageType == Version)) {
 		goto out;
-	}
-
-	if (client->codec_recheck_pending && client->authenticated &&
-	    msg->messageType != Authenticate) {
-		client->codec_recheck_pending = false;
-		recheckCodecVersions(client);
 	}
 
 	switch (msg->messageType) {
@@ -222,40 +212,17 @@ void Mh_handle_message(client_t *client, message_t *msg)
 		client->authenticated = true;
 
 		/* Codec version */
-		Log_debug("Client %d has %d CELT codecs", client->sessionId,
-				  msg->payload.authenticate->n_celt_versions);
-		if (msg->payload.authenticate->n_celt_versions > 0) {
-			int i;
-			codec_t *codec_itr;
-			client->codec_count = msg->payload.authenticate->n_celt_versions;
-
-			for (i = 0; i < client->codec_count; i++)
-			Client_codec_add(client, msg->payload.authenticate->celt_versions[i]);
-			codec_itr = NULL;
-			while (Client_codec_iterate(client, &codec_itr) != NULL)
-				Log_debug("Client %d CELT codec ver 0x%x", client->sessionId, codec_itr->codec);
-
-		} else {
-			Client_codec_add(client, (int32_t)0x8000000b);
-			client->codec_count = 1;
-			fake_celt_support = true;
-		}
 		if (msg->payload.authenticate->opus)
 			client->bOpus = true;
 
-		client->codec_recheck_pending = true;
-
 		sendmsg = Msg_create(CodecVersion);
-		sendmsg->payload.codecVersion->alpha = iCodecAlpha;
-		sendmsg->payload.codecVersion->beta = iCodecBeta;
-		sendmsg->payload.codecVersion->prefer_alpha = bPreferAlpha;
 		sendmsg->payload.codecVersion->has_opus = true;
-		sendmsg->payload.codecVersion->opus = bOpus;
+		sendmsg->payload.codecVersion->opus = true;
 		Client_send_message(client, sendmsg);
 
-		if (!bOpus && client->bOpus && fake_celt_support) {
-			Client_textmessage(client, NO_CELT_MESSAGE);
-		}
+		if (!client->bOpus)
+			sendServerReject(client, OPUS_CLIENT_UNSUPPORTED,
+			    MUMBLE_PROTO__REJECT__REJECT_TYPE__None);
 
 		/* Iterate channels and send channel info */
 		ch_itr = NULL;
@@ -813,8 +780,6 @@ void Mh_handle_message(client_t *client, message_t *msg)
 	case UserStats:
 	{
 		client_t *target = NULL;
-		codec_t *codec_itr = NULL;
-		int i;
 		bool_t details = true;
 
 		if (msg->payload.userStats->has_stats_only)
@@ -879,13 +844,6 @@ void Mh_handle_message(client_t *client, message_t *msg)
 				sendmsg->payload.userStats->version->os = strdup(target->os);
 			if (target->os_version)
 				sendmsg->payload.userStats->version->os_version = strdup(target->os_version);
-
-			sendmsg->payload.userStats->n_celt_versions = target->codec_count;
-			sendmsg->payload.userStats->celt_versions
-				= Memory_safeMalloc(target->codec_count, sizeof(int32_t));
-			i = 0;
-			while (Client_codec_iterate(target, &codec_itr) != NULL)
-				sendmsg->payload.userStats->celt_versions[i++] = codec_itr->codec;
 
 			sendmsg->payload.userStats->has_opus = true;
 			sendmsg->payload.userStats->opus = target->bOpus;

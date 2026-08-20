@@ -60,10 +60,6 @@ void Client_free(client_t *client);
 declare_list(clients);
 static int clientcount; /* = 0 */
 static int maxBandwidth;
-bool_t bOpus = true;
-
-int iCodecAlpha, iCodecBeta;
-bool_t bPreferAlpha;
 
 extern int* udpsocks;
 extern bool_t hasv4;
@@ -115,42 +111,6 @@ void Client_janitor(void)
 	Ban_pruneBanned();
 }
 
-void Client_codec_add(client_t *client, int codec)
-{
-	codec_t *cd = Memory_safeMalloc(1, sizeof(codec_t));
-	init_list_entry(&cd->node);
-	cd->codec = codec;
-	list_add_tail(&cd->node, &client->codecs);
-}
-
-void Client_codec_free(client_t *client)
-{
-	struct dlist *itr, *save;
-	list_iterate_safe(itr, save, &client->codecs) {
-		list_del(&list_get_entry(itr, codec_t, node)->node);
-		free(list_get_entry(itr, codec_t, node));
-	}
-}
-
-codec_t *Client_codec_iterate(client_t *client, codec_t **codec_itr)
-{
-	codec_t *cd = *codec_itr;
-
-	if (list_empty(&client->codecs))
-		return NULL;
-
-	if (cd == NULL) {
-		cd = list_get_entry(list_get_first(&client->codecs), codec_t, node);
-	} else {
-		if (list_get_next(&cd->node) == &client->codecs)
-			cd = NULL;
-		else
-			cd = list_get_entry(list_get_next(&cd->node), codec_t, node);
-	}
-	*codec_itr = cd;
-	return cd;
-}
-
 void Client_token_add(client_t *client, char *token_string)
 {
 	token_t *token;
@@ -193,111 +153,6 @@ void Client_token_free(client_t *client)
 		free(token);
 	}
 	client->tokencount = 0;
-}
-
-
-#define OPUS_WARN_USING "<strong>WARNING:</strong> Your client doesn't support the Opus codec the server is using, you won't be able to talk or hear anyone. Please upgrade your Mumble client."
-#define OPUS_WARN_SWITCHING "<strong>WARNING:</strong> Your client doesn't support the Opus codec the server is switching to, you won't be able to talk or hear anyone. Please upgrade your Mumble client."
-void recheckCodecVersions(client_t *connectingClient)
-{
-	client_t *client_itr = NULL;
-	int max = 0, version = 0, current_version = 0;
-	int users = 0, opus = 0;
-	message_t *sendmsg;
-	struct dlist codec_list, *itr, *save;
-	codec_t *codec_itr, *cd;
-	bool_t found;
-	bool_t enableOpus;
-
-	init_list_entry(&codec_list);
-
-	while (Client_iterate(&client_itr) != NULL) {
-		codec_itr = NULL;
-		if (client_itr->shutdown_wait)
-			continue;
-		if (client_itr->codec_count == 0 && !client_itr->bOpus)
-			continue;
-		while (Client_codec_iterate(client_itr, &codec_itr) != NULL) {
-			found = false;
-			list_iterate(itr, &codec_list) {
-				cd = list_get_entry(itr, codec_t, node);
-				if (cd->codec == codec_itr->codec) {
-					cd->count++;
-					found = true;
-				}
-			}
-			if (!found) {
-				cd = Memory_safeMalloc(1, sizeof(codec_t));
-				memset(cd, 0, sizeof(codec_t));
-				init_list_entry(&cd->node);
-				cd->codec = codec_itr->codec;
-				cd->count = 1;
-				list_add_tail(&cd->node, &codec_list);
-			}
-		}
-		users++;
-		if (client_itr->bOpus)
-			opus++;
-	}
-	if (users == 0)
-		return;
-
-	enableOpus = ((opus * 100 / users) >= getIntConf(OPUS_THRESHOLD));
-
-	list_iterate(itr, &codec_list) {
-		cd = list_get_entry(itr, codec_t, node);
-		if (cd->count > max) {
-			max = cd->count;
-			version = cd->codec;
-		}
-	}
-	list_iterate_safe(itr, save, &codec_list) {
-		list_del(&list_get_entry(itr, codec_t, node)->node);
-		free(list_get_entry(itr, codec_t, node));
-	}
-
-	current_version = bPreferAlpha ? iCodecAlpha : iCodecBeta;
-	if (current_version != version) {
-		// If we don't already use the compat bitstream version set
-		// it as alpha and announce it. If another codec now got the
-		// majority set it as the opposite of the currently valid bPreferAlpha
-		// and announce it.
-		if ((uint32_t)version == 0x8000000bU)
-			bPreferAlpha = true;
-		else
-			bPreferAlpha = !bPreferAlpha;
-
-		if (bPreferAlpha)
-			iCodecAlpha = version;
-		else
-			iCodecBeta = version;
-	} else if (bOpus && enableOpus) {
-		if (connectingClient && !connectingClient->bOpus)
-			Client_textmessage(connectingClient, OPUS_WARN_USING);
-		return;
-	}
-
-	sendmsg = Msg_create(CodecVersion);
-	sendmsg->payload.codecVersion->alpha = iCodecAlpha;
-	sendmsg->payload.codecVersion->beta = iCodecBeta;
-	sendmsg->payload.codecVersion->prefer_alpha = bPreferAlpha;
-	sendmsg->payload.codecVersion->has_opus = true;
-	sendmsg->payload.codecVersion->opus = enableOpus;
-
-	Client_send_message_except(NULL, sendmsg);
-
-	if (enableOpus && !bOpus) {
-		client_itr = NULL;
-		while (Client_iterate(&client_itr) != NULL) {
-			if ((client_itr->authenticated || client_itr == connectingClient) &&
-				!client_itr->bOpus) {
-				Client_textmessage(client_itr, OPUS_WARN_SWITCHING);
-			}
-		}
-		Log_info("OPUS codec %s", bOpus ? "enabled" : "disabled");
-	}
-
-	bOpus = enableOpus;
 }
 
 static int findFreeSessionId(void)
@@ -354,7 +209,6 @@ int Client_add(int fd, struct sockaddr_storage *remote)
 	init_list_entry(&newclient->chan_node);
 	init_list_entry(&newclient->node);
 	init_list_entry(&newclient->voicetargets);
-	init_list_entry(&newclient->codecs);
 	init_list_entry(&newclient->tokens);
 
 	list_add_tail(&newclient->node, &clients);
@@ -376,7 +230,6 @@ void Client_free(client_t *client)
 {
 	struct dlist *itr, *save;
 	message_t *sendmsg;
-	bool_t authenticatedLeft = client->authenticated;
 
 	if (client->authenticated) {
 		int leave_id;
@@ -394,7 +247,6 @@ void Client_free(client_t *client)
 		list_del(&list_get_entry(itr, message_t, node)->node);
 		Msg_free(list_get_entry(itr, message_t, node));
 	}
-	Client_codec_free(client);
 	Voicetarget_free_all(client);
 	Client_token_free(client);
 	CryptState_cleanup(&client->cryptState);
@@ -415,9 +267,6 @@ void Client_free(client_t *client)
 	if (client->context)
 		free(client->context);
 	free(client);
-
-	if (authenticatedLeft)
-		recheckCodecVersions(NULL); /* Can use better codec now? */
 }
 
 void Client_close(client_t *client)
@@ -870,12 +719,6 @@ int Client_read_udp(int udpsock)
 	char *clientAddressString = NULL;
 
 	switch (msgType) {
-		case UDPVoiceSpeex:
-		case UDPVoiceCELTAlpha:
-		case UDPVoiceCELTBeta:
-			if (bOpus)
-				break;
-			/* fall through */
 		case UDPVoiceOpus:
 			Client_voiceMsg(itr, buffer, len);
 			break;
@@ -914,8 +757,8 @@ int Client_voiceMsg(client_t *client, uint8_t *data, int len)
 	pds_t *pds = Pds_create(buffer + 1, UDP_PACKET_SIZE - 1);
 	unsigned int type = data[0] & 0xe0;
 	unsigned int target = data[0] & 0x1f;
-	unsigned int poslen, counter, size;
-	int offset, packetsize;
+	unsigned int poslen, size;
+	int packetsize;
 	voicetarget_t *vt;
 
 	channel_t *ch = client->channel;
@@ -932,16 +775,9 @@ int Client_voiceMsg(client_t *client, uint8_t *data, int len)
 	Timer_restart(&client->idleTime);
 	Timer_restart(&client->lastActivity);
 
-	counter = Pds_get_numval(pdi); /* step past session id */
-	if ((type >> 5) != UDPVoiceOpus) {
-		do {
-			counter = Pds_next8(pdi);
-			offset = Pds_skip(pdi, counter & 0x7f);
-		} while ((counter & 0x80) && offset > 0);
-	} else {
-		size = Pds_get_numval(pdi);
-		Pds_skip(pdi, size & 0x1fff);
-	}
+	Pds_get_numval(pdi); /* step past session id */
+	size = Pds_get_numval(pdi);
+	Pds_skip(pdi, size & 0x1fff);
 
 	poslen = pdi->maxsize - pdi->offset; /* For stripping of positional info */
 
