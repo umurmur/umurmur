@@ -52,7 +52,6 @@
 #define BUFSIZE 8192
 #define UDP_BUFSIZE 512
 #define INACTIVITY_TIMEOUT 15 /* Seconds */
-#define MAX_CODECS 10
 #define MAX_TOKENSIZE 64
 #define MAX_TOKENS 32
 #define KEY_LENGTH sizeof(uint16_t) + 4 * sizeof(in_addr_t)
@@ -75,13 +74,10 @@ typedef struct {
 	int sessionId;
 	uint8_t key[KEY_LENGTH];
 	char *username;
-	bool_t bUDP, authenticated, deaf, mute, self_deaf, self_mute, recording, bOpus;
-	bool_t codec_recheck_pending;
+	bool_t bUDP, authenticated, deaf, mute, self_deaf, self_mute, recording;
 	bool_t priority_speaker;
 	char *os, *release, *os_version;
 	uint32_t version;
-	int codec_count;
-	struct dlist codecs;
 	int availableBandwidth;
 	etimer_t lastActivity, connectTime, idleTime;
 	struct dlist node;
@@ -99,11 +95,6 @@ typedef struct {
 	float UDPPingAvg, UDPPingVar, TCPPingAvg, TCPPingVar;
 	uint32_t UDPPackets, TCPPackets;
 } client_t;
-
-typedef struct {
-	int codec, count;
-	struct dlist node;
-} codec_t;
 
 typedef struct {
 	char *token;
@@ -127,10 +118,6 @@ int Client_send_message_except(client_t *client, message_t *msg);
 int Client_read_udp(int udpsock);
 void Client_disconnect_all();
 int Client_voiceMsg(client_t *client, uint8_t *data, int len);
-void recheckCodecVersions(client_t *connectingClient);
-void Client_codec_add(client_t *client, int codec);
-void Client_codec_free(client_t *client);
-codec_t *Client_codec_iterate(client_t *client, codec_t **codec_itr);
 void Client_textmessage(client_t *client, char *text);
 bool_t Client_token_match(client_t *client, char const *str);
 void Client_token_free(client_t *client);

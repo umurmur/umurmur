@@ -88,7 +88,7 @@ void Sharedmemory_update(void)
 				shmptr->client[cc].bUDP  = client_itr->bUDP;
 				shmptr->client[cc].deaf  = client_itr->deaf;
 				shmptr->client[cc].mute  = client_itr->mute;
-				shmptr->client[cc].bOpus  = client_itr->bOpus;
+				shmptr->client[cc].bOpus  = true;
 				shmptr->client[cc].self_deaf  = client_itr->self_deaf;
 				shmptr->client[cc].self_mute  = client_itr->self_mute;
 				shmptr->client[cc].recording  = client_itr->recording;

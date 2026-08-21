@@ -46,7 +46,6 @@ static config_t configuration;
 #define DEFAULT_MAX_BANDWIDTH 48000
 #define DEFAULT_BINDPORT 64738
 #define DEFAULT_BAN_LENGTH (60*60)
-#define DEFAULT_OPUS_THRESHOLD 100
 
 const char defaultconfig[] = DEFAULT_CONFIG;
 
@@ -281,14 +280,6 @@ int getIntConf(param_t param)
 			setting = config_lookup(&configuration, "max_users");
 			if (!setting)
 				return DEFAULT_MAX_CLIENTS;
-			else {
-				return config_setting_get_int(setting);
-			}
-			break;
-		case OPUS_THRESHOLD:
-			setting = config_lookup(&configuration, "opus_threshold");
-			if (!setting)
-				return DEFAULT_OPUS_THRESHOLD;
 			else {
 				return config_setting_get_int(setting);
 			}
