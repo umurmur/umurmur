@@ -47,7 +47,7 @@
 #define MAX_TEXT 512
 #define MAX_USERNAME 128
 
-#define OPUS_CLIENT_UNSUPPORTED "<strong>WARNING:</strong> Your client doesn't support the Opus codec the server is using, you won't be able to talk or hear anyone. Please upgrade your Mumble client."
+#define OPUS_CLIENT_UNSUPPORTED "Your client does not support Opus. Please upgrade your Mumble client."
 
 
 extern channel_t *defaultChan;
@@ -131,6 +131,12 @@ void Mh_handle_message(client_t *client, message_t *msg)
 			break;
 		}
 
+		if (!msg->payload.authenticate->opus) {
+			sendServerReject(client, OPUS_CLIENT_UNSUPPORTED,
+			    MUMBLE_PROTO__REJECT__REJECT_TYPE__None);
+			goto disconnect;
+		}
+
 		if (SSLi_getSHA1Hash(client->ssl, client->hash) && Ban_isBanned(client)) {
 			char hexhash[41];
 			SSLi_hash2hex(client->hash, hexhash);
@@ -211,18 +217,10 @@ void Mh_handle_message(client_t *client, message_t *msg)
 
 		client->authenticated = true;
 
-		/* Codec version */
-		if (msg->payload.authenticate->opus)
-			client->bOpus = true;
-
 		sendmsg = Msg_create(CodecVersion);
 		sendmsg->payload.codecVersion->has_opus = true;
 		sendmsg->payload.codecVersion->opus = true;
 		Client_send_message(client, sendmsg);
-
-		if (!client->bOpus)
-			sendServerReject(client, OPUS_CLIENT_UNSUPPORTED,
-			    MUMBLE_PROTO__REJECT__REJECT_TYPE__None);
 
 		/* Iterate channels and send channel info */
 		ch_itr = NULL;
@@ -846,7 +844,7 @@ void Mh_handle_message(client_t *client, message_t *msg)
 				sendmsg->payload.userStats->version->os_version = strdup(target->os_version);
 
 			sendmsg->payload.userStats->has_opus = true;
-			sendmsg->payload.userStats->opus = target->bOpus;
+			sendmsg->payload.userStats->opus = true;
 
 			/* Address */
 			if (getBoolConf(SHOW_ADDRESSES)) {
