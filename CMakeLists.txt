@@ -42,6 +42,12 @@ check_function_exists(strlcpy HAVE_STRLCPY)
 
 add_subdirectory(src)
 
+enable_testing()
+add_test(NAME umurmurd-help COMMAND $<TARGET_FILE:umurmurd> -h)
+set_tests_properties(umurmurd-help PROPERTIES
+  PASS_REGULAR_EXPRESSION "Usage: umurmurd"
+)
+
 install(
   FILES "umurmur.conf.example"
   DESTINATION "${CMAKE_INSTALL_FULL_SYSCONFDIR}/umurmur"
