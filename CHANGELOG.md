@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0](https://github.com/umurmur/umurmur/compare/v0.4.1...v0.5.0) (2026-08-21)
+
+
+### Added
+
+* Remove legacy codec support ([#262](https://github.com/umurmur/umurmur/issues/262)) ([0a1b67d](https://github.com/umurmur/umurmur/commit/0a1b67d7f37f50b1ca74a72f29cae81f9f2ca793))
+
+
+### Fixed
+
+* Add format attribute to log wrappers ([#256](https://github.com/umurmur/umurmur/issues/256)) ([07f2693](https://github.com/umurmur/umurmur/commit/07f269376a308ccbeb428487af071d20be7ba666))
+* Remove unused parameter in Sharedmemory_init() ([#253](https://github.com/umurmur/umurmur/issues/253)) ([5f62561](https://github.com/umurmur/umurmur/commit/5f6256123815672d164c9fddf69a861e8d0f757e))
+* Simplify extension feature-test macros ([#252](https://github.com/umurmur/umurmur/issues/252)) ([c41b614](https://github.com/umurmur/umurmur/commit/c41b6140f95200e18cd112aaa5eae58525d23a62))
+* Tidy extraneous newlines ([#261](https://github.com/umurmur/umurmur/issues/261)) ([071657c](https://github.com/umurmur/umurmur/commit/071657c5f1d8eb1cbd1a74c57b190a9cdfb06f04))
+* Use properly-sized buffer for system_string ([#255](https://github.com/umurmur/umurmur/issues/255)) ([427450a](https://github.com/umurmur/umurmur/commit/427450a91237b46791abaf4c69bb90608e8c17da))
+* Use snprintf in SSLi_init() ([#254](https://github.com/umurmur/umurmur/issues/254)) ([d691392](https://github.com/umurmur/umurmur/commit/d691392c01389d0b65fea4784c89d601584a8622))
+
 ## [0.4.1](https://github.com/umurmur/umurmur/compare/v0.4.0...v0.4.1) (2026-08-18)
 
 
