@@ -46,16 +46,24 @@ typedef struct CryptState cryptState_t;
 /* Crypto backend: mbedTLS */
 #if defined(USE_MBEDTLS)
 
-#include <mbedtls/aes.h>
+#include <psa/crypto.h>
 
-#define CRYPT_AES_KEY mbedtls_aes_context
+#define CRYPT_AES_KEY psa_key_id_t
 
-#define CRYPT_RANDOM_BYTES(dest, size) RAND_bytes((unsigned char *)(dest), (size))
-#define CRYPT_SET_ENC_KEY(dest, source, size) mbedtls_aes_setkey_enc((dest), (source), (size));
-#define CRYPT_SET_DEC_KEY(dest, source, size) mbedtls_aes_setkey_dec((dest), (source), (size));
+#define CRYPT_RANDOM_BYTES(dest, size) do { \
+	if (psa_generate_random((unsigned char *)(dest), (size)) != PSA_SUCCESS) \
+		Log_fatal("psa_generate_random failed"); \
+} while (0)
 
-#define CRYPT_AES_ENCRYPT(src, dst, cryptstate) mbedtls_aes_crypt_ecb(&(cryptstate)->encrypt_key, MBEDTLS_AES_ENCRYPT, (unsigned char *)(src), (unsigned char *)(dst));
-#define CRYPT_AES_DECRYPT(src, dst, cryptstate) mbedtls_aes_crypt_ecb(&(cryptstate)->decrypt_key, MBEDTLS_AES_DECRYPT, (unsigned char *)(src), (unsigned char *)(dst));
+void CryptState_setEncryptKey(CRYPT_AES_KEY *dest, const unsigned char *source, int size);
+void CryptState_setDecryptKey(CRYPT_AES_KEY *dest, const unsigned char *source, int size);
+void CryptState_aesEncrypt(const unsigned char *src, unsigned char *dst, cryptState_t *cs);
+void CryptState_aesDecrypt(const unsigned char *src, unsigned char *dst, cryptState_t *cs);
+
+#define CRYPT_SET_ENC_KEY(dest, source, size) CryptState_setEncryptKey((dest), (source), (size))
+#define CRYPT_SET_DEC_KEY(dest, source, size) CryptState_setDecryptKey((dest), (source), (size))
+#define CRYPT_AES_ENCRYPT(src, dst, cryptstate) CryptState_aesEncrypt((const unsigned char *)(src), (unsigned char *)(dst), (cryptstate))
+#define CRYPT_AES_DECRYPT(src, dst, cryptstate) CryptState_aesDecrypt((const unsigned char *)(src), (unsigned char *)(dst), (cryptstate))
 
 /* Crypto backend: GnuTLS/nettle */
 #elif defined(USE_GNUTLS)

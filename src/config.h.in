@@ -4,7 +4,6 @@
 #cmakedefine USE_GNUTLS
 #cmakedefine USE_MBEDTLS
 #cmakedefine USE_MBEDTLS_TESTCERT
-#cmakedefine USE_MBEDTLS_HAVEGE
 
 #cmakedefine USE_SHAREDMEMORY_API
 

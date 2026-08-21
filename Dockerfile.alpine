@@ -1,5 +1,6 @@
 # Stage 1: Build
-FROM alpine:3.23 AS build
+
+FROM alpine:3.24 AS build
 
 ARG SSL=openssl
 ARG BUILD_TYPE=debug
@@ -15,15 +16,8 @@ RUN \
 		libconfig-dev \
 		protobuf-c-dev ; \
 	[ "${SSL}" == "gnutls" ] && apk add gnutls-dev ; \
+  [ "${SSL}" == "mbedtls" ] && apk add mbedtls-dev ; \
 	[ "${SSL}" == "openssl" ] && apk add openssl-dev ; \
-	if [ "${SSL}" == "mbedtls" ] ; then \
-		curl -o mbedtls.tar.bz2 -L https://github.com/Mbed-TLS/mbedtls/releases/download/mbedtls-3.6.5/mbedtls-3.6.5.tar.bz2 && \
-		tar -jxvf mbedtls.tar.bz2 && \
-		cd mbedtls-* && \
-		cmake -Bbuild -H. -DENABLE_TESTING=OFF && \
-		cmake --build build && \
-		cmake --install build ; \
-	fi ; \
 	echo "Installed deps for building against ${SSL}"
 
 WORKDIR /umurmur
@@ -44,7 +38,7 @@ RUN \
 	cmake --install build-${SSL}
 
 # # Stage 2: Runtime
-FROM alpine:3.23
+FROM alpine:3.24
 
 ARG SSL=openssl
 
@@ -54,6 +48,7 @@ RUN \
 		libconfig \
 		protobuf-c ; \
 	[ "${SSL}" == "gnutls" ] && apk add gnutls; \
+	[ "${SSL}" == "mbedtls" ] && apk add mbedtls; \
 	[ "${SSL}" == "openssl" ] && apk add openssl ; \
 	rm -rf /var/cache/apk/* ; \
 	mkdir /etc/umurmur
@@ -66,4 +61,3 @@ COPY --from=build /umurmur/umurmur.conf.example /usr/local/etc/umurmur/umurmur.c
 EXPOSE 64738
 
 ENTRYPOINT ["/usr/local/bin/umurmurd", "-d"]
-
