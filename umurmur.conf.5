@@ -1,0 +1,270 @@
+.\" Copyright (C) 2026, Andrew Kloet <andrew@kloet.net>
+.\"
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" - Redistributions of source code must retain the above copyright notice,
+.\" this list of conditions and the following disclaimer.
+.\" - Redistributions in binary form must reproduce the above copyright notice,
+.\" this list of conditions and the following disclaimer in the documentation
+.\" and/or other materials provided with the distribution.
+.\" - Neither the name of the Developers nor the names of its contributors may
+.\" be used to endorse or promote products derived from this software without
+.\" specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+.\" A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR
+.\" CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+.\" EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+.\" PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+.\" PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+.\" LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+.\" NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+.\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd August 21, 2026
+.Dt UMURMUR.CONF 5
+.Os
+.
+.Sh NAME
+.Nm umurmur.conf
+.Nd uMurmur daemon configuration file
+.
+.Sh DESCRIPTION
+The
+.Nm
+file configures the
+.Xr umurmurd 8
+Mumble server.
+.Pp
+The following sections describe the available configuration parameters.
+.Ss General Configuration
+The following parameters may be specified at the top level of
+.Nm :
+.Bl -tag -width Ds
+.It Ic max_bandwidth Ar bits/second
+Maximum bandwidth available to a connected client.
+The default is
+.Qq 48000 .
+.It Ic welcometext Ar text
+Displayed to a client when it connects to the server.
+The default is
+.Qq Welcome to uMurmur!\&
+.It Ic certificate Ar path
+Certificate for TLS communication.
+The default is
+.Pa /etc/umurmur/certificate.crt .
+.It Ic private_key Ar path
+Private key for TLS communication.
+The default is
+.Pa /etc/umurmur/private_key.key .
+.It Ic password Ar password
+Server password required to connect.
+An empty string disables the password.
+The default is the empty string.
+.It Ic max_users Ar number
+Maximum number of simultaneous users.
+The default is
+.Qq 10 .
+.It Ic bindaddr Ar address
+IPv4 address on which the server listens.
+The default is all available addresses.
+.It Ic bindport Ar port
+IPv4 listening port.
+The default is
+.Qq 64738 .
+.It Ic bindaddr6 Ar address
+IPv6 address on which the server listens.
+The default is all available addresses.
+.It Ic bindport6 Ar port
+IPv6 listening port.
+The default is
+.Va bindport .
+.It Ic admin_password Ar password
+Password used for administrative functions.
+If empty, administrative functions are disabled.
+.It Ic ban_length Ar seconds
+Length of time, in seconds, which a ban remains active.
+A value of zero causes bans to remain indefinitely.
+The default is zero.
+.It Ic enable_ban Ar true/false
+Enable client banning.
+The default is
+.Qq false .
+.It Ic banfile Ar path
+Path to the file used to store bans.
+An empty string disables persistent ban storage.
+The default is an empty string.
+.It Ic sync_banfile Ar true/false
+Synchronize the ban file when bans are modified.
+If false, bans sync only when TERM is received.
+The default is
+.Qq false .
+.It Ic allow_textmessage Ar true/false
+Allow clients to send text messages.
+The default is
+.Qq true .
+.It Ic show_addresses Ar true/false
+Whether to show client's IP addresses under user information.
+The default is
+.Qq true .
+.It Ic username Ar user
+User to which the daemon drops privileges after reading the TLS
+certificate and private key.
+The account specified by
+.Va username
+must have permission to access
+.Va logfile
+and
+.Va banfile .
+.It Ic groupname Ar group
+Group to which the daemon drops privileges.
+If omitted, the primary group ID of
+.Va username
+is used.
+.It Ic logfile Ar path
+Path to a file to which log messages are written.
+If omitted, log messages are sent to
+.Xr syslog 3 .
+.Pp
+When
+.Va logfile
+is used, the file must be accessible by the user configured with
+.Va username .
+.It Ic ca_path Ar folder
+CA location for CA-signed certificates.
+The default is unset.
+.It Ic default_channel Ar channel
+Name of the channel in which newly connected users are placed.
+The default is the root channel.
+.El
+.Ss Channel Configuration
+Channels are declared in the
+.Va channels
+configuration list.
+Each channel requires
+.Va name
+and
+.Va parent
+parameters.
+.Pp
+The following parameters are available:
+.Bl -tag -width Ds
+.It Ic name Ar text
+Name displayed to clients.
+.It Ic parent Ar channel
+Name of the parent channel.
+.It Ic noenter Ar true/false
+Prevent clients from entering the channel.
+The default is
+.Qq false .
+This can be used to create a folder channel containing other channels.
+.It Ic password Ar password
+Password required to enter the channel.
+The default is an empty string.
+.It Ic description Ar text
+Description displayed for the channel.
+The default is an empty string.
+.It Ic silent Ar true/false
+Prevent speech from being transmitted in the channel.
+The default is
+.Qq false .
+.It Ic position Ar index
+Integer controlling the channel's position in the client's channel tree.
+The default is zero.
+When channels have the same position, they are sorted alphabetically.
+.It Ic allow_temp Ar true/false
+Allow temporary subchannels to be created below this channel.
+The default is
+.Qq false .
+.El
+.Ss Channel Links
+Channel links are declared in the
+.Va channel_links
+configuration list.
+A channel link performs one-way duplication of speech
+from one channel to another.
+.Pp
+Both of the following parameters are required:
+.Bl -tag -width Ds
+.It Ic source Ar channel
+Name of the source channel.
+.It Ic destination Ar channel
+Name of the destination channel.
+.El
+.Pp
+Speech transmitted in the source channel is also transmitted in the
+destination channel.
+The link is one-way; speech originating in the destination channel
+is not sent back to the source channel.
+.
+.Sh EXAMPLES
+A configuration might look like:
+.Bd -literal -offset indent
+username = "umurmur";
+groupname = "umurmur";
+
+certificate = "/etc/umurmur/certificate.crt";
+private_key = "/etc/umurmur/private_key.key";
+
+default_channel = "Lobby";
+channels = (
+	{
+		name = "Root";
+		parent = "";
+		description = "Root channel. No entry.";
+		noenter = true;
+	},
+	{
+		name = "Lobby";
+		parent = "Root";
+		description = "Lobby channel";
+	},
+	{
+		name = "Silent";
+		parent = "Root";
+		description = "Silent channel";
+		silent = true;
+	},
+	{
+		name = "Red team";
+		parent = "Lobby";
+		description = "The Red team channel";
+		position = 0;
+		password = "redpw";
+		allow_temp = true;
+	},
+	{
+		name = "Blue team";
+		parent = "Lobby";
+		description = "The Blue team channel";
+		position = 1;
+		password = "bluepw";
+	}
+);
+
+channel_links = (
+	{
+		source = "Lobby";
+		destination = "Red team";
+	},
+	{
+		source = "Lobby";
+		destination = "Blue team";
+	}
+);
+.Ed
+.
+.Sh SEE ALSO
+.Xr syslog 3 ,
+.Xr umurmurd 8
+.
+.Sh AUTHORS
+.An Martin Johansson Aq Mt martin@fatbob.nu
+and
+.An Thorvald Natvig Aq Mt thorvald@natvig.com .

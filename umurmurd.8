@@ -1,0 +1,108 @@
+.\" Copyright (C) 2026, Andrew Kloet <andrew@kloet.net>
+.\"
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" - Redistributions of source code must retain the above copyright notice,
+.\" this list of conditions and the following disclaimer.
+.\" - Redistributions in binary form must reproduce the above copyright notice,
+.\" this list of conditions and the following disclaimer in the documentation
+.\" and/or other materials provided with the distribution.
+.\" - Neither the name of the Developers nor the names of its contributors may
+.\" be used to endorse or promote products derived from this software without
+.\" specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+.\" A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR
+.\" CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+.\" EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+.\" PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+.\" PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+.\" LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+.\" NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+.\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd August 21, 2026
+.Dt UMURMUR 8
+.Os
+.
+.Sh NAME
+.Nm umurmurd
+.Nd Minimalistic Mumble server
+.
+.Sh SYNOPSIS
+.Nm
+.Op Fl dhrt
+.Op Fl A Ar address
+.Op Fl a Ar address
+.Op Fl B Ar port
+.Op Fl b Ar port
+.Op Fl c Ar conf file
+.Op Fl p Ar pidfile
+.
+.Sh DESCRIPTION
+.Nm
+is a minimalistic Mumble server primarily targeted to run on routers
+with an open OS like OpenWRT.
+The server part of Mumble is called Murmur, hence the name uMurmur.
+.Nm
+reopens the log file when it receives SIGHUP.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl A Ar host
+Specifies the IPv6 address to bind to.
+.It Fl a Ar host
+Specifies the IPv4 address to bind to.
+.It Fl B Ar port
+Specifies the IPv6 port to bind to (defaults to the IPv4 port).
+.It Fl b Ar port
+Specifies the IPv4 port to bind to (defaults to 64738).
+.It Fl c Ar path
+Use configuration file at
+.Ar path .
+.It Fl d
+Do not detach or become a daemon.
+.It Fl h
+Show
+.Nm
+usage help and exit.
+.It Fl p Ar path
+Write PID to file at
+.Ar path .
+.It Fl r
+Run with realtime priority.
+.It Fl t
+Check that the configuration is valid, but don't start a server.
+.El
+.
+.Sh LIMITATIONS
+.Nm
+only supports the Opus codec, legacy clients are rejected.
+.
+.Sh FILES
+.Bl -tag -width "/etc/umurmur/certificate.crt" -compact
+.It Pa /etc/umurmur/umurmur.conf
+Default configuration file.
+.It Pa /etc/umurmur/certificate.crt
+Default certificate file.
+.It Pa /etc/umurmur/private_key.key
+Default private key file.
+.El
+.
+.Sh SEE ALSO
+.Xr umurmur.conf 5
+.
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+program was written by
+.An Martin Johansson Aq Mt martin@fatbob.nu
+and
+.An Thorvald Natvig Aq Mt thorvald@natvig.com .
