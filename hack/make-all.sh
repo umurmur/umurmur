@@ -13,7 +13,6 @@ for S in mbedtls openssl gnutls; do
 		-DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
 		-DCMAKE_RULE_MESSAGES=ON \
 		-DUSE_SHAREDMEMORY_API=${SHMEM} \
-		-DSSL=${SSL} \
 		&& \
 	cmake --build build-${S} && \
 	ctest --test-dir build-${S} --output-on-failure -V && \
