@@ -41,17 +41,17 @@ uMurmur is a minimalistic Mumble server primarily targeted to run on embedded co
         </a>
     </td>
     <td align="center" style="word-wrap: break-word; width: 150.0; height: 150.0">
-        <a href=https://github.com/unterwulf>
-            <img src=https://avatars.githubusercontent.com/u/150391?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=Vitaly Sinilin/>
-            <br />
-            <sub style="font-size:12px"><b>Vitaly Sinilin</b></sub>
-        </a>
-    </td>
-    <td align="center" style="word-wrap: break-word; width: 150.0; height: 150.0">
         <a href=https://github.com/amrfti>
             <img src=https://avatars.githubusercontent.com/u/182707342?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=Andrew Kloet/>
             <br />
             <sub style="font-size:12px"><b>Andrew Kloet</b></sub>
+        </a>
+    </td>
+    <td align="center" style="word-wrap: break-word; width: 150.0; height: 150.0">
+        <a href=https://github.com/unterwulf>
+            <img src=https://avatars.githubusercontent.com/u/150391?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=Vitaly Sinilin/>
+            <br />
+            <sub style="font-size:12px"><b>Vitaly Sinilin</b></sub>
         </a>
     </td>
     <td align="center" style="word-wrap: break-word; width: 150.0; height: 150.0">
