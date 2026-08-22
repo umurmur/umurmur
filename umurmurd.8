@@ -83,7 +83,17 @@ Check that the configuration is valid, but don't start a server.
 .
 .Sh LIMITATIONS
 .Nm
-only supports the Opus codec, legacy clients are rejected.
+does not support the following mumble features:
+.Bl -dash -compact
+.It
+Channel access control lists
+.It
+Persistent dynamic channel creation
+.It
+User certificate registration
+.It
+Legacy codecs (CELT, Speex)
+.El
 .
 .Sh FILES
 .Bl -tag -width "/etc/umurmur/certificate.crt" -compact
