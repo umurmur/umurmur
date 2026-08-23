@@ -12,6 +12,6 @@
 #cmakedefine UMURMUR_CODENAME "@UMURMUR_CODENAME@"
 #cmakedefine SSL_LIBRARY "@SSL_LIBRARY@"
 
-#define DEFAULT_CONFIG "${CMAKE_INSTALL_FULL_SYSCONFDIR}/umurmur/umurmur.conf"
+#define DEFAULT_CONFIG "${CMAKE_FULL_SYSCONFDIR}/umurmur/umurmur.conf"
 
 #endif // CONFIG_H
