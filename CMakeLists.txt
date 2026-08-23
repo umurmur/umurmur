@@ -41,7 +41,9 @@ include(CheckFunctionExists)
 check_function_exists(strlcpy HAVE_STRLCPY)
 
 add_subdirectory(src)
-add_subdirectory(man)
+if(EXISTS "${CMAKE_SOURCE_DIR}/man/CMakeLists.txt")
+  add_subdirectory(man)
+endif()
 
 install(
   FILES "umurmur.conf.example"
