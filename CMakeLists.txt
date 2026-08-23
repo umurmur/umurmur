@@ -41,22 +41,13 @@ include(CheckFunctionExists)
 check_function_exists(strlcpy HAVE_STRLCPY)
 
 add_subdirectory(src)
+add_subdirectory(man)
 
 install(
   FILES "umurmur.conf.example"
-  DESTINATION "${CMAKE_INSTALL_FULL_SYSCONFDIR}/umurmur"
+  DESTINATION "${CMAKE_INSTALL_SYSCONFDIR}/umurmur"
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ
   RENAME "umurmur.conf"
-)
-
-install(
-  FILES "umurmur.conf.5"
-  DESTINATION "${CMAKE_INSTALL_MANDIR}/man5"
-)
-
-install(
-  FILES "umurmurd.8"
-  DESTINATION "${CMAKE_INSTALL_MANDIR}/man8"
 )
 
 message(STATUS "Version: ${UMURMUR_VERSION}")

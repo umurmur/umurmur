@@ -39,8 +39,6 @@ WORKDIR /umurmur
 COPY CMakeLists.txt .
 COPY cmake cmake
 COPY umurmur.conf.example .
-COPY umurmurd.8 .
-COPY umurmur.conf.5 .
 COPY src src
 
 # Build against both OpenSSL and Mbed TLS
