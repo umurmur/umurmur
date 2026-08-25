@@ -58,11 +58,11 @@ The default is
 .It Ic certificate Ar path
 Certificate for TLS communication.
 The default is
-.Pa @CMAKE_INSTALL_SYSCONFDIR@/umurmur/certificate.crt .
+.Pa @CMAKE_INSTALL_FULL_SYSCONFDIR@/umurmur/certificate.crt .
 .It Ic private_key Ar path
 Private key for TLS communication.
 The default is
-.Pa @CMAKE_INSTALL_SYSCONFDIR@/umurmur/private_key.key .
+.Pa @CMAKE_INSTALL_FULL_SYSCONFDIR@/umurmur/private_key.key .
 .It Ic password Ar password
 Server password required to connect.
 An empty string disables the password.
@@ -209,8 +209,8 @@ A configuration might look like:
 username = "umurmur";
 groupname = "umurmur";
 
-certificate = "@CMAKE_INSTALL_SYSCONFDIR@/umurmur/certificate.crt";
-private_key = "@CMAKE_INSTALL_SYSCONFDIR@/umurmur/private_key.key";
+certificate = "@CMAKE_INSTALL_FULL_SYSCONFDIR@/umurmur/certificate.crt";
+private_key = "@CMAKE_INSTALL_FULL_SYSCONFDIR@/umurmur/private_key.key";
 
 default_channel = "Lobby";
 channels = (

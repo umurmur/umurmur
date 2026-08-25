@@ -96,12 +96,12 @@ Legacy codecs (CELT, Speex)
 .El
 .
 .Sh FILES
-.Bl -tag -width "@CMAKE_INSTALL_SYSCONFDIR@/umurmur/certificate.crt" -compact
-.It Pa @CMAKE_INSTALL_SYSCONFDIR@/umurmur/umurmur.conf
+.Bl -tag -width "@CMAKE_INSTALL_FULL_SYSCONFDIR@/umurmur/certificate.crt" -compact
+.It Pa @CMAKE_INSTALL_FULL_SYSCONFDIR@/umurmur/umurmur.conf
 Default configuration file.
-.It Pa @CMAKE_INSTALL_SYSCONFDIR@/umurmur/certificate.crt
+.It Pa @CMAKE_INSTALL_FULL_SYSCONFDIR@/umurmur/certificate.crt
 Default certificate file.
-.It Pa @CMAKE_INSTALL_SYSCONFDIR@/umurmur/private_key.key
+.It Pa @CMAKE_INSTALL_FULL_SYSCONFDIR@/umurmur/private_key.key
 Default private key file.
 .El
 .
