@@ -43,8 +43,8 @@
 #if defined(USE_MBEDTLS)
 #include <mbedtls/version.h>
 
-#if !defined(MBEDTLS_VERSION_MAJOR) || (MBEDTLS_VERSION_MAJOR < 2)
-#error mbedTLS version 2.0.0 or greater is required!
+#if !defined(MBEDTLS_VERSION_MAJOR) || (MBEDTLS_VERSION_MAJOR < 3)
+#error mbedTLS version 3.0.0 or greater is required!
 #endif
 
 #include <mbedtls/ssl.h>
