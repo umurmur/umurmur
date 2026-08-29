@@ -48,11 +48,7 @@
 #endif
 
 #include <mbedtls/ssl.h>
-#if (MBEDTLS_VERSION_MINOR > 3)
 #include <mbedtls/net_sockets.h>
-#else
-#include <mbedtls/net.h>
-#endif
 
 #define RAND_bytes(_dst_, _size_) do { urandom_bytes(NULL, _dst_, _size_); } while (0)
 int urandom_bytes(void *ctx, unsigned char *dest, size_t len);

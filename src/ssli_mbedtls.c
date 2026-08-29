@@ -35,30 +35,20 @@
 #include "memory.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
 
-#include <mbedtls/version.h>
 #if defined(MBEDTLS_USE_PSA_CRYPTO)
 #include <mbedtls/psa_util.h>
 #else
 #include <mbedtls/ctr_drbg.h>
 #include <mbedtls/entropy.h>
 #endif
-#include <mbedtls/x509.h>
 #include <mbedtls/x509_crt.h>
 #include <mbedtls/pk.h>
 #include <mbedtls/rsa.h>
-#include <mbedtls/bignum.h>
-#include <mbedtls/ssl.h>
-
-#if MBEDTLS_VERSION_NUMBER < 0x02060000L
-#include <mbedtls/net.h>
-#else
-#include <mbedtls/net_sockets.h>
-#endif
-
 #include <mbedtls/sha1.h>
 #include <mbedtls/error.h>
 
