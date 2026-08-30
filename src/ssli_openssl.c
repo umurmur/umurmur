@@ -353,6 +353,7 @@ bool_t SSLi_getSHA1Hash(SSL_handle_t *ssl, uint8_t *hash)
 
 	SHA1(buf, len, hash);
 	free(buf);
+	X509_free(x509);
 	return true;
 }
 
