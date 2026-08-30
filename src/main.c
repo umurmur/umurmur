@@ -252,16 +252,21 @@ void printhelp(void)
 	printf("Usage: umurmurd [-d] [-r] [-h] [-p <pidfile>] [-t] [-c <conf file>] [-a <addr>] [-b <port>]\n");
 	printf("       -d             - Do not daemonize - run in foreground.\n");
 #ifdef POSIX_PRIORITY_SCHEDULING
+	printf("r");
+#endif
+	printf("t] [-A <addr>] [-a <addr>] [-B <port>] [-b <port>] [-c <conf file>] [-p <pidfile>]\n");
+	printf("       -A <address>   - Bind to IPv6 address\n");
+	printf("       -a <address>   - Bind to IPv4 address\n");
+	printf("       -B <port>      - Bind to port (IPv6)\n");
+	printf("       -b <port>      - Bind to port (IPv4)\n");
+	printf("       -c <conf file> - Specify configuration file (default %s)\n", DEFAULT_CONFIG);
+	printf("       -d             - Do not daemonize - run in foreground.\n");
+	printf("       -h             - Print this help\n");
+	printf("       -p <pidfile>   - Write PID to this file\n");
+#ifdef POSIX_PRIORITY_SCHEDULING
 	printf("       -r             - Run with realtime priority\n");
 #endif
-	printf("       -p <pidfile>   - Write PID to this file\n");
-	printf("       -c <conf file> - Specify configuration file (default %s)\n", DEFAULT_CONFIG);
 	printf("       -t             - Test config. Error message to stderr + non-zero exit code on error\n");
-	printf("       -a <address>   - Bind to IP address\n");
-	printf("       -A <address>   - Bind to IPv6 address\n");
-	printf("       -b <port>      - Bind to port\n");
-	printf("       -B <port>      - Bind to port (IPv6)\n");
-	printf("       -h             - Print this help\n");
 	exit(0);
 }
 
@@ -282,28 +287,25 @@ int main(int argc, char **argv)
 
 	/* Arguments */
 #ifdef POSIX_PRIORITY_SCHEDULING
-	while ((c = getopt(argc, argv, "drp:c:a:A:b:B:ht")) != EOF) {
+	while ((c = getopt(argc, argv, "dhprt:A:a:B:b:c:")) != EOF) {
 #else
-	while ((c = getopt(argc, argv, "dp:c:a:A:b:B:ht")) != EOF) {
+	while ((c = getopt(argc, argv, "dhpt:A:a:B:b:c:")) != EOF) {
 #endif
 		switch(c) {
-			case 'c':
-				conffile = optarg;
-				break;
-			case 'p':
-				pidfile = optarg;
+			case 'A':
+				bindaddr6 = optarg;
 				break;
 			case 'a':
 				bindaddr = optarg;
 				break;
-			case 'A':
-				bindaddr6 = optarg;
+			case 'B':
+				bindport6 = atoi(optarg);
 				break;
 			case 'b':
 				bindport = atoi(optarg);
 				break;
-			case 'B':
-				bindport6 = atoi(optarg);
+			case 'c':
+				conffile = optarg;
 				break;
 			case 'd':
 				nodaemon = true;
@@ -311,14 +313,17 @@ int main(int argc, char **argv)
 			case 'h':
 				printhelp();
 				break;
-			case 't':
-				testconfig = true;
+			case 'p':
+				pidfile = optarg;
 				break;
 #ifdef POSIX_PRIORITY_SCHEDULING
 			case 'r':
 				realtime = true;
 				break;
 #endif
+			case 't':
+				testconfig = true;
+				break;
 			default:
 				fprintf(stderr, "Unrecognized option\n");
 				printhelp();
