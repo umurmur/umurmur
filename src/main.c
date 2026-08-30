@@ -248,7 +248,7 @@ void setscheduler(void)
 void printhelp(void)
 {
 	printf("uMurmur %s (%s), Mumble protocol %d.%d.%d\n", UMURMUR_VERSION,
-		SSL_VERSION, PROTVER_MAJOR, PROTVER_MINOR, PROTVER_PATCH);
+		SSLIMP_VERSION, PROTVER_MAJOR, PROTVER_MINOR, PROTVER_PATCH);
 	printf("Usage: umurmurd [-d] [-r] [-h] [-p <pidfile>] [-t] [-c <conf file>] [-a <addr>] [-b <port>]\n");
 	printf("       -d             - Do not daemonize - run in foreground.\n");
 #ifdef POSIX_PRIORITY_SCHEDULING
