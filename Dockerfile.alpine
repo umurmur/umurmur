@@ -1,5 +1,5 @@
 # Stage 1: Build
-FROM alpine:3.23 AS build
+FROM alpine:3.24 AS build
 
 ARG SSL=openssl
 ARG BUILD_TYPE=debug
@@ -36,7 +36,7 @@ RUN \
 	cmake --install build-${SSL}
 
 # # Stage 2: Runtime
-FROM alpine:3.23
+FROM alpine:3.24
 
 ARG SSL=openssl
 
@@ -45,7 +45,7 @@ RUN \
 	apk add \
 		libconfig \
 		protobuf-c ; \
-	[ "${SSL}" == "gnutls" ] && apk add gnutls; \
+	[ "${SSL}" == "gnutls" ] && apk add gnutls ; \
 	[ "${SSL}" == "mbedtls" ] && apk add mbedtls ; \
 	[ "${SSL}" == "openssl" ] && apk add openssl ; \
 	rm -rf /var/cache/apk/* ; \
