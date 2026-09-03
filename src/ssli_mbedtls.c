@@ -35,27 +35,20 @@
 #include "memory.h"
 
 #include <stdlib.h>
-#include <fcntl.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <time.h>
 
-#include <mbedtls/version.h>
 #if defined(MBEDTLS_USE_PSA_CRYPTO)
 #include <mbedtls/psa_util.h>
 #else
 #include <mbedtls/ctr_drbg.h>
 #include <mbedtls/entropy.h>
 #endif
-#if MBEDTLS_VERSION_MAJOR < 3
-#include <mbedtls/certs.h>
-#endif
-#include <mbedtls/x509.h>
-#include <mbedtls/ssl.h>
-
-#if MBEDTLS_VERSION_NUMBER < 0x02060000L
-#include <mbedtls/net.h>
-#else
-#include <mbedtls/net_sockets.h>
-#endif
-
+#include <mbedtls/x509_crt.h>
+#include <mbedtls/pk.h>
+#include <mbedtls/rsa.h>
 #include <mbedtls/sha1.h>
 #include <mbedtls/error.h>
 
@@ -73,7 +66,6 @@ const int ciphers[] =
     0
 };
 
-#if MBEDTLS_VERSION_NUMBER >= 0x03000000
 #if !defined(MBEDTLS_USE_PSA_CRYPTO)
 #ifdef MBEDTLS_ENTROPY_C
 static mbedtls_entropy_context entropy;
@@ -82,6 +74,13 @@ static mbedtls_ctr_drbg_context ctr_drbg;
 #endif
 #endif
 #endif
+
+#if defined(MBEDTLS_USE_PSA_CRYPTO)
+#define UMURMUR_MBEDTLS_RNG     mbedtls_psa_get_random
+#define UMURMUR_MBEDTLS_RNG_CTX MBEDTLS_PSA_RANDOM_STATE
+#else
+#define UMURMUR_MBEDTLS_RNG     mbedtls_ctr_drbg_random
+#define UMURMUR_MBEDTLS_RNG_CTX &ctr_drbg
 #endif
 
 static mbedtls_x509_crt certificate;
@@ -90,15 +89,7 @@ static inline int x509parse_keyfile(mbedtls_pk_context *pk, const char *path, co
     int ret;
 
     mbedtls_pk_init(pk);
-#if MBEDTLS_VERSION_NUMBER >= 0x03000000
-#if defined(MBEDTLS_USE_PSA_CRYPTO)
-    ret = mbedtls_pk_parse_keyfile(pk, path, pwd, mbedtls_psa_get_random, MBEDTLS_PSA_RANDOM_STATE);
-#else
-    ret = mbedtls_pk_parse_keyfile(pk, path, pwd, mbedtls_ctr_drbg_random, &ctr_drbg);
-#endif
-#else
-    ret = mbedtls_pk_parse_keyfile(pk, path, pwd);
-#endif
+    ret = mbedtls_pk_parse_keyfile(pk, path, pwd, UMURMUR_MBEDTLS_RNG, UMURMUR_MBEDTLS_RNG_CTX);
     if (ret == 0 && !mbedtls_pk_can_do(pk, MBEDTLS_PK_ECDSA) && !mbedtls_pk_can_do(pk, MBEDTLS_PK_RSA))
 	{
         ret = MBEDTLS_ERR_PK_TYPE_MISMATCH;
@@ -108,73 +99,195 @@ static inline int x509parse_keyfile(mbedtls_pk_context *pk, const char *path, co
 }
 
 static mbedtls_pk_context key;
-bool_t builtInTestCertificate;
 
-#ifdef USE_MBEDTLS_HAVEGE
-mbedtls_havege_state hs;
+#if defined(MBEDTLS_X509_CRT_WRITE_C) && defined(MBEDTLS_PK_WRITE_C) && \
+	defined(MBEDTLS_PEM_WRITE_C) && defined(MBEDTLS_GENPRIME) && defined(MBEDTLS_RSA_C)
+#define UMURMUR_MBEDTLS_CAN_GENCERT 1
 #else
-int urandom_fd;
+#define UMURMUR_MBEDTLS_CAN_GENCERT 0
 #endif
 
-static void initCert()
+static bool_t file_exists(const char *filename)
 {
-	int rc;
-	
-	char *crtfile = (char *)getStrConf(CERTIFICATE);
-
-	if (crtfile == NULL) {
-		Log_fatal("No certificate file specified");
-		return;
-	}
-
-	rc = mbedtls_x509_crt_parse_file(&certificate, crtfile);
-
-	if (rc != 0) {
-	    char buffer[128];
-	    mbedtls_strerror(rc, buffer, 128);
-	    Log_fatal("Could not parse certificate file %s: %s", crtfile, buffer);
-		return;
-	}
+	return (access(filename, F_OK) == 0);
 }
 
-static void initKey()
+#if UMURMUR_MBEDTLS_CAN_GENCERT
+static void mbedtls_fatal(const char *what, int rc)
 {
-	int rc;
-	char *keyfile = (char *)getStrConf(KEY);
+	char buffer[128];
+	mbedtls_strerror(rc, buffer, sizeof(buffer));
+	Log_fatal("%s: %s", what, buffer);
+}
 
+static void write_pem_file(const char *path, const unsigned char *pem)
+{
+	FILE *fp = fopen(path, "w");
+	if (fp == NULL) {
+		Log_warn("Unable to open %s for writing", path);
+		return;
+	}
+	if (fputs((const char *)pem, fp) == EOF)
+		Log_warn("Unable to write %s", path);
+	fclose(fp);
+}
+
+static void generate_cert_and_key(const char *keyfile, const char *crtfile)
+{
+	mbedtls_x509write_cert crt;
+	mbedtls_rsa_context *rsa;
+	unsigned char cert_pem[4096] = {0}, key_pem[4096] = {0};
+	char not_before[32], not_after[32];
+	time_t now;
+	struct tm *tm, t;
+	int rc, year;
+
+	Log_info("Generating new server certificate.");
+
+	mbedtls_x509write_crt_init(&crt);
+
+	if ((rc = mbedtls_pk_setup(&key, mbedtls_pk_info_from_type(MBEDTLS_PK_RSA))) != 0)
+		goto err;
+	rsa = mbedtls_pk_rsa(key);
+	if (rsa == NULL) {
+		rc = MBEDTLS_ERR_PK_TYPE_MISMATCH;
+		goto err;
+	}
+	rc = mbedtls_rsa_gen_key(rsa, UMURMUR_MBEDTLS_RNG, UMURMUR_MBEDTLS_RNG_CTX, 2048, 65537);
+	if (rc != 0)
+		goto err;
+
+	mbedtls_x509write_crt_set_version(&crt, MBEDTLS_X509_CRT_VERSION_3);
+#if MBEDTLS_VERSION_NUMBER >= 0x03020000
+	{
+		unsigned char serial = 1;
+		if ((rc = mbedtls_x509write_crt_set_serial_raw(&crt, &serial, 1)) != 0)
+			goto err;
+	}
+#else
+	{
+		mbedtls_mpi serial;
+		mbedtls_mpi_init(&serial);
+		rc = mbedtls_mpi_lset(&serial, 1);
+		if (rc == 0)
+			rc = mbedtls_x509write_crt_set_serial(&crt, &serial);
+		mbedtls_mpi_free(&serial);
+		if (rc != 0)
+			goto err;
+	}
+#endif
+
+	now = time(NULL);
+	tm = gmtime(&now);
+	if (tm == NULL) {
+		rc = MBEDTLS_ERR_X509_BAD_INPUT_DATA;
+		goto err;
+	}
+	t = *tm;
+	if (t.tm_mon == 1 && t.tm_mday == 29)
+		t.tm_mday = 28;
+	year = t.tm_year + 1900;
+	snprintf(not_before, sizeof(not_before), "%04d%02d%02d%02d%02d%02d",
+		year, t.tm_mon + 1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec);
+	snprintf(not_after, sizeof(not_after), "%04d%02d%02d%02d%02d%02d",
+		year + 20, t.tm_mon + 1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec);
+	if ((rc = mbedtls_x509write_crt_set_validity(&crt, not_before, not_after)) != 0)
+		goto err;
+
+	if ((rc = mbedtls_x509write_crt_set_subject_name(&crt,
+			"CN=Murmur Autogenerated Certificate v2")) != 0)
+		goto err;
+	if ((rc = mbedtls_x509write_crt_set_issuer_name(&crt,
+			"CN=Murmur Autogenerated Certificate v2")) != 0)
+		goto err;
+	mbedtls_x509write_crt_set_subject_key(&crt, &key);
+	mbedtls_x509write_crt_set_issuer_key(&crt, &key);
+#if defined(MBEDTLS_MD_CAN_SHA256) || defined(MBEDTLS_SHA256_C)
+	mbedtls_x509write_crt_set_md_alg(&crt, MBEDTLS_MD_SHA256);
+#elif defined(MBEDTLS_MD_CAN_SHA1) || defined(MBEDTLS_SHA1_C)
+	mbedtls_x509write_crt_set_md_alg(&crt, MBEDTLS_MD_SHA1);
+#else
+	Log_fatal("No hash algorithm available to sign the generated certificate.");
+#endif
+	if ((rc = mbedtls_x509write_crt_set_basic_constraints(&crt, 0, 0)) != 0)
+		goto err;
+#if defined(MBEDTLS_MD_CAN_SHA1)
+	if ((rc = mbedtls_x509write_crt_set_subject_key_identifier(&crt)) != 0)
+		goto err;
+#endif
+
+	rc = mbedtls_x509write_crt_pem(&crt, cert_pem, sizeof(cert_pem),
+		UMURMUR_MBEDTLS_RNG, UMURMUR_MBEDTLS_RNG_CTX);
+	if (rc != 0)
+		goto err;
+	if ((rc = mbedtls_pk_write_key_pem(&key, key_pem, sizeof(key_pem))) != 0)
+		goto err;
+
+	write_pem_file(crtfile, cert_pem);
+	write_pem_file(keyfile, key_pem);
+
+	if ((rc = mbedtls_x509_crt_parse(&certificate, cert_pem, strlen((char *)cert_pem) + 1)) != 0)
+		goto err;
+
+	mbedtls_x509write_crt_free(&crt);
+	return;
+err:
+	mbedtls_x509write_crt_free(&crt);
+	mbedtls_fatal("Failed to generate key and/or certificate", rc);
+}
+#endif /* UMURMUR_MBEDTLS_CAN_GENCERT */
+
+static void init_rng(void)
+{
+#if defined(MBEDTLS_USE_PSA_CRYPTO)
+	psa_crypto_init();
+#else
+	mbedtls_ctr_drbg_init(&ctr_drbg);
+	mbedtls_entropy_init(&entropy);
+	mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func, &entropy, NULL, 0);
+#endif
+}
+
+static void initCertAndKey(void)
+{
+	const char *crtfile = getStrConf(CERTIFICATE);
+	const char *keyfile = getStrConf(KEY);
+	int rc_crt, rc_key;
+
+	if (crtfile == NULL)
+		Log_fatal("No certificate file specified");
 	if (keyfile == NULL)
 		Log_fatal("No key file specified");
-	rc = x509parse_keyfile(&key, keyfile, NULL);
-	if (rc != 0) {
-		char buffer[128];
-		mbedtls_strerror(rc, buffer, 128);
-		Log_fatal("Could not read private key file %s: %s", keyfile, buffer);
-	}
+
+	mbedtls_x509_crt_init(&certificate);
+	rc_crt = mbedtls_x509_crt_parse_file(&certificate, crtfile);
+	rc_key = x509parse_keyfile(&key, keyfile, NULL);
+	if (rc_crt == 0 && rc_key == 0)
+		return;
+
+	/* Do not generate new certificate if either private key or
+	 * certificate file (or both) already exists, even though one
+	 * (or both) of them is invalid or inaccessible. */
+	if (file_exists(keyfile) || file_exists(crtfile))
+		Log_fatal("Key and/or certificate file present but invalid or inaccessible. Exiting.");
+
+	mbedtls_x509_crt_free(&certificate);
+	mbedtls_pk_free(&key);
+	mbedtls_x509_crt_init(&certificate);
+	mbedtls_pk_init(&key);
+
+#if UMURMUR_MBEDTLS_CAN_GENCERT
+	generate_cert_and_key(keyfile, crtfile);
+#else
+	Log_fatal("Key and/or certificate file missing, and this Mbed TLS build cannot generate them.");
+#endif
 }
 
-#ifndef USE_MBEDTLS_HAVEGE
 int urandom_bytes(void *ctx, unsigned char *dest, size_t len)
 {
 	(void)ctx;
-#if (MBEDTLS_VERSION_MAJOR >= 3)
-#if defined(MBEDTLS_USE_PSA_CRYPTO)
-	mbedtls_psa_get_random(MBEDTLS_PSA_RANDOM_STATE, dest, len);
-#else
-	mbedtls_ctr_drbg_random(&ctr_drbg, dest, len);
-#endif
-#else
-	int cur;
-
-	while (len) {
-		cur = read(urandom_fd, dest, len);
-		if (cur < 0)
-			continue;
-		len -= cur;
-	}
-#endif
-	return 0;
+	return UMURMUR_MBEDTLS_RNG(UMURMUR_MBEDTLS_RNG_CTX, dest, len);
 }
-#endif
 
 #define DEBUG_LEVEL 3
 static void pssl_debug(void *ctx, int level, const char *file, int line, const char *str)
@@ -192,27 +305,9 @@ void SSLi_init(void)
 {
 	int rc;
 
-	initCert();
-	initKey();
-
-	/* Initialize random number generator */
-#ifdef USE_MBEDTLS_HAVEGE
-	mbedtls_havege_init(&hs);
-#else
-#if MBEDTLS_VERSION_NUMBER >= 0x03000000
-#if defined(MBEDTLS_USE_PSA_CRYPTO)
-	psa_crypto_init();
-#else
-	mbedtls_ctr_drbg_init(&ctr_drbg);
-	mbedtls_entropy_init(&entropy);
-	mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func, &entropy, NULL, 0);
-#endif
-#else
-	urandom_fd = open("/dev/urandom", O_RDONLY);
-	if (urandom_fd < 0)
-		Log_fatal("Cannot open /dev/urandom");
-#endif
-#endif
+	/* RNG must be ready before key parse (mbed TLS 3+) and cert generation. */
+	init_rng();
+	initCertAndKey();
 
 	/* Initialize config */
 	conf = Memory_safeCalloc(1, sizeof(mbedtls_ssl_config));
@@ -229,18 +324,10 @@ void SSLi_init(void)
 		Log_fatal("mbedtls_ssl_config_defaults returned %d", rc);
 
 	mbedtls_ssl_conf_authmode(conf, MBEDTLS_SSL_VERIFY_OPTIONAL);
-#ifdef USE_MBEDTLS_HAVEGE
-	mbedtls_ssl_conf_rng(conf, HAVEGE_RAND, &hs);
-#else
 	mbedtls_ssl_conf_rng(conf, urandom_bytes, NULL);
-#endif
 	mbedtls_ssl_conf_dbg(conf, pssl_debug, NULL);
 
-#if MBEDTLS_VERSION_NUMBER >= 0x03000000
 	mbedtls_ssl_conf_min_version(conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_3);
-#else
-	mbedtls_ssl_conf_min_version(conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_1);
-#endif
 
 	mbedtls_ssl_conf_ciphersuites(conf, (const int*)&ciphers);
 
@@ -259,17 +346,9 @@ void SSLi_deinit(void)
 	mbedtls_x509_crt_free(&certificate);
 	mbedtls_pk_free(&key);
 	
-#ifdef USE_MBEDTLS_HAVEGE
-	mbedtls_havege_free(&hs);
-#else
-#if MBEDTLS_VERSION_NUMBER >= 0x03000000
 #if !defined(MBEDTLS_USE_PSA_CRYPTO)
 	mbedtls_ctr_drbg_free(&ctr_drbg);
 	mbedtls_entropy_free(&entropy);
-#endif
-#else
-	close(urandom_fd);
-#endif
 #endif
 }
 
