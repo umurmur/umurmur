@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0](https://github.com/umurmur/umurmur/compare/v0.4.1...v0.5.0) (2026-09-03)
+
+
+### Added
+
+* Autogenerate certificate with GnuTLS ([#269](https://github.com/umurmur/umurmur/issues/269)) ([4ed5dbb](https://github.com/umurmur/umurmur/commit/4ed5dbb7b31d6ad3e646ca578c1d5357d632f741))
+* Autogenerate certificate with Mbed TLS ([#268](https://github.com/umurmur/umurmur/issues/268)) ([39bc055](https://github.com/umurmur/umurmur/commit/39bc0552e97427210a64a78cef292b7890f9576b))
+* Display SSL implementation in version string ([#270](https://github.com/umurmur/umurmur/issues/270)) ([eb01ffc](https://github.com/umurmur/umurmur/commit/eb01ffc0949b8f85701d681f5d19b3e6ff23ddea))
+* Remove legacy codec support ([#262](https://github.com/umurmur/umurmur/issues/262)) ([0a1b67d](https://github.com/umurmur/umurmur/commit/0a1b67d7f37f50b1ca74a72f29cae81f9f2ca793))
+
+
+### Fixed
+
+* Add format attribute to log wrappers ([#256](https://github.com/umurmur/umurmur/issues/256)) ([07f2693](https://github.com/umurmur/umurmur/commit/07f269376a308ccbeb428487af071d20be7ba666))
+* Memory leak in OpenSSL X509 handling ([#271](https://github.com/umurmur/umurmur/issues/271)) ([9a0a947](https://github.com/umurmur/umurmur/commit/9a0a947ada4733537249254485f3b079b7bcec01))
+* Remove unused parameter in Sharedmemory_init() ([#253](https://github.com/umurmur/umurmur/issues/253)) ([5f62561](https://github.com/umurmur/umurmur/commit/5f6256123815672d164c9fddf69a861e8d0f757e))
+* Simplify extension feature-test macros ([#252](https://github.com/umurmur/umurmur/issues/252)) ([c41b614](https://github.com/umurmur/umurmur/commit/c41b6140f95200e18cd112aaa5eae58525d23a62))
+* Tidy extraneous newlines ([#261](https://github.com/umurmur/umurmur/issues/261)) ([071657c](https://github.com/umurmur/umurmur/commit/071657c5f1d8eb1cbd1a74c57b190a9cdfb06f04))
+* Usage typos ([#272](https://github.com/umurmur/umurmur/issues/272)) ([8159d91](https://github.com/umurmur/umurmur/commit/8159d910e0c7394d9757fdb864897178facf9945))
+* Use properly-sized buffer for system_string ([#255](https://github.com/umurmur/umurmur/issues/255)) ([427450a](https://github.com/umurmur/umurmur/commit/427450a91237b46791abaf4c69bb90608e8c17da))
+* Use snprintf in SSLi_init() ([#254](https://github.com/umurmur/umurmur/issues/254)) ([d691392](https://github.com/umurmur/umurmur/commit/d691392c01389d0b65fea4784c89d601584a8622))
+
 ## [0.4.1](https://github.com/umurmur/umurmur/compare/v0.4.0...v0.4.1) (2026-08-18)
 
 
