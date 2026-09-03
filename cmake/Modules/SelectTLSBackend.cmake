@@ -48,7 +48,7 @@ function(SelectTLSBackend SSL)
     unset(MbedTLS_SLOT CACHE)
     find_package(MbedTLS 4 REQUIRED)
 
-    set(SSL_VERSION "MbedTLS ${MbedTLS_VERSION}")
+    set(SSLIMP_VERSION "MbedTLS ${MbedTLS_VERSION}")
     set(USE_MBEDTLS ON PARENT_SCOPE)
     set(USE_MBEDTLS4 ON PARENT_SCOPE)
     set(LIBRARIES MbedTLS::mbedtls)
