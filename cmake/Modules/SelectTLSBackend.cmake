@@ -9,6 +9,7 @@ function(SelectTLSBackend SSL)
   set(LIBRARY_DIR "")
   # Prevent stale TLS backend state from leaking between reconfigures
   set(USE_MBEDTLS OFF PARENT_SCOPE)
+  set(USE_MBEDTLS4 OFF PARENT_SCOPE)
   set(USE_GNUTLS OFF PARENT_SCOPE)
 
   if("${SSL}" STREQUAL "openssl")
@@ -22,12 +23,35 @@ function(SelectTLSBackend SSL)
     endif()
 
   elseif("${SSL}" STREQUAL "mbedtls")
+    unset(MbedTLS_SLOT CACHE)
     find_package(MbedTLS REQUIRED)
 
     set(SSLIMP_VERSION "MbedTLS ${MbedTLS_VERSION}")
-
     set(USE_MBEDTLS ON PARENT_SCOPE)
-    set(LIBRARIES MbedTLS::mbedtls MbedTLS::mbedcrypto MbedTLS::mbedx509)
+    if(MbedTLS_VERSION VERSION_GREATER_EQUAL "4.0.0")
+      set(USE_MBEDTLS4 ON PARENT_SCOPE)
+    endif()
+    set(LIBRARIES MbedTLS::mbedtls)
+
+  elseif("${SSL}" STREQUAL "mbedtls3")
+    set(MbedTLS_SLOT "mbedtls3" CACHE STRING "mbedTLS ABI slot directory" FORCE)
+    find_package(MbedTLS 3 REQUIRED)
+    if(MbedTLS_VERSION VERSION_GREATER_EQUAL "4.0.0")
+      message(FATAL_ERROR "SSL=mbedtls3 requires Mbed TLS 3.x (found ${MbedTLS_VERSION})")
+    endif()
+
+    set(SSLIMP_VERSION "MbedTLS ${MbedTLS_VERSION}")
+    set(USE_MBEDTLS ON PARENT_SCOPE)
+    set(LIBRARIES MbedTLS::mbedtls)
+
+  elseif("${SSL}" STREQUAL "mbedtls4")
+    unset(MbedTLS_SLOT CACHE)
+    find_package(MbedTLS 4 REQUIRED)
+
+    set(SSL_VERSION "MbedTLS ${MbedTLS_VERSION}")
+    set(USE_MBEDTLS ON PARENT_SCOPE)
+    set(USE_MBEDTLS4 ON PARENT_SCOPE)
+    set(LIBRARIES MbedTLS::mbedtls)
 
   elseif("${SSL}" STREQUAL "gnutls")
     find_package(GnuTLS 3 REQUIRED)
@@ -39,6 +63,8 @@ function(SelectTLSBackend SSL)
     set(USE_GNUTLS ON PARENT_SCOPE)
     set(LIBRARIES GnuTLS::GnuTLS ${NETTLE_LIBRARIES})
 
+  else()
+    message(FATAL_ERROR "Unknown SSL backend: ${SSL}")
   endif()
 
   set(SSLIMP_LIBRARIES ${LIBRARIES} PARENT_SCOPE)
