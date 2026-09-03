@@ -249,12 +249,7 @@ void printhelp(void)
 {
 	printf("uMurmur %s (%s), Mumble protocol %d.%d.%d\n", UMURMUR_VERSION,
 		SSLIMP_VERSION, PROTVER_MAJOR, PROTVER_MINOR, PROTVER_PATCH);
-	printf("Usage: umurmurd [-d] [-r] [-h] [-p <pidfile>] [-t] [-c <conf file>] [-a <addr>] [-b <port>]\n");
-	printf("       -d             - Do not daemonize - run in foreground.\n");
-#ifdef POSIX_PRIORITY_SCHEDULING
-	printf("r");
-#endif
-	printf("t] [-A <addr>] [-a <addr>] [-B <port>] [-b <port>] [-c <conf file>] [-p <pidfile>]\n");
+	printf("Usage: umurmurd [-d] [-r] [-h] [-t] [-A <addr>] [-a <addr>] [-B <port>] [-b <port>] [-c <conf file>] [-p <pidfile>]\n");
 	printf("       -A <address>   - Bind to IPv6 address\n");
 	printf("       -a <address>   - Bind to IPv4 address\n");
 	printf("       -B <port>      - Bind to port (IPv6)\n");
