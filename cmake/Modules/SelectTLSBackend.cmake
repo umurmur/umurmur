@@ -13,7 +13,7 @@ function(SelectTLSBackend SSL)
 
   if("${SSL}" STREQUAL "openssl")
     find_package(OpenSSL REQUIRED)
-    set(SSL_VERSION "OpenSSL ${OPENSSL_VERSION}")
+    set(SSLIMP_VERSION "OpenSSL ${OPENSSL_VERSION}")
 
     set(LIBRARIES OpenSSL::SSL)
 
@@ -24,7 +24,7 @@ function(SelectTLSBackend SSL)
   elseif("${SSL}" STREQUAL "mbedtls")
     find_package(MbedTLS REQUIRED)
 
-    set(SSL_VERSION "MbedTLS ${MbedTLS_VERSION}")
+    set(SSLIMP_VERSION "MbedTLS ${MbedTLS_VERSION}")
 
     set(USE_MBEDTLS ON PARENT_SCOPE)
     set(LIBRARIES MbedTLS::mbedtls MbedTLS::mbedcrypto MbedTLS::mbedx509)
@@ -34,7 +34,7 @@ function(SelectTLSBackend SSL)
     # Nettle is the primary and required crypto library for GnuTLS
     find_package(Nettle REQUIRED)
 
-    set(SSL_VERSION "GnuTLS ${GNUTLS_VERSION}")
+    set(SSLIMP_VERSION "GnuTLS ${GNUTLS_VERSION}")
 
     set(USE_GNUTLS ON PARENT_SCOPE)
     set(LIBRARIES GnuTLS::GnuTLS ${NETTLE_LIBRARIES})
@@ -44,7 +44,8 @@ function(SelectTLSBackend SSL)
   set(SSLIMP_LIBRARIES ${LIBRARIES} PARENT_SCOPE)
   set(SSLIMP_LIBRARY_DIR ${LIBRARY_DIR} PARENT_SCOPE)
   set(SSLIMP_INCLUDE_DIR ${INCLUDE_DIR} PARENT_SCOPE)
+  set(SSLIMP_VERSION "${SSLIMP_VERSION}" PARENT_SCOPE)
 
-  message(STATUS "Using ${SSL_VERSION} as SSL backend")
+  message(STATUS "Using ${SSLIMP_VERSION} as SSL backend")
 
 endfunction()

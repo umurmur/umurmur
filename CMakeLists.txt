@@ -6,7 +6,6 @@ project(umurmurd VERSION 0.4.1 LANGUAGES C) # x-release-please-version
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules")
 
 # Versions
-set(UMURMUR_CODENAME "Loopy")
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
