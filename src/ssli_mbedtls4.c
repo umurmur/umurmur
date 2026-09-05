@@ -27,7 +27,6 @@ const int ciphers[] =
 
 static mbedtls_x509_crt certificate;
 static mbedtls_pk_context key;
-bool_t builtInTestCertificate;
 
 static inline int x509parse_keyfile(mbedtls_pk_context *pk, const char *path, const char *pwd)
 {
