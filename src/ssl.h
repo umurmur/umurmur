@@ -39,19 +39,23 @@
 #include <stdio.h>
 #include <string.h>
 
-/* TLS backend: mbedTLS */
-#if defined(USE_MBEDTLS)
+/* TLS backend: mbedTLS 4.x */
+#if defined(USE_MBEDTLS4)
 #include <mbedtls/version.h>
+#include <mbedtls/ssl.h>
+#include <mbedtls/net_sockets.h>
 
-#if !defined(MBEDTLS_VERSION_MAJOR) || (MBEDTLS_VERSION_MAJOR < 3)
-#error mbedTLS version 3.0.0 or greater is required!
-#endif
-
+/* TLS backend: mbedTLS 3.x */
+#elif defined(USE_MBEDTLS)
 #include <mbedtls/ssl.h>
 #include <mbedtls/net_sockets.h>
 
 #define RAND_bytes(_dst_, _size_) do { urandom_bytes(NULL, _dst_, _size_); } while (0)
 int urandom_bytes(void *ctx, unsigned char *dest, size_t len);
+
+#endif /* USE_MBEDTLS / USE_MBEDTLS4 */
+
+#if defined(USE_MBEDTLS) || defined(USE_MBEDTLS4)
 
 #define SSLI_ERROR_WANT_READ -0x0F300
 #define SSLI_ERROR_WANT_WRITE -0x0F310
@@ -60,7 +64,7 @@ int urandom_bytes(void *ctx, unsigned char *dest, size_t len);
 #define SSLI_ERROR_CONNRESET MBEDTLS_ERR_NET_CONN_RESET
 #define SSLI_ERROR_SYSCALL MBEDTLS_ERR_NET_RECV_FAILED
 
-typedef	mbedtls_ssl_context SSL_handle_t;
+typedef mbedtls_ssl_context SSL_handle_t;
 
 /* TLS backend: GnuTLS */
 #elif defined(USE_GNUTLS)
@@ -124,4 +128,3 @@ static inline void SSLi_hex2hash(char *in, uint8_t *hash)
 	}
 }
 #endif
-
