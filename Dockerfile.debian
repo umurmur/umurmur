@@ -19,15 +19,10 @@ RUN \
 
 RUN \
 	if test "${SSL}" = "gnutls" ; then \
-		apt-get install -qq -y --no-install-recommends libgnutls28-dev; \
+		apt-get install -qq -y --no-install-recommends libgnutls28-dev ; \
 	fi && \
 	if test "${SSL}" = "mbedtls" ; then \
-		curl -o mbedtls.tar.bz2 -L https://github.com/Mbed-TLS/mbedtls/releases/download/mbedtls-4.1.0/mbedtls-4.1.0.tar.bz2 && \
-		tar -jxvf mbedtls.tar.bz2 && \
-		cd mbedtls-* && \
-		cmake -Bbuild -H. -DENABLE_TESTING=OFF && \
-		cmake --build build && \
-		cmake --install build; \
+		apt-get install -qq -y --no-install-recommends libmbedtls-dev ; \
 	fi && \
 	if test "${SSL}" = "openssl" ; then \
 		apt-get install -qq -y --no-install-recommends libssl-dev ; \
