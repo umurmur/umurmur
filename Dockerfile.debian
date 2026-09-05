@@ -21,10 +21,10 @@ RUN \
 
 RUN \
 	if test "${SSL}" = "gnutls" ; then \
-		apt-get install -qq -y --no-install-recommends libgnutls28-dev; \
+		apt-get install -qq -y --no-install-recommends libgnutls28-dev ; \
 	fi && \
 	if test "${SSL}" = "mbedtls" ; then \
-		apt-get install -qq -y --no-install-recommends libmbedtls-dev; \
+		apt-get install -qq -y --no-install-recommends libmbedtls-dev ; \
 	fi && \
 	if test "${SSL}" = "openssl" ; then \
 		apt-get install -qq -y --no-install-recommends libssl-dev ; \
