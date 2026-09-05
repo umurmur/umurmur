@@ -45,7 +45,6 @@
 #else
 #include <mbedtls/ctr_drbg.h>
 #include <mbedtls/entropy.h>
-#include <mbedtls/sha1.h>
 #endif
 #include <mbedtls/x509_crt.h>
 #include <mbedtls/pk.h>
@@ -79,8 +78,6 @@ static mbedtls_ctr_drbg_context ctr_drbg;
 #endif
 
 static mbedtls_x509_crt certificate;
-static mbedtls_pk_context key;
-bool_t builtInTestCertificate;
 
 static inline int x509parse_keyfile(mbedtls_pk_context *pk, const char *path, const char *pwd)
 {
