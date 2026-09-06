@@ -1,6 +1,6 @@
 # Test compilation against some popular Linux distros
 #   docker compose --profile stable build
-#   docker compose --profile rolling build
+#   docker compose --profile latest build
 
 x-umurmur: &umurmur
   depends_on:
@@ -29,7 +29,7 @@ services:
 
   alpine-stable-gnutls:
     <<: *umurmur
-    profiles: [stable]
+    profiles: [alpine, stable]
     build:
       context: .
       dockerfile: Dockerfile.alpine
@@ -39,7 +39,7 @@ services:
 
   alpine-stable-mbedtls:
     <<: *umurmur
-    profiles: [stable]
+    profiles: [alpine, stable]
     build:
       context: .
       dockerfile: Dockerfile.alpine
@@ -49,7 +49,7 @@ services:
 
   alpine-stable-openssl:
     <<: *umurmur
-    profiles: [stable]
+    profiles: [alpine, stable]
     build:
       context: .
       dockerfile: Dockerfile.alpine
@@ -59,7 +59,7 @@ services:
 
   debian-stable-gnutls:
     <<: *umurmur
-    profiles: [stable]
+    profiles: [debian, stable]
     build:
       context: .
       dockerfile: Dockerfile.debian
@@ -69,7 +69,7 @@ services:
 
   debian-stable-mbedtls:
     <<: *umurmur
-    profiles: [stable]
+    profiles: [debian, stable]
     build:
       context: .
       dockerfile: Dockerfile.debian
@@ -79,7 +79,7 @@ services:
 
   debian-stable-openssl:
     <<: *umurmur
-    profiles: [stable]
+    profiles: [debian, stable]
     build:
       context: .
       dockerfile: Dockerfile.debian
@@ -89,7 +89,7 @@ services:
 
   alpine-latest-gnutls:
     <<: *umurmur
-    profiles: [rolling]
+    profiles: [alpine, latest]
     build:
       context: .
       dockerfile: Dockerfile.alpine
@@ -99,7 +99,7 @@ services:
 
   alpine-latest-mbedtls:
     <<: *umurmur
-    profiles: [rolling]
+    profiles: [alpine, latest]
     build:
       context: .
       dockerfile: Dockerfile.alpine
@@ -109,7 +109,7 @@ services:
 
   alpine-latest-openssl:
     <<: *umurmur
-    profiles: [rolling]
+    profiles: [alpine, latest]
     build:
       context: .
       dockerfile: Dockerfile.alpine
@@ -119,7 +119,7 @@ services:
 
   debian-unstable-gnutls:
     <<: *umurmur
-    profiles: [rolling]
+    profiles: [debian, latest]
     build:
       context: .
       dockerfile: Dockerfile.debian
@@ -129,7 +129,7 @@ services:
 
   debian-unstable-mbedtls:
     <<: *umurmur
-    profiles: [rolling]
+    profiles: [debian, latest]
     build:
       context: .
       dockerfile: Dockerfile.debian
@@ -139,7 +139,7 @@ services:
 
   debian-unstable-openssl:
     <<: *umurmur
-    profiles: [rolling]
+    profiles: [debian, latest]
     build:
       context: .
       dockerfile: Dockerfile.debian

@@ -18,14 +18,7 @@ RUN \
 		protobuf-c-dev ; \
 	[ "${SSL}" == "gnutls" ] && apk add gnutls-dev ; \
 	[ "${SSL}" == "openssl" ] && apk add openssl-dev ; \
-	if [ "${SSL}" == "mbedtls" ] ; then \
-		curl -o mbedtls.tar.bz2 -L https://github.com/Mbed-TLS/mbedtls/releases/download/mbedtls-3.6.5/mbedtls-3.6.5.tar.bz2 && \
-		tar -jxvf mbedtls.tar.bz2 && \
-		cd mbedtls-* && \
-		cmake -Bbuild -H. -DENABLE_TESTING=OFF && \
-		cmake --build build && \
-		cmake --install build ; \
-	fi ; \
+	[ "${SSL}" == "mbedtls" ] && apk add mbedtls-dev ; \
 	echo "Installed deps for building against ${SSL}"
 
 WORKDIR /umurmur
@@ -56,6 +49,7 @@ RUN \
 		protobuf-c ; \
 	[ "${SSL}" == "gnutls" ] && apk add gnutls; \
 	[ "${SSL}" == "openssl" ] && apk add openssl ; \
+	[ "${SSL}" == "mbedtls" ] && apk add mbedtls ; \
 	rm -rf /var/cache/apk/* ; \
 	mkdir /etc/umurmur
 
