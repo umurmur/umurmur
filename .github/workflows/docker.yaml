@@ -9,22 +9,33 @@ on:
       - cmake/**
       - CMakeLists.txt
       - Dockerfile.*
+      - .github/workflows/docker.yaml
   pull_request:
     types: [opened, synchronize]
   workflow_dispatch:
+  schedule:
+    - cron: "0 12 * * 1"
 
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        distro: [ alpine, debian ]
-        ssl: [ gnutls, mbedtls, openssl ]  # Supported TLS libraries
+        config:
+          - { family: alpine, base: alpine:3.22 }
+          - { family: alpine, base: alpine:3.23 }
+          - { family: alpine, base: alpine:3.24 }
+          - { family: alpine, base: alpine:latest }
+          - { family: debian, base: debian:trixie-slim }
+          - { family: debian, base: debian:unstable-slim }
+        ssl: [gnutls, mbedtls, openssl]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Containerized build
         run: |
-          docker build -f Dockerfile.${{ matrix.distro }} --build-arg SSL=${{ matrix.ssl }} .
-
+          docker build -f Dockerfile.${{ matrix.config.family }} \
+            --build-arg BASE_IMAGE=${{ matrix.config.base }} \
+            --build-arg SSL=${{ matrix.ssl }} .
