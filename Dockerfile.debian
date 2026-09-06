@@ -1,5 +1,7 @@
+ARG BASE_IMAGE=debian:unstable
+
 # Stage 1: Build
-FROM debian:trixie-slim AS build
+FROM ${BASE_IMAGE} AS build
 
 ARG SSL=openssl
 ARG BUILD_TYPE=debug
@@ -9,25 +11,20 @@ ARG DEBIAN_FRONTEND=noninteractive
 RUN \
 	apt-get update && \
 	apt-get install -qq -y --no-install-recommends \
-		curl \
-		git \
-		ca-certificates \
 		build-essential \
+		ca-certificates \
 		cmake \
+		git \
 		libconfig-dev \
-		libprotobuf-c-dev
+		libprotobuf-c-dev \
+		pkg-config
 
 RUN \
 	if test "${SSL}" = "gnutls" ; then \
 		apt-get install -qq -y --no-install-recommends libgnutls28-dev; \
 	fi && \
 	if test "${SSL}" = "mbedtls" ; then \
-		curl -o mbedtls.tar.bz2 -L https://github.com/Mbed-TLS/mbedtls/releases/download/mbedtls-3.6.5/mbedtls-3.6.5.tar.bz2 && \
-		tar -jxvf mbedtls.tar.bz2 && \
-		cd mbedtls-* && \
-		cmake -Bbuild -H. -DENABLE_TESTING=OFF && \
-		cmake --build build && \
-		cmake --install build; \
+		apt-get install -qq -y --no-install-recommends libmbedtls-dev; \
 	fi && \
 	if test "${SSL}" = "openssl" ; then \
 		apt-get install -qq -y --no-install-recommends libssl-dev ; \
@@ -41,7 +38,6 @@ COPY cmake cmake
 COPY umurmur.conf.example .
 COPY src src
 
-# Build against both OpenSSL and Mbed TLS
 RUN \
 	cmake -Bbuild-${SSL} -H. \
 		-DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
@@ -52,29 +48,32 @@ RUN \
 	cmake --install build-${SSL}
 
 # Stage 2: Runtime
-FROM debian:trixie-slim
+FROM ${BASE_IMAGE}
 
 ARG SSL=openssl
+ARG DEBIAN_FRONTEND=noninteractive
 
 RUN \
 	apt-get update && \
 	apt-get install -qq -y --no-install-recommends \
-		libconfig11 \
+		libconfig-dev \
 		libprotobuf-c1 && \
 	if test "${SSL}" = "gnutls" ; then \
-		apt-get install -qq -y --no-install-recommends libgnutls30 ; \
+		apt-get install -qq -y --no-install-recommends libgnutls28-dev ; \
+	fi && \
+	if test "${SSL}" = "mbedtls" ; then \
+		apt-get install -qq -y --no-install-recommends \
+			libmbedtls-dev ; \
 	fi && \
 	if test "${SSL}" = "openssl" ; then \
-		apt-get install -qq -y --no-install-recommends libssl3 ; \
+		apt-get install -qq -y --no-install-recommends libssl-dev ; \
 	fi && \
 	rm -rf /var/lib/apt/lists/* && \
 	mkdir /etc/umurmur
 
-# Copy the compiled binary from the build stage, default to OpenSSL
 COPY --from=build /usr/local/bin/umurmurd /usr/local/bin/
 COPY --from=build /umurmur/umurmur.conf.example /usr/local/etc/umurmur/umurmur.conf
 
 EXPOSE 64738
 
 ENTRYPOINT ["/usr/local/bin/umurmurd", "-d"]
-
