@@ -17,9 +17,11 @@ set(SOURCE_FILES
   voicetarget.c
 )
 
-if(SSL MATCHES "mbedtls")
+if(SSL STREQUAL "mbedtls4" OR (SSL STREQUAL "mbedtls" AND USE_MBEDTLS4))
+  list(APPEND SOURCE_FILES ssli_mbedtls4.c)
+elseif(SSL STREQUAL "mbedtls3" OR SSL STREQUAL "mbedtls")
   list(APPEND SOURCE_FILES ssli_mbedtls.c)
-elseif(SSL MATCHES "gnutls")
+elseif(SSL STREQUAL "gnutls")
   list(APPEND SOURCE_FILES ssli_gnutls.c)
 else()
   list(APPEND SOURCE_FILES ssli_openssl.c)
