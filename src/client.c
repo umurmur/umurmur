@@ -375,6 +375,7 @@ int Client_read(client_t *client)
 				SSLi_get_error(client->ssl, rc) == 0) {
 				Log_info_client(client, "Connection closed by peer");
 				Client_close(client);
+				return 0;
 			}
 			else {
 				if (SSLi_get_error(client->ssl, rc) == SSLI_ERROR_SYSCALL) {
