@@ -16,3 +16,6 @@ endif()
 # SHM API
 option(USE_SHAREDMEMORY_API "Compile with Sharedmemory API support" OFF)
 
+# Grow TCP rx/tx buffers to Murmur's max payload instead of a fixed stack
+option(USE_DYNAMIC_BUFFERS "Allocate TCP message buffers dynamically" OFF)
+

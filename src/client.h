@@ -49,7 +49,11 @@
 #include "pds.h"
 #include "ssl.h"
 
+#ifdef USE_DYNAMIC_BUFFERS
+#define MAX_TCP_PAYLOAD 0x7fffff /* Murmur Connection.cpp */
+#else
 #define BUFSIZE 8192
+#endif
 #define UDP_BUFSIZE 512
 #define INACTIVITY_TIMEOUT 15 /* Seconds */
 #define MAX_TOKENSIZE 64
@@ -69,7 +73,14 @@ typedef struct {
 	bool_t readBlockedOnWrite, writeBlockedOnRead;
 	struct sockaddr_storage remote_tcp;
 	struct sockaddr_storage remote_udp;
+#ifdef USE_DYNAMIC_BUFFERS
+	uint8_t *rxbuf;
+	uint32_t rxbuf_cap;
+	uint8_t *txbuf;
+	uint32_t txbuf_cap;
+#else
 	uint8_t rxbuf[BUFSIZE], txbuf[BUFSIZE];
+#endif
 	uint32_t rxcount, msgsize, drainleft, txcount, txsize;
 	int sessionId;
 	uint8_t key[KEY_LENGTH];

@@ -67,194 +67,177 @@ static void Msg_getPreamble(uint8_t *buffer, int *type, int *len)
 	*len = (int)msgLen;
 }
 
+#ifdef USE_DYNAMIC_BUFFERS
+#define MAX_MSGSIZE MAX_TCP_PAYLOAD
+#else
 #define MAX_MSGSIZE (BUFSIZE - PREAMBLE_SIZE)
-int Msg_messageToNetwork(message_t *msg, uint8_t *buffer)
+#endif
+
+int Msg_payloadSize(message_t *msg)
 {
 	int len = 0;
+
+	switch (msg->messageType) {
+	case Version:
+		len = mumble_proto__version__get_packed_size(msg->payload.version);
+		break;
+	case UDPTunnel:
+		len = (int)msg->payload.UDPTunnel->packet.len;
+		break;
+	case Authenticate:
+		len = mumble_proto__authenticate__get_packed_size(msg->payload.authenticate);
+		break;
+	case Ping:
+		len = mumble_proto__ping__get_packed_size(msg->payload.ping);
+		break;
+	case Reject:
+		len = mumble_proto__reject__get_packed_size(msg->payload.reject);
+		break;
+	case ServerSync:
+		len = mumble_proto__server_sync__get_packed_size(msg->payload.serverSync);
+		break;
+	case TextMessage:
+		len = mumble_proto__text_message__get_packed_size(msg->payload.textMessage);
+		break;
+	case PermissionDenied:
+		len = mumble_proto__permission_denied__get_packed_size(msg->payload.permissionDenied);
+		break;
+	case CryptSetup:
+		len = mumble_proto__crypt_setup__get_packed_size(msg->payload.cryptSetup);
+		break;
+	case UserList:
+		len = mumble_proto__user_list__get_packed_size(msg->payload.userList);
+		break;
+	case UserState:
+		len = mumble_proto__user_state__get_packed_size(msg->payload.userState);
+		break;
+	case UserRemove:
+		len = mumble_proto__user_remove__get_packed_size(msg->payload.userRemove);
+		break;
+	case ChannelState:
+		len = mumble_proto__channel_state__get_packed_size(msg->payload.channelState);
+		break;
+	case VoiceTarget:
+		len = mumble_proto__voice_target__get_packed_size(msg->payload.voiceTarget);
+		break;
+	case CodecVersion:
+		len = mumble_proto__codec_version__get_packed_size(msg->payload.codecVersion);
+		break;
+	case PermissionQuery:
+		len = mumble_proto__permission_query__get_packed_size(msg->payload.permissionQuery);
+		break;
+	case ChannelRemove:
+		len = mumble_proto__channel_remove__get_packed_size(msg->payload.channelRemove);
+		break;
+	case UserStats:
+		len = mumble_proto__user_stats__get_packed_size(msg->payload.userStats);
+		break;
+	case ServerConfig:
+		len = mumble_proto__server_config__get_packed_size(msg->payload.serverConfig);
+		break;
+	case BanList:
+		len = mumble_proto__ban_list__get_packed_size(msg->payload.banList);
+		break;
+	default:
+		return -1;
+	}
+
+	if (len > MAX_MSGSIZE)
+		return -1;
+
+	return len;
+}
+
+int Msg_messageToNetwork(message_t *msg, uint8_t *buffer)
+{
+	int len;
 	uint8_t *bufptr = buffer + PREAMBLE_SIZE;
+
+	len = Msg_payloadSize(msg);
+	if (len < 0) {
+		Log_warn("Too big or unsupported tx message type %d", msg->messageType);
+		return 0;
+	}
 
 	Log_debug("To net: msg type %d", msg->messageType);
 	switch (msg->messageType) {
 	case Version:
-		len = mumble_proto__version__get_packed_size(msg->payload.version);
-		if (len > MAX_MSGSIZE) {
-			Log_warn("Too big tx message. Discarding");
-			break;
-		}
 		Msg_addPreamble(buffer, msg->messageType, len);
 		mumble_proto__version__pack(msg->payload.version, bufptr);
 		break;
 	case UDPTunnel: /* Non-standard handling of tunneled voice traffic. */
-		if (msg->payload.UDPTunnel->packet.len > MAX_MSGSIZE) {
-			Log_warn("Too big tx message. Discarding");
-			break;
-		}
-		len = msg->payload.UDPTunnel->packet.len;
 		Msg_addPreamble(buffer, msg->messageType, msg->payload.UDPTunnel->packet.len);
 		memcpy(bufptr, msg->payload.UDPTunnel->packet.data, msg->payload.UDPTunnel->packet.len);
 		break;
 	case Authenticate:
-		len = mumble_proto__authenticate__get_packed_size(msg->payload.authenticate);
-		if (len > MAX_MSGSIZE) {
-			Log_warn("Too big tx message. Discarding");
-			break;
-			}
 		Msg_addPreamble(buffer, msg->messageType, len);
 		mumble_proto__authenticate__pack(msg->payload.authenticate, bufptr);
 		break;
 	case Ping:
-		len = mumble_proto__ping__get_packed_size(msg->payload.ping);
-		if (len > MAX_MSGSIZE) {
-			Log_warn("Too big tx message. Discarding");
-			break;
-			}
 		Msg_addPreamble(buffer, msg->messageType, len);
 		mumble_proto__ping__pack(msg->payload.ping, bufptr);
 		break;
 	case Reject:
-		len = mumble_proto__reject__get_packed_size(msg->payload.reject);
-		if (len > MAX_MSGSIZE) {
-			Log_warn("Too big tx message. Discarding");
-			break;
-			}
 		Msg_addPreamble(buffer, msg->messageType, len);
 		mumble_proto__reject__pack(msg->payload.reject, bufptr);
 		break;
 	case ServerSync:
-		len = mumble_proto__server_sync__get_packed_size(msg->payload.serverSync);
-		if (len > MAX_MSGSIZE) {
-			Log_warn("Too big tx message. Discarding");
-			break;
-			}
 		Msg_addPreamble(buffer, msg->messageType, len);
 		mumble_proto__server_sync__pack(msg->payload.serverSync, bufptr);
 		break;
 	case TextMessage:
-		len = mumble_proto__text_message__get_packed_size(msg->payload.textMessage);
-		if (len > MAX_MSGSIZE) {
-			Log_warn("Too big tx message. Discarding");
-			break;
-			}
 		Msg_addPreamble(buffer, msg->messageType, len);
 		mumble_proto__text_message__pack(msg->payload.textMessage, bufptr);
 		break;
 	case PermissionDenied:
-		len = mumble_proto__permission_denied__get_packed_size(msg->payload.permissionDenied);
-		if (len > MAX_MSGSIZE) {
-			Log_warn("Too big tx message. Discarding");
-			break;
-			}
 		Msg_addPreamble(buffer, msg->messageType, len);
 		mumble_proto__permission_denied__pack(msg->payload.permissionDenied, bufptr);
 		break;
 	case CryptSetup:
-		len = mumble_proto__crypt_setup__get_packed_size(msg->payload.cryptSetup);
-		if (len > MAX_MSGSIZE) {
-			Log_warn("Too big tx message. Discarding");
-			break;
-			}
 		Msg_addPreamble(buffer, msg->messageType, len);
 		mumble_proto__crypt_setup__pack(msg->payload.cryptSetup, bufptr);
 		break;
 	case UserList:
-		len = mumble_proto__user_list__get_packed_size(msg->payload.userList);
-		if (len > MAX_MSGSIZE) {
-			Log_warn("Too big tx message. Discarding");
-			break;
-			}
 		Msg_addPreamble(buffer, msg->messageType, len);
 		mumble_proto__user_list__pack(msg->payload.userList, bufptr);
 		break;
 	case UserState:
-		len = mumble_proto__user_state__get_packed_size(msg->payload.userState);
-		if (len > MAX_MSGSIZE) {
-			Log_warn("Too big tx message. Discarding");
-			break;
-			}
 		Msg_addPreamble(buffer, msg->messageType, len);
 		mumble_proto__user_state__pack(msg->payload.userState, bufptr);
 		break;
 	case UserRemove:
-		len = mumble_proto__user_remove__get_packed_size(msg->payload.userRemove);
-		if (len > MAX_MSGSIZE) {
-			Log_warn("Too big tx message. Discarding");
-			break;
-			}
 		Msg_addPreamble(buffer, msg->messageType, len);
 		mumble_proto__user_remove__pack(msg->payload.userRemove, bufptr);
 		break;
 	case ChannelState:
-		len = mumble_proto__channel_state__get_packed_size(msg->payload.channelState);
-		if (len > MAX_MSGSIZE) {
-			Log_warn("Too big tx message. Discarding");
-			break;
-			}
 		Msg_addPreamble(buffer, msg->messageType, len);
 		mumble_proto__channel_state__pack(msg->payload.channelState, bufptr);
 		break;
 	case VoiceTarget:
-		len = mumble_proto__voice_target__get_packed_size(msg->payload.voiceTarget);
-		if (len > MAX_MSGSIZE) {
-			Log_warn("Too big tx message. Discarding");
-			break;
-			}
 		Msg_addPreamble(buffer, msg->messageType, len);
 		mumble_proto__voice_target__pack(msg->payload.voiceTarget, bufptr);
 		break;
 	case CodecVersion:
-		len = mumble_proto__codec_version__get_packed_size(msg->payload.codecVersion);
-		if (len > MAX_MSGSIZE) {
-			Log_warn("Too big tx message. Discarding");
-			break;
-			}
 		Msg_addPreamble(buffer, msg->messageType, len);
 		mumble_proto__codec_version__pack(msg->payload.codecVersion, bufptr);
 		break;
 	case PermissionQuery:
-		len = mumble_proto__permission_query__get_packed_size(msg->payload.permissionQuery);
-		if (len > MAX_MSGSIZE) {
-			Log_warn("Too big tx message. Discarding");
-			break;
-			}
 		Msg_addPreamble(buffer, msg->messageType, len);
 		mumble_proto__permission_query__pack(msg->payload.permissionQuery, bufptr);
 		break;
 	case ChannelRemove:
-		len = mumble_proto__channel_remove__get_packed_size(msg->payload.channelRemove);
-		if (len > MAX_MSGSIZE) {
-			Log_warn("Too big tx message. Discarding");
-			break;
-			}
 		Msg_addPreamble(buffer, msg->messageType, len);
 		mumble_proto__channel_remove__pack(msg->payload.channelRemove, bufptr);
 		break;
 	case UserStats:
-	{
-		len = mumble_proto__user_stats__get_packed_size(msg->payload.userStats);
-		if (len > MAX_MSGSIZE) {
-			Log_warn("Too big tx message. Discarding");
-			break;
-			}
 		Msg_addPreamble(buffer, msg->messageType, len);
 		mumble_proto__user_stats__pack(msg->payload.userStats, bufptr);
 		break;
-	}
 	case ServerConfig:
-		len = mumble_proto__server_config__get_packed_size(msg->payload.serverConfig);
-		if (len > MAX_MSGSIZE) {
-			Log_warn("Too big tx message. Discarding");
-			break;
-			}
 		Msg_addPreamble(buffer, msg->messageType, len);
 		mumble_proto__server_config__pack(msg->payload.serverConfig, bufptr);
 		break;
-
 	case BanList:
-		len = mumble_proto__ban_list__get_packed_size(msg->payload.banList);
-		if (len > MAX_MSGSIZE) {
-			Log_warn("Too big tx message. Discarding");
-			break;
-			}
 		Msg_addPreamble(buffer, msg->messageType, len);
 		Log_debug("Msg_MessageToNetwork: BanList size %d", len);
 		mumble_proto__ban_list__pack(msg->payload.banList, bufptr);

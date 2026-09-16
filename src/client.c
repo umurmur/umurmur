@@ -57,6 +57,24 @@ static int Client_write(client_t *client);
 static int Client_send_udp(client_t *client, uint8_t *data, int len);
 void Client_free(client_t *client);
 
+#ifdef USE_DYNAMIC_BUFFERS
+static bool_t Client_grow_buf(uint8_t **buf, uint32_t *cap, uint32_t need)
+{
+	uint8_t *grown;
+
+	if (*cap >= need)
+		return true;
+
+	grown = realloc(*buf, need);
+	if (!grown)
+		return false;
+
+	*buf = grown;
+	*cap = need;
+	return true;
+}
+#endif
+
 declare_list(clients);
 static int clientcount; /* = 0 */
 static int maxBandwidth;
@@ -266,6 +284,10 @@ void Client_free(client_t *client)
 		free(client->username);
 	if (client->context)
 		free(client->context);
+#ifdef USE_DYNAMIC_BUFFERS
+	free(client->rxbuf);
+	free(client->txbuf);
+#endif
 	free(client);
 }
 
@@ -330,13 +352,23 @@ int Client_read(client_t *client)
 
 		errno = 0;
 		if (!client->msgsize) {
-			// Read 6-byte Mumble header
+#ifdef USE_DYNAMIC_BUFFERS
+			if (!Client_grow_buf(&client->rxbuf, &client->rxbuf_cap, 6)) {
+				Log_warn("Failed to allocate RX buffer");
+				Client_free(client);
+				return -1;
+			}
+#endif
 			to_read = 6 - client->rxcount;
 		} else {
-			// Read message payload, calculate remaining bytes
 			to_read = (size_t)client->msgsize + 6 - client->rxcount;
+#ifdef USE_DYNAMIC_BUFFERS
+			if (to_read > (size_t)(client->rxbuf_cap - client->rxcount))
+				to_read = (size_t)(client->rxbuf_cap - client->rxcount);
+#else
 			if (to_read > (size_t)(BUFSIZE - client->rxcount))
 				to_read = (size_t)(BUFSIZE - client->rxcount);
+#endif
 		}
 		rc = SSLi_read(client->ssl, &client->rxbuf[client->rxcount], (int)to_read);
 		if (rc > 0) {
@@ -347,12 +379,24 @@ int Client_read(client_t *client)
 				memcpy(&msgLen, &client->rxbuf[2], sizeof(uint32_t));
 				client->msgsize = ntohl(msgLen);
 
-				// Reject messages that are too large for our buffer.
+#ifdef USE_DYNAMIC_BUFFERS
+				if (client->msgsize > MAX_TCP_PAYLOAD) {
+					Log_warn("Too big message received (%u bytes). Disconnecting client.", client->msgsize);
+					Client_free(client);
+					return -1;
+				}
+				if (!Client_grow_buf(&client->rxbuf, &client->rxbuf_cap, client->msgsize + 6)) {
+					Log_warn("Failed to allocate RX buffer for %u byte message", client->msgsize);
+					Client_free(client);
+					return -1;
+				}
+#else
 				if (client->msgsize > BUFSIZE - 6) {
 					Log_warn("Too big message received (%u bytes). Disconnecting client.", client->msgsize);
 					Client_free(client);
 					return -1;
 				}
+#endif
 			}
 			else if (client->rxcount == client->msgsize + 6) { /* Got all of the message */
 				msg = Msg_networkToMessage(client->rxbuf, client->msgsize + 6);
@@ -492,8 +536,30 @@ int Client_send_message(client_t *client, message_t *msg)
 		return 0;
 	} else {
 		int len, rc;
+
+#ifdef USE_DYNAMIC_BUFFERS
+		{
+			int payload = Msg_payloadSize(msg);
+			if (payload < 0) {
+				Msg_free(msg);
+				return -1;
+			}
+			len = payload + 6;
+			if (!Client_grow_buf(&client->txbuf, &client->txbuf_cap, (uint32_t)len)) {
+				Log_warn("Failed to allocate TX buffer for %d byte message", len);
+				Msg_free(msg);
+				return -1;
+			}
+		}
+#endif
 		len = Msg_messageToNetwork(msg, client->txbuf);
+		if (len <= 0) {
+			Msg_free(msg);
+			return -1;
+		}
+#ifndef USE_DYNAMIC_BUFFERS
 		doAssert(len < BUFSIZE);
+#endif
 
 		client->txsize = len;
 		client->txcount = 0;

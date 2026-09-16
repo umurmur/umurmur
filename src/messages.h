@@ -142,6 +142,7 @@ typedef struct message {
 
 
 int Msg_messageToNetwork(message_t *msg, uint8_t *buffer);
+int Msg_payloadSize(message_t *msg);
 message_t *Msg_networkToMessage(uint8_t *data, int size);
 void Msg_free(message_t *msg);
 void Msg_inc_ref(message_t *msg);
