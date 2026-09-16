@@ -329,7 +329,7 @@ void Server_run(void)
 	/* Prepare UDP sockets */
 	Server_setupUDPSockets(addresses, pollfds);
 
-	Log_info("uMurmur %s (%s), Mumble protocol %d.%d.%d\n", UMURMUR_VERSION,
+	Log_info("uMurmur %s (%s), Mumble protocol %d.%d.%d", UMURMUR_VERSION,
 		SSLIMP_VERSION, PROTVER_MAJOR, PROTVER_MINOR, PROTVER_PATCH);
 	Log_info("Visit https://github.com/umurmur/umurmur");
 
