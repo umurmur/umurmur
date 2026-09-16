@@ -143,18 +143,15 @@ bool_t SSLi_getSHA1Hash(SSL_handle_t *ssl, uint8_t *hash)
 SSL_handle_t *SSLi_newconnection(int *fd, bool_t *SSLready)
 {
 	mbedtls_ssl_context *ssl;
-	mbedtls_ssl_session *ssn;
 	int rc;
 	(void)SSLready;
 
 	ssl = Memory_safeCalloc(1, sizeof(mbedtls_ssl_context));
-	ssn = Memory_safeCalloc(1, sizeof(mbedtls_ssl_session));
-	if (!ssl || !ssn)
+	if (!ssl)
 		Log_fatal("Out of memory");
 
 	mbedtls_ssl_init(ssl);
 	mbedtls_ssl_set_bio(ssl, fd, mbedtls_net_send, mbedtls_net_recv, NULL);
-	mbedtls_ssl_set_session(ssl, ssn);
 
 	if ((rc = mbedtls_ssl_setup(ssl, conf)) != 0)
 		Log_fatal("mbedtls_ssl_setup returned %d", rc);
