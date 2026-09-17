@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1](https://github.com/umurmur/umurmur/compare/v0.5.0...v0.5.1) (2026-09-16)
+
+
+### Fixed
+
+* Add missing return when SSLi returns 0 ([#274](https://github.com/umurmur/umurmur/issues/274)) ([ffc39b5](https://github.com/umurmur/umurmur/commit/ffc39b533b90228114d30c8218b9fa0e1a8af975))
+* Allow TLS 1.3 only when provided ([#277](https://github.com/umurmur/umurmur/issues/277)) ([c9ee778](https://github.com/umurmur/umurmur/commit/c9ee77842ac5784a60613e2623cabfd3ccda46e3))
+* Memory leaks involving mbedtls_ssl_session ([#276](https://github.com/umurmur/umurmur/issues/276)) ([68b3027](https://github.com/umurmur/umurmur/commit/68b3027c02d1e35092b44f51d87c7de9548fb948))
+
 ## [0.5.0](https://github.com/umurmur/umurmur/compare/v0.4.1...v0.5.0) (2026-09-09)
 
 
