@@ -216,7 +216,7 @@ void SSLi_init(void)
 	int i, offset = 0, cipherstringlen = 0;
 	STACK_OF(SSL_CIPHER) *cipherlist = NULL, *cipherlist_new = NULL;
 	const SSL_CIPHER *cipher;
-	char *cipherstring;
+	char *cipherstring = NULL;
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
 	SSL_library_init();
@@ -277,7 +277,7 @@ void SSLi_init(void)
 	if (cipherlist_new)
 		sk_SSL_CIPHER_free(cipherlist_new);
 
-	if (strlen(cipherstring) == 0)
+	if (cipherstring == NULL || strlen(cipherstring) == 0)
 		Log_fatal("No suitable ciphers found!");
 
 	if (SSL_CTX_set_cipher_list(context, cipherstring) == 0)
