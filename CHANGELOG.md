@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.2](https://github.com/umurmur/umurmur/compare/v0.5.1...v0.5.2) (2026-09-28)
+
+
+### Fixed
+
+* Initialize variable for -Wsometimes-uninitialized ([#279](https://github.com/umurmur/umurmur/issues/279)) ([0b03cf3](https://github.com/umurmur/umurmur/commit/0b03cf36fbaacc16d5ec719e5bb773fb192542d4))
+
 ## [0.5.1](https://github.com/umurmur/umurmur/compare/v0.5.0...v0.5.1) (2026-09-16)
 
 
