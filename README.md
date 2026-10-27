@@ -6,7 +6,18 @@ uMurmur is a minimalistic Mumble server primarily targeted to run on embedded co
  
 ## Building
 
-[Build instructions](https://github.com/umurmur/umurmur/wiki/Building) can be found in the [wiki](https://github.com/umurmur/umurmur/wiki).
+Compiling uMurmur requires CMake, libconfig, protobuf-c, and one supported TLS library.
+
+```shell
+cmake -S . -B build -DSSL=openssl -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+ctest --test-dir build
+sudo cmake --install build
+```
+
+`-DSSL` selects the TLS implementation: `openssl` (default, also LibreSSL), `mbedtls`, or `gnutls`.
+
+To list the other configuration options and their current values, run `cmake -LH build` after configuring, or edit them interactively with `ccmake build` or `cmake-gui`.
  
 ## Contributors
 
@@ -225,8 +236,6 @@ uMurmur is a minimalistic Mumble server primarily targeted to run on embedded co
 </table>
 
 ## Support
-
-Documentation: Please consult the [Wiki](https://github.com/umurmur/umurmur/wiki) 
 
 Bug reports: [Issues](https://github.com/umurmur/umurmur/issues) or [Pull Requests](https://github.com/umurmur/umurmur/pulls)
 
