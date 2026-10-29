@@ -430,6 +430,12 @@ int main(int argc, char **argv)
 		needs_rpath = true;
 	}
 
+#ifdef USE_MBEDTLS
+	if (unveil("/dev/random", "r") == -1)
+		Log_fatal("unveil /dev/random failed: %s", strerror(errno));
+	needs_rpath = true;
+#endif
+
 #ifdef USE_SHAREDMEMORY_API
 	if (unveil("/tmp", "c") == -1)
 		Log_fatal("unveil shared memory directory (/tmp) failed: %s", strerror(errno));
