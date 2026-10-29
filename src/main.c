@@ -41,11 +41,9 @@
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
-#ifdef _POSIX_PRIORITY_SCHEDULING
-#if (_POSIX_PRIORITY_SCHEDULING > 0)
-#define POSIX_PRIORITY_SCHEDULING
+#include "config.h"
+#ifdef POSIX_PRIORITY_SCHEDULING
 #include <sched.h>
-#endif
 #endif
 #include "server.h"
 #include "ssl.h"
@@ -53,7 +51,6 @@
 #include "log.h"
 #include "client.h"
 #include "conf.h"
-#include "config.h"
 #include "sharedmemory.h"
 #include "ban.h"
 
