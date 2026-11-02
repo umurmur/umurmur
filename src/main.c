@@ -274,6 +274,7 @@ int main(int argc, char **argv)
 	bool_t testconfig = false;
 #ifdef __OpenBSD__
 	bool_t needs_filesystem = false;
+	bool_t needs_rpath = false;
 	const char *pledge_promises;
 #endif
 	char *conffile = NULL, *pidfile = NULL;
@@ -422,6 +423,19 @@ int main(int argc, char **argv)
 		needs_filesystem = true;
 	}
 
+	const char *capath = getStrConf(CAPATH);
+	if (capath && *capath) {
+		if (unveil(capath, "r") == -1)
+			Log_fatal("unveil ca_path (%s) failed: %s", capath, strerror(errno));
+		needs_rpath = true;
+	}
+
+#ifdef USE_MBEDTLS
+	if (unveil("/dev/random", "r") == -1)
+		Log_fatal("unveil /dev/random failed: %s", strerror(errno));
+	needs_rpath = true;
+#endif
+
 #ifdef USE_SHAREDMEMORY_API
 	if (unveil("/tmp", "c") == -1)
 		Log_fatal("unveil shared memory directory (/tmp) failed: %s", strerror(errno));
@@ -431,9 +445,14 @@ int main(int argc, char **argv)
 	if (unveil(NULL, NULL) == -1)
 		Log_fatal("unveil lock failed: %s", strerror(errno));
 
-	pledge_promises = "stdio inet";
-	if (needs_filesystem)
+	if (needs_filesystem && needs_rpath)
+		pledge_promises = "stdio inet rpath wpath cpath";
+	else if (needs_filesystem)
 		pledge_promises = "stdio inet wpath cpath";
+	else if (needs_rpath)
+		pledge_promises = "stdio inet rpath";
+	else
+		pledge_promises = "stdio inet";
 
 	if (pledge(pledge_promises, NULL) == -1)
 		Log_fatal("pledge (%s) failed: %s", pledge_promises, strerror(errno));
