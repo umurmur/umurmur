@@ -1,0 +1,51 @@
+name: FreeBSD
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - src/**
+      - cmake/**
+      - CMakeLists.txt
+      - hack/**
+      - .github/workflows/portability-freebsd.yml
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - src/**
+      - cmake/**
+      - CMakeLists.txt
+      - hack/**
+      - .github/workflows/portability-freebsd.yml
+  schedule:
+    - cron: "30 6 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: portability-freebsd-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  freebsd:
+    name: "${{ matrix.config.version }}"
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - { version: "14.5", ssl: "mbedtls openssl gnutls" }
+          - { version: "15.1", ssl: "mbedtls openssl gnutls" }
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Build and test all SSL backends
+        uses: cross-platform-actions/action@30cde56b87a128507bebea9531205087890ee360 # v1.8.0
+        with:
+          operating_system: freebsd
+          version: ${{ matrix.config.version }}
+          run: |
+            sudo pkg install -y cmake gmake pkgconf libconfig protobuf-c mbedtls3 gnutls zsh
+            ./hack/make-all.sh ${{ matrix.config.ssl }}

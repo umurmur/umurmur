@@ -1,6 +1,10 @@
 # uMurmur
  
-[![Build with Docker](https://github.com/umurmur/umurmur/actions/workflows/docker.yaml/badge.svg)](https://github.com/umurmur/umurmur/actions/workflows/docker.yaml)
+[![Linux](https://github.com/umurmur/umurmur/actions/workflows/portability-linux.yml/badge.svg)](https://github.com/umurmur/umurmur/actions/workflows/portability-linux.yml)
+[![macOS](https://github.com/umurmur/umurmur/actions/workflows/portability-macos.yml/badge.svg)](https://github.com/umurmur/umurmur/actions/workflows/portability-macos.yml)
+[![FreeBSD](https://github.com/umurmur/umurmur/actions/workflows/portability-freebsd.yml/badge.svg)](https://github.com/umurmur/umurmur/actions/workflows/portability-freebsd.yml)
+[![OpenBSD](https://github.com/umurmur/umurmur/actions/workflows/portability-openbsd.yml/badge.svg)](https://github.com/umurmur/umurmur/actions/workflows/portability-openbsd.yml)
+[![NetBSD](https://github.com/umurmur/umurmur/actions/workflows/portability-netbsd.yml/badge.svg)](https://github.com/umurmur/umurmur/actions/workflows/portability-netbsd.yml)
  
 uMurmur is a minimalistic Mumble server primarily targeted to run on embedded computers, like routers, with an open OS like e.g. OpenWRT. The server part of Mumble is called Murmur, hence the name uMurmur. It is available as a precompiled package for quite a lot distributions. Check your distribution's package repository.
  
@@ -73,21 +77,14 @@ To list the other configuration options and their current values, run `cmake -LH
         </a>
     </td>
     <td align="center" style="word-wrap: break-word; width: 150.0; height: 150.0">
-        <a href=https://github.com/concatime>
-            <img src=https://avatars.githubusercontent.com/u/26262387?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=Issam E. Maghni/>
+        <a href=https://github.com/Teuzig>
+            <img src=https://avatars.githubusercontent.com/u/355278903?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=Teuzig/>
             <br />
-            <sub style="font-size:12px"><b>Issam E. Maghni</b></sub>
+            <sub style="font-size:12px"><b>Teuzig</b></sub>
         </a>
     </td>
 </tr>
 <tr>
-    <td align="center" style="word-wrap: break-word; width: 150.0; height: 150.0">
-        <a href=https://github.com/Rawi666>
-            <img src=https://avatars.githubusercontent.com/u/5843854?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=Szymon Pusz/>
-            <br />
-            <sub style="font-size:12px"><b>Szymon Pusz</b></sub>
-        </a>
-    </td>
     <td align="center" style="word-wrap: break-word; width: 150.0; height: 150.0">
         <a href=https://github.com/dvzrv>
             <img src=https://avatars.githubusercontent.com/u/432519?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=David Runge/>
@@ -96,10 +93,17 @@ To list the other configuration options and their current values, run `cmake -LH
         </a>
     </td>
     <td align="center" style="word-wrap: break-word; width: 150.0; height: 150.0">
-        <a href=https://github.com/TinnedTuna>
-            <img src=https://avatars.githubusercontent.com/u/118243?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=Dan Turner/>
+        <a href=https://github.com/Rawi666>
+            <img src=https://avatars.githubusercontent.com/u/5843854?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=Szymon Pusz/>
             <br />
-            <sub style="font-size:12px"><b>Dan Turner</b></sub>
+            <sub style="font-size:12px"><b>Szymon Pusz</b></sub>
+        </a>
+    </td>
+    <td align="center" style="word-wrap: break-word; width: 150.0; height: 150.0">
+        <a href=https://github.com/concatime>
+            <img src=https://avatars.githubusercontent.com/u/26262387?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=Issam E. Maghni/>
+            <br />
+            <sub style="font-size:12px"><b>Issam E. Maghni</b></sub>
         </a>
     </td>
     <td align="center" style="word-wrap: break-word; width: 150.0; height: 150.0">
@@ -107,6 +111,13 @@ To list the other configuration options and their current values, run `cmake -LH
             <img src=https://avatars.githubusercontent.com/u/6183628?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=Andreas/>
             <br />
             <sub style="font-size:12px"><b>Andreas</b></sub>
+        </a>
+    </td>
+    <td align="center" style="word-wrap: break-word; width: 150.0; height: 150.0">
+        <a href=https://github.com/TinnedTuna>
+            <img src=https://avatars.githubusercontent.com/u/118243?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=Dan Turner/>
+            <br />
+            <sub style="font-size:12px"><b>Dan Turner</b></sub>
         </a>
     </td>
     <td align="center" style="word-wrap: break-word; width: 150.0; height: 150.0">
@@ -130,6 +141,8 @@ To list the other configuration options and their current values, run `cmake -LH
             <sub style="font-size:12px"><b>Zero King</b></sub>
         </a>
     </td>
+</tr>
+<tr>
     <td align="center" style="word-wrap: break-word; width: 150.0; height: 150.0">
         <a href=https://github.com/wfdewith>
             <img src=https://avatars.githubusercontent.com/u/2306085?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=Wim de With/>
@@ -137,8 +150,6 @@ To list the other configuration options and their current values, run `cmake -LH
             <sub style="font-size:12px"><b>Wim de With</b></sub>
         </a>
     </td>
-</tr>
-<tr>
     <td align="center" style="word-wrap: break-word; width: 150.0; height: 150.0">
         <a href=https://github.com/neheb>
             <img src=https://avatars.githubusercontent.com/u/2918873?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=Rosen Penev/>
@@ -188,6 +199,8 @@ To list the other configuration options and their current values, run `cmake -LH
             <sub style="font-size:12px"><b>Partmedia</b></sub>
         </a>
     </td>
+</tr>
+<tr>
     <td align="center" style="word-wrap: break-word; width: 150.0; height: 150.0">
         <a href=https://github.com/jcgruenhage>
             <img src=https://avatars.githubusercontent.com/u/6861958?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=JC Grünhage/>
@@ -195,8 +208,6 @@ To list the other configuration options and their current values, run `cmake -LH
             <sub style="font-size:12px"><b>JC Grünhage</b></sub>
         </a>
     </td>
-</tr>
-<tr>
     <td align="center" style="word-wrap: break-word; width: 150.0; height: 150.0">
         <a href=https://github.com/Ra2-IFV>
             <img src=https://avatars.githubusercontent.com/u/96299096?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=IFV/>

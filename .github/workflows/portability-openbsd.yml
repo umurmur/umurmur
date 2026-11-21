@@ -1,0 +1,52 @@
+name: OpenBSD
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - src/**
+      - cmake/**
+      - CMakeLists.txt
+      - hack/**
+      - .github/workflows/portability-openbsd.yml
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - src/**
+      - cmake/**
+      - CMakeLists.txt
+      - hack/**
+      - .github/workflows/portability-openbsd.yml
+  schedule:
+    - cron: "30 6 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: portability-openbsd-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  openbsd:
+    name: "${{ matrix.config.version }}"
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - { version: "7.9", ssl: "mbedtls openssl gnutls" }
+          - { version: "8.0", ssl: "mbedtls openssl gnutls" }
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Build and test all SSL backends
+        uses: cross-platform-actions/action@30cde56b87a128507bebea9531205087890ee360 # v1.8.0
+        with:
+          operating_system: openbsd
+          architecture: x86-64
+          version: ${{ matrix.config.version }}
+          run: |
+            sudo pkg_add -U cmake gmake libconfig protobuf-c mbedtls gnutls zsh
+            ./hack/make-all.sh ${{ matrix.config.ssl }}

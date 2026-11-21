@@ -1,0 +1,49 @@
+name: macOS
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - src/**
+      - cmake/**
+      - CMakeLists.txt
+      - hack/**
+      - .github/workflows/portability-macos.yml
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - src/**
+      - cmake/**
+      - CMakeLists.txt
+      - hack/**
+      - .github/workflows/portability-macos.yml
+  schedule:
+    - cron: "30 6 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: portability-macos-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  macos:
+    name: "${{ matrix.config.runner }}"
+    runs-on: ${{ matrix.config.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - { version: 15, runner: "macos-15" }
+          - { version: 15, runner: "macos-15-intel" }
+          - { version: 26, runner: "macos-26" }
+          - { version: 26, runner: "macos-26-intel" }
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install dependencies
+        run: brew install cmake libconfig protobuf-c openssl@3 mbedtls gnutls nettle
+      - name: Build and test all SSL backends
+        run: ./hack/make-all.sh
