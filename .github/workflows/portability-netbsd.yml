@@ -1,0 +1,52 @@
+name: NetBSD
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - src/**
+      - cmake/**
+      - CMakeLists.txt
+      - hack/**
+      - .github/workflows/portability-netbsd.yml
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - src/**
+      - cmake/**
+      - CMakeLists.txt
+      - hack/**
+      - .github/workflows/portability-netbsd.yml
+  schedule:
+    - cron: "30 6 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: portability-netbsd-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  netbsd:
+    name: "${{ matrix.config.version }}"
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - { version: "10.2", ssl: "mbedtls openssl gnutls" }
+          - { version: "11.1", ssl: "mbedtls openssl gnutls" }
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Build and test all SSL backends
+        uses: cross-platform-actions/action@30cde56b87a128507bebea9531205087890ee360 # v1.8.0
+        with:
+          operating_system: netbsd
+          version: ${{ matrix.config.version }}
+          run: |
+            sudo pkgin -y update
+            sudo pkgin -y install cmake gmake pkg-config libconfig protobuf-c git-base mbedtls3 gnutls zsh
+            ./hack/make-all.sh ${{ matrix.config.ssl }}

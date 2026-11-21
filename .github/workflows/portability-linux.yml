@@ -1,0 +1,50 @@
+name: Linux
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - src/**
+      - cmake/**
+      - CMakeLists.txt
+      - Dockerfile.*
+      - .github/workflows/portability-linux.yml
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - src/**
+      - cmake/**
+      - CMakeLists.txt
+      - Dockerfile.*
+      - .github/workflows/portability-linux.yml
+  schedule:
+    - cron: "30 6 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: portability-linux-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux:
+    name: "${{ matrix.config.base }}"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - { family: alpine, base: alpine:3.22 }
+          - { family: alpine, base: alpine:3.23 }
+          - { family: alpine, base: alpine:3.24 }
+          - { family: debian, base: debian:trixie-slim }
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Build and test all SSL backends
+        run: |
+          docker build --target build \
+            -f Dockerfile.${{ matrix.config.family }} \
+            --build-arg BASE_IMAGE=${{ matrix.config.base }} .

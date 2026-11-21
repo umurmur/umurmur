@@ -1,10 +1,11 @@
 ARG BASE_IMAGE=alpine:latest
+ARG SSL=openssl
 
-# Stage 1: Build
+# Build and test with all SSL backends
+
 FROM ${BASE_IMAGE} AS build
 
-ARG SSL=openssl
-ARG BUILD_TYPE=debug
+ARG BUILD_TYPE=Release
 ARG SHMEM=true
 
 RUN \
@@ -14,11 +15,10 @@ RUN \
 		cmake \
 		git \
 		libconfig-dev \
-		protobuf-c-dev ; \
-	[ "${SSL}" == "gnutls" ] && apk add gnutls-dev ; \
-	[ "${SSL}" == "mbedtls" ] && apk add mbedtls-dev ; \
-	[ "${SSL}" == "openssl" ] && apk add openssl-dev ; \
-	echo "Installed deps for building against ${SSL}"
+		protobuf-c-dev \
+		gnutls-dev \
+		mbedtls-dev \
+		openssl-dev
 
 WORKDIR /umurmur
 
@@ -28,34 +28,43 @@ COPY umurmur.conf.example .
 COPY src src
 
 RUN \
-	cmake -Bbuild-${SSL} -H. \
-		-DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
-		-DCMAKE_INSTALL_BINDIR=bin \
-		-DUSE_SHAREDMEMORY_API=${SHMEM} \
-		-DSSL=${SSL} && \
-	cmake --build build-${SSL} && \
-	cmake --install build-${SSL}
+	for s in mbedtls openssl gnutls; do \
+		cmake -B "build-${s}" \
+			-DSSL="${s}" \
+			-DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
+			-DUSE_SHAREDMEMORY_API="${SHMEM}" && \
+		cmake --build "build-${s}" && \
+		ctest --test-dir "build-${s}" --output-on-failure; \
+	done
 
-# Stage 2: Runtime
-FROM ${BASE_IMAGE}
+# Runtime images
 
-ARG SSL=openssl
-
+FROM ${BASE_IMAGE} AS runtime-openssl
 RUN \
-	apk update && \
-	apk add \
-		libconfig \
-		protobuf-c ; \
-	[ "${SSL}" == "gnutls" ] && apk add gnutls ; \
-	[ "${SSL}" == "mbedtls" ] && apk add mbedtls ; \
-	[ "${SSL}" == "openssl" ] && apk add openssl ; \
-	[ "${SSL}" == "mbedtls" ] && apk add mbedtls ; \
-	rm -rf /var/cache/apk/* ; \
-	mkdir /etc/umurmur
-
-COPY --from=build /usr/local/bin/umurmurd /usr/local/bin/
+	apk add --no-cache libconfig protobuf-c openssl && \
+	mkdir -p /etc/umurmur /usr/local/etc/umurmur
+COPY --from=build /umurmur/build-openssl/src/umurmurd /usr/local/bin/
 COPY --from=build /umurmur/umurmur.conf.example /usr/local/etc/umurmur/umurmur.conf
-
-EXPOSE 64738
-
+EXPOSE 64738/tcp 64738/udp
 ENTRYPOINT ["/usr/local/bin/umurmurd", "-d"]
+
+FROM ${BASE_IMAGE} AS runtime-mbedtls
+RUN \
+	apk add --no-cache libconfig protobuf-c mbedtls && \
+	mkdir -p /etc/umurmur /usr/local/etc/umurmur
+COPY --from=build /umurmur/build-mbedtls/src/umurmurd /usr/local/bin/
+COPY --from=build /umurmur/umurmur.conf.example /usr/local/etc/umurmur/umurmur.conf
+EXPOSE 64738/tcp 64738/udp
+ENTRYPOINT ["/usr/local/bin/umurmurd", "-d"]
+
+FROM ${BASE_IMAGE} AS runtime-gnutls
+RUN \
+	apk add --no-cache libconfig protobuf-c gnutls && \
+	mkdir -p /etc/umurmur /usr/local/etc/umurmur
+COPY --from=build /umurmur/build-gnutls/src/umurmurd /usr/local/bin/
+COPY --from=build /umurmur/umurmur.conf.example /usr/local/etc/umurmur/umurmur.conf
+EXPOSE 64738/tcp 64738/udp
+ENTRYPOINT ["/usr/local/bin/umurmurd", "-d"]
+
+# Default public image: --build-arg SSL=openssl|mbedtls|gnutls
+FROM runtime-${SSL}
