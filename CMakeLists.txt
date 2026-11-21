@@ -39,6 +39,21 @@ include(GNUInstallDirs)
 include(CheckFunctionExists)
 check_function_exists(strlcpy HAVE_STRLCPY)
 
+# Look for Realtime scheduling capability using _GNU_SOURCE
+include(CheckCSourceCompiles)
+include(CMakePushCheckState)
+cmake_push_check_state(RESET)
+set(CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
+check_c_source_compiles("
+#include <unistd.h>
+#if !defined(_POSIX_PRIORITY_SCHEDULING) || (_POSIX_PRIORITY_SCHEDULING <= 0)
+#error POSIX priority scheduling not available
+#endif
+#include <sched.h>
+int main(void) { return sched_get_priority_min(SCHED_RR); }
+" POSIX_PRIORITY_SCHEDULING)
+cmake_pop_check_state()
+
 add_subdirectory(src)
 
 enable_testing()
