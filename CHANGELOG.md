@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.2](https://github.com/umurmur/umurmur/compare/v0.5.1...v0.5.2) (2026-11-26)
+
+
+### Fixed
+
+* Detect POSIX priority scheduling in CMake ([#286](https://github.com/umurmur/umurmur/issues/286)) ([0ef80f0](https://github.com/umurmur/umurmur/commit/0ef80f0b43294b21a07fd76a13067386b6468343))
+* Initialize variable for -Wsometimes-uninitialized ([#279](https://github.com/umurmur/umurmur/issues/279)) ([0b03cf3](https://github.com/umurmur/umurmur/commit/0b03cf36fbaacc16d5ec719e5bb773fb192542d4))
+* Unveil ca_path and pledge rpath when set ([#287](https://github.com/umurmur/umurmur/issues/287)) ([b74da0d](https://github.com/umurmur/umurmur/commit/b74da0d6f9245b3f1cfa69ec112c8912bf3d1ad6))
+
 ## [0.5.1](https://github.com/umurmur/umurmur/compare/v0.5.0...v0.5.1) (2026-09-16)
 
 
