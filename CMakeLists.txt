@@ -55,6 +55,9 @@ int main(void) { return sched_get_priority_min(SCHED_RR); }
 cmake_pop_check_state()
 
 add_subdirectory(src)
+if(EXISTS "${CMAKE_SOURCE_DIR}/man/CMakeLists.txt")
+  add_subdirectory(man)
+endif()
 
 enable_testing()
 add_test(NAME umurmurd-help COMMAND $<TARGET_FILE:umurmurd> -h)
@@ -64,7 +67,7 @@ set_tests_properties(umurmurd-help PROPERTIES
 
 install(
   FILES "umurmur.conf.example"
-  DESTINATION "${CMAKE_INSTALL_FULL_SYSCONFDIR}/umurmur"
+  DESTINATION "${CMAKE_INSTALL_SYSCONFDIR}/umurmur"
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ
   RENAME "umurmur.conf"
 )
